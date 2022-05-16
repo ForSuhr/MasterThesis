@@ -5,7 +5,7 @@ BibTeX: https://git.ltd.uni-erlangen.de/MarkusLohmayer/bibtex
 
 ## EPHS
 
-- Modeling basics"
+- Modeling basics
   https://www.tandfonline.com/doi/full/10.1080/13873954.2021.1979592
 - Modeling language
   https://arxiv.org/abs/2202.00377
