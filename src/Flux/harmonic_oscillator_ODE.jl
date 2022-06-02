@@ -5,7 +5,7 @@ using DiffEqFlux, DifferentialEquations, Plots
 using CUDA
 
 ## initial condition
-x0 = Float32[1.0;0.0]
+x0 = Float32[1.0;0.0;0.0]
 ## set timespan
 datasize = 1000
 tspan = (1.0f0, 20.0f0)
@@ -16,14 +16,18 @@ tsteps = range(tspan[1], tspan[2], length = datasize)
 function TrueODEfunc_Task1(df,x,u,t) ### in-place usage
   q = x[1]
   p = x[2]
+  s = x[3]
   d = 0.4  ### d is the damping coefficient
   c = 0.5  ### c is the spring compliance   
   m = 1 ### m is the mass
+  θ = 20 ### θ is the environmental temperature
   v = p/m
   dq = v
   dp = -q/c-d*v 
+  ds = d*(v^2)/θ
   df[1] = dq
   df[2] = dp
+  df[3] = ds
 end
 
 ## define an ODEProblem with the self-defined ODEFunction above 
@@ -39,14 +43,15 @@ ode_data = Array(sol)
 ## plot original data (q,p)
 x_axis_ode_data = ode_data[1,:]
 y_axis_ode_data = ode_data[2,:]
-plt = plot(x_axis_ode_data, y_axis_ode_data, label="Original")
+z_axis_ode_data = ode_data[3,:]
+plt = plot(x_axis_ode_data, y_axis_ode_data, z_axis_ode_data, label="Original")
 
 
 
 ## Make a neural network with a NeuralODE layer, where FastChain is a fast neural net structure for NeuralODEs
-dudt2 = FastChain(FastDense(2, 20, tanh), ### Multilayer perceptron for the part we don't know
+dudt2 = FastChain(FastDense(3, 20, tanh), ### Multilayer perceptron for the part we don't know
                   FastDense(20, 10, tanh),
-                  FastDense(10, 2))
+                  FastDense(10, 3))
 prob_neuralode = NeuralODE(dudt2, tspan, Tsit5(), saveat = tsteps)
 ### check the parameters prob_neuralode.p in prob_neuralode
 prob_neuralode.p
@@ -69,8 +74,9 @@ callback = function(p, loss, pred_data)
     println(loss)
     x_axis_pred_data = pred_data[1,:]
     y_axis_pred_data = pred_data[2,:]
-    plt = plot(x_axis_ode_data, y_axis_ode_data, label="Original")
-    plot!(plt,x_axis_pred_data, y_axis_pred_data, label = "Prediction")
+    z_axis_pred_data = pred_data[3,:]
+    plt = plot(x_axis_ode_data, y_axis_ode_data, z_axis_ode_data, label="Original")
+    plot!(plt,x_axis_pred_data, y_axis_pred_data, z_axis_pred_data, label = "Prediction")
     display(plot(plt))
     return false
   end
