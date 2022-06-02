@@ -1,8 +1,10 @@
+# https://fluxml.ai/Flux.jl/stable/models/overview/
+# using package
 using Revise
 using Flux
 # do simulation
-actual(x) = 8x + 4
-x_train, x_test= hcat(0:5...), hcat(6:10...)
+actual(x) = 4x + 2
+x_train, x_test= hcat(0:6...), hcat(6:10...)
 y_train, y_test = actual.(x_train), actual.(x_test)
 
 # build a predict model with siso, the single input is x_train and the single output is y_train
@@ -15,7 +17,7 @@ loss(x_train,y_train)
 
 # improve the prediction with the optimiser Descent()
 using Flux:train!
-opt = Descent(0.1)
+opt = Descent(0.01) ### the learning rate should not be too high, otherwise it will diverge
 data = [(x_train, y_train)]
 # data = [(x_train, y_train),(x_test, y_test)]
 
@@ -32,7 +34,7 @@ train!(loss, parameters, data, opt)
 loss(x_train, y_train)
 parameters
 
-# creat a void array
+# generate an array with 1000 void elements
 array = Vector{Float64}(undef,1000)
 
 # Iteratively train the model
