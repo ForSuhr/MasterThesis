@@ -1,0 +1,127 @@
+%%%%%%%%%%%%%%%%%%%%%%%
+% Version: 2022-01-31 %
+%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% DOCUMENT CLASS AND GENERAL OPTIONS %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[
+	parskip, 			   % german paragraph style (no indentation, blank line)
+	twoside, 			   % two-sided document
+	DIV=14, 			   % narrow margin
+	BCOR=15.0mm, 		   % binding correction
+	headsepline, 		   % header line
+	open=right, 		   % new chapters start on right hand side
+	captions=tableheading, % correct distance between table and caption above
+	bibliography=totoc,    % references shown in contents
+	numbers=noenddot       % remove dots at the the end of chapter numbers
+]{scrreprt}
+
+\newcommand{\languages}{english}
+
+\makeatletter
+\newcommand\addcase[3]{\expandafter\def\csname\string#1@case@#2\endcsname{#3}}
+\newcommand\makeswitch[2][]{%
+	\newcommand#2[1]{%
+		\ifcsname\string#2@case@##1\endcsname\csname\string#2@case@##1\endcsname\else#1\fi%
+	}%
+}
+\makeatother
+
+\makeswitch[nada]\dothis
+\addcase\dothis{english}{\include{prechapters/declaration}}
+\addcase\dothis{ngerman}{\include{prechapters/Eigenstaendigkeitserklaerung}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+% PACKAGES AND SETTINGS %
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[utf8]{inputenc} % input umlaut characters directly
+\usepackage[T1]{fontenc} % proper output of umlaut characters
+\usepackage[ngerman, \languages]{babel} % hyphenation, main language in the end
+\usepackage{scrlayer-scrpage} % customise head and foot
+\automark[chapter]{chapter} % display chapter name on all pages instead of section name on right hand side
+\usepackage{color} % definition of own colors
+\definecolor{LTD_grey}{gray}{0.65} % LTD Grau nach dem neuen, druckkostensparenden caltechgray
+\addtokomafont{pagehead}{\color{LTD_grey} \sffamily \upshape} % head in grey and sans serif
+\addtokomafont{pagenumber}{\color{LTD_grey}} % page number in grey
+\addtokomafont{subject}{\normalfont} % Thesis type not bold
+\usepackage{graphicx} % scaling of graphics
+\usepackage{booktabs} % lines for tabs
+\usepackage{amssymb,amsmath} % math symbols
+
+
+%%%%%%%%%%%
+% CONTENT %
+%%%%%%%%%%%
+\begin{document}
+\pagenumbering{roman} % roman numbering before main part
+
+
+%%%%%%%%%%%%%%%%%%%%
+% TITLE AND AUTHOR %
+%%%%%%%%%%%%%%%%%%%%
+\title{Manual on how to write a thesis} % title
+\subject{Master's thesis} % type (Bachelor's thesis / Master's thesis / project thesis)
+\author{John Smith} % author
+\date{March to April 2019} % period
+\publishers{supervised by\\[1em]
+	Prof. Dr.-Ing. habil. S. Leyendecker\\
+	Dipl.-Ing. T. Schlögl % name of supervisor
+	}
+\titlehead{\includegraphics[height=1.45cm]{figures/uni_head_new} \hfill \includegraphics[height=1.3cm]{figures/ltd_head}}
+
+% title page
+\maketitle
+
+
+%%%%%%%%%%%%%%%%%%%%%%
+% CONTENTS AND LISTS %
+%%%%%%%%%%%%%%%%%%%%%%
+%% declaration
+\dothis{\languages}
+
+% abstract
+\include{prechapters/abstract}
+
+% contents
+\tableofcontents
+
+% figure list
+\listoffigures
+
+% table list
+\listoftables
+
+\cleardoublepage % finish current page with roman numbering
+
+
+%%%%%%%%%%%%%%%%
+% MAIN CONTENT %
+%%%%%%%%%%%%%%%%
+\pagenumbering{arabic} % arabic numbering for main part
+
+% chapters
+\include{chapters/introduction}
+\include{chapters/basics}
+\include{chapters/mainpart}
+\include{chapters/summary}
+
+
+%%%%%%%%%%%%%%
+% REFERENCES %
+%%%%%%%%%%%%%%
+\bibliographystyle{alpha}
+\renewcommand{\bibname}{References} % Title References instead of Bibliography
+\bibliography{literature/literature}
+
+
+%%%%%%%%%%%%
+% APPENDIX %
+%%%%%%%%%%%%
+\appendix
+\include{appendix/code}
+
+
+\end{document}

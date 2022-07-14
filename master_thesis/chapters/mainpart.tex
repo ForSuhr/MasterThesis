@@ -1,0 +1,86 @@
+\chapter{Main part}
+\label{cha:mainpart}
+
+This chapter describes the test bench setup and the experiments that were realised. For pure theoretical work, new methods can be developed, proofs can be shown and extensions of existing work can be discussed. Split the main part into several chapters if appropriate and use descriptive chapter names.
+
+\section{Structure}
+\label{sec:structure}
+
+The presented structure of chapters and sections is just an example and has to be customised. Every chapter is split into several sections.
+
+\subsection{Subsection}
+\label{sec:subsection}
+
+Subsections provide smaller structural units. Use them for increasing the understanding but do not use too much nesting. Each unit should consist of at least several paragraphs. This is a bad example. You could take the two Subsections \ref{sec:subsection} and \ref{sec:anothersubsection} and paste the text as a part of Section \ref{sec:structure}.
+
+\subsection{Another subsection}
+\label{sec:anothersubsection}
+
+Try and avoid having no text in between two structural units. Between the heading of Section \ref{sec:structure} and the heading of Subsection \ref{sec:subsection} should be some text, as it is the case here. A short description of what is being discussed in the next section increases the understanding.
+
+\section{Figures}
+
+Figures are introduced as floating objects. LaTeX is then going to decide where the figures are placed exactly such that it looks nice and a good readability is provided. Figures can then be referenced analogously to Figure \ref{fig:example}. The numbering is automatically handled by LaTeX.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=.7\textwidth]{figures/example}
+	\caption{Cartoon to illustrate the use of figures.}
+	\label{fig:example}
+\end{figure}
+
+\section{Tables}
+
+Tables are also used within the framework of floating objects. Table \ref{tab:integrationschemes} consists of three columns. Avoid vertical lines. The package \verb|booktabs| provides the commands \verb|\toprule|, \verb|\midrule| and \verb|\bottomrule| to create nice tables.
+
+\begin{table}
+	\centering
+	\caption{Available MATLAB integration schemes.}
+	\label{tab:integrationschemes}
+	\begin{tabular}{lcc}
+		\toprule
+		Solver & Problem type & Order of Accuracy \\
+		\midrule
+		ode45 & nonstiff & medium \\
+		ode15s & stiff & low to medium \\
+		ode23t & moderately stiff & low \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\section{Maths}
+
+Equations like
+\begin{equation}
+	\label{eq:exampleequation}
+	\sqrt{a^2 + b^2} = c
+\end{equation}
+are automatically numbered in parentheses. Besides the form of Equation (\ref{eq:exampleequation}), you can use maths $a > 0, b, c$ within text. Have a look at the ``Short Math Guide for \LaTeX'' for further information\footnote{ftp://ftp.ams.org/pub/tex/doc/amsmath/short-math-guide.pdf}.
+
+\section{References}
+
+References are automatically given in square brackets \cite{cohen2000} and \cite{wriggers2001}. This also works with more than one reference at the same time \cite{dorfmann2005, vu2006, marsden2001}. Be careful to cite every reference that is given somewhere. The same holds for tables and figures.
+
+\section{Text}
+
+A lot of text.
+
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. 
+
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. 
+
+Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. 
+
+Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. 
+
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis. 
+
+At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, At accusam aliquyam diam diam dolore dolores duo eirmod eos erat, et nonumy sed tempor et et invidunt justo labore Stet clita ea et gubergren, kasd magna no rebum. sanctus sea sed takimata ut vero voluptua. est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat. 
+
+Consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus. 
+
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. 
+
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. 
+
+Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. 
