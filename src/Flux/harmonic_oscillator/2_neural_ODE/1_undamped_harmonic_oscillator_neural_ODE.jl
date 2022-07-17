@@ -68,6 +68,3 @@ end
 ## prob_neuralode.p are parameters, which are passed into loss_neuralode(p) as its argument
 ## optimizer chain of ADAM -> BFGS is used by default
 @btime DiffEqFlux.sciml_train(loss_neuralode, neural_params, cb = callback)    
-
-
-

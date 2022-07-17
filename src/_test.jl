@@ -1,20 +1,22 @@
-using Zygote
-θ  = rand(2,2)
-function cost(θ_)
-  f = x -> sum(θ_*x)
-  x = [1.0,2.0]
-  sum(ForwardDiff.gradient(f, x))
-end
-Zygote.gradient(cost,θ) # nothing
+ode_data
+aaa = ode_data[1,:]
 
 
-using DiffEqFlux, ForwardDiff, LinearAlgebra
-nn = FastChain(FastDense(1,32,tanh), FastDense(32,32,tanh), FastDense(32,1))
-θ  = initial_params(nn)
-function cost(θ_)
-  f = x -> nn(x,θ_)[1]
-  x = [0f-1]
-  sum(ForwardDiff.gradient(f, x))
-end
-Zygote.gradient(cost,θ) # nothing
 
+
+x = [:a,:b,:c,:d,:e,:f]
+n = 2
+reshape(x, (n, div(length(x), n)))
+
+aaa
+n = 2
+ccc = reshape(aaa, (n, div(length(aaa), n)))
+print(ccc)
+print(ccc[:,1])
+
+
+tsteps[1]
+
+
+dddd= [1,2,1,3,4,5,4,3,2,1]
+unique(dddd)
