@@ -25,7 +25,7 @@ function dxdt_pred(du,u,p,t)
   du[2] = -p[1]*u[1] - p[2]*u[2] + f(nn(u,p[3:end])[1])
 end
 
-α = zeros(102)
+params_PIML = zeros(102)
 
 prob_pred = ODEProblem{true}(dxdt_pred,u0,tspan)
 
@@ -52,7 +52,7 @@ end
 
 adtype = Optimization.AutoZygote()
 optf = Optimization.OptimizationFunction((x,p) -> loss_adjoint(x), adtype)
-optprob = Optimization.OptimizationProblem(optf, α)
+optprob = Optimization.OptimizationProblem(optf, params_PIML)
 res1 = Optimization.solve(optprob, ADAM(0.05), callback = callback, maxiters = 150)
 
 optprob2 = Optimization.OptimizationProblem(optf, res1.u)
