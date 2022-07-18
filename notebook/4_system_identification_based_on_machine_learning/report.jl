@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.5
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -15,15 +15,16 @@ begin
 end
   ╠═╡ =#
 
-# ╔═╡ a1a19311-5c6a-48f5-b4f7-bebbcc840bc3
-using Documenter ### for latex formula
-
 # ╔═╡ 6b665343-653d-4d1b-8884-31dd94873160
 begin
 	## using package
+	using Revise ### for modification
 	using DifferentialEquations ### for ODE Problem
 	using Plots ### for plot
 end
+
+# ╔═╡ a1a19311-5c6a-48f5-b4f7-bebbcc840bc3
+using Documenter ### for latex formula
 
 # ╔═╡ cb243b77-d77f-4404-8083-ede544888aa3
 begin
@@ -31,6 +32,9 @@ begin
 	using DiffEqFlux ### for NeuralODE and sciml_train
 	using BenchmarkTools ### for macro @btime
 end
+
+# ╔═╡ 4171a8c4-558c-4651-b608-a408d967b55e
+using Optimization
 
 # ╔═╡ a6d6f0d5-414c-47b5-8488-7123926618ed
 begin
@@ -280,20 +284,147 @@ In previous part, the baseline model learned the state of the system $(\dot{q},\
 
 Hamiltonian-based model also known as Hamiltonian Neural Networks(HNNs). The main purpose of HNNs is to endow neural networks with physics priors. In fact, if the system is not conserve, it has another upper-level name called physics-informed neural network, which is a method to solve ODEs with neural networks, regardless of energy conservation.
 
-In this section, the learning object is the hamiltonian. To compute the loss function, the key is to compare the truth and the model's estimation of the gradient of the neural network $(\frac{\partial{H}}{\partial{p}},\frac{\partial{H}}{\partial{q}})$.
+In this section, the learning object is the hamiltonian. To compute the loss function, the key is to compare the ground truth and the model's prediction of the gradient of the neural network $(\frac{\partial{H}}{\partial{p}},\frac{\partial{H}}{\partial{q}})$.
 
-However, DiffEqFlux.sciml_train() doesn't seem to support structured neural ODE.
+Suppose we already know $\frac{\partial{H}}{\partial{p}}$ and we replace $frac{\partial{H}}{\partial{q}}$ with a neural network.
 
-Compute the gradient of the neural network.
+
+"""
+
+# ╔═╡ 34549a60-aa77-4fbe-b772-c831da3a849b
+md"""
+### Neural network
+Firstly, construct a neural network with only one input.
 """
 
 # ╔═╡ e014f9cb-c930-4098-abec-4afe1b8da420
-## ∂H/∂q
-dNN_dq = gradient(u -> NN(u, initial_params(NN))[1], u0)[1] 
+# ╠═╡ show_logs = false
+NN_struct = FastChain(FastDense(1, 20, tanh), 
+			   FastDense(20, 20, tanh), 
+			   FastDense(20, 1))
+
+# ╔═╡ c110dd6c-b6de-44bd-9fad-6b7806aaaf33
+md"""
+initial parameters
+"""
 
 # ╔═╡ 83671ac5-04ab-459a-b18d-0e36255a0f7f
-## ∂H/∂p
-dNN_dp = gradient(u -> NN(u, initial_params(NN))[2], u0)[1] 
+neural_params_struct = initial_params(NN_struct)
+
+# ╔═╡ 55b5a6e8-f6b3-46aa-86d5-4144e1ef0001
+md"""
+Get the length of the neural parameters.
+"""
+
+# ╔═╡ f635b771-0de0-466d-9593-eda42466a8c6
+size_neural_params_struct = length(neural_params_struct)
+
+# ╔═╡ 608b05e7-0922-4847-9101-f8c25e6232f8
+md"""
+Replace a part of the ODEs with a neural network.
+"""
+
+# ╔═╡ d17cb817-d535-4f02-965d-4f8c989f0aef
+function ODEfunc_udho_pred(du,u,params,t) ### params = params_PIML
+  ## conversion
+  q, p = u
+  m, c = init_params
+  ## ODEs
+  du[1] = p/m
+  du[2] = NN_struct(q, params[1:size_neural_params_struct])[1]
+end
+
+# ╔═╡ 3b58ff42-9dec-4dbb-85bb-8406251fd2a5
+md"""
+Construct an ODE problem with NN replacement part.
+"""
+
+# ╔═╡ c15b3fd4-161d-4a30-bf1a-a8dba71b7d11
+prob_pred_struct = ODEProblem(ODEfunc_udho_pred, u0, tspan, init_params)
+
+# ╔═╡ 0e26676a-a90f-4755-b838-0553e388d2ac
+md"""
+Solve the ODE problem.
+"""
+
+# ╔═╡ b242c47e-bcef-4158-a269-bec99b6d85b7
+function predict_neuralode_struct(params)
+  Array(solve(prob_pred_struct, Tsit5(), p=params, saveat=tsteps,
+        sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))))
+end
+
+# ╔═╡ 549e686b-f14e-4620-872b-16b891b958ab
+md"""
+Construct a loss function that return a tuple with error and prediction.
+"""
+
+# ╔═╡ 371a19cd-883a-4a47-aa87-64ec18117ecd
+function loss_neuralode_struct(params)
+    pred_data = predict_neuralode_struct(params)
+    # rss = sum(abs2, ode_data .- pred_data)
+    error = sum(abs2, ode_data[2,:] .- pred_data[2,:]) # Just sum of squared error, without mean
+    return error, pred_data
+end
+
+# ╔═╡ 8fd79683-91aa-4c9c-b941-e6fbf563223d
+md"""
+Construct a callback function to observe training. Suppose we are satisfied with a loss less than 0.1.
+"""
+
+# ╔═╡ d5040ea9-fd2e-43a0-af63-c3bce7c89616
+callback_struct = function(params, loss, pred_data)
+  ### plot Ground truth and prediction data
+  println(loss)
+  x_axis_pred_data = pred_data[1,:]
+  y_axis_pred_data = pred_data[2,:]
+  plt = plot(x_axis_ode_data, y_axis_ode_data, label="Ground truth")
+  plot!(plt,x_axis_ode_data, y_axis_pred_data, label = "Prediction")
+  display(plot(plt))
+  if loss > 0.1 
+    return false
+  else
+    return true
+  end
+end
+
+# ╔═╡ f16b6608-2e29-4248-a1c2-9fc6a50ef8e0
+md"""
+### Training
+Use Optimization.jl to train.
+"""
+
+# ╔═╡ 9972976b-c0d5-44c4-b1a3-6cb2feee6ffd
+md"""
+Select a type for automatic differentiation.
+"""
+
+# ╔═╡ 0e560952-e93b-4df4-a732-e77846c8ae34
+adtype = Optimization.AutoZygote()
+
+# ╔═╡ cf8bdb19-579a-4f24-be89-99f14d8ba843
+md"""
+Construct a optimization function.
+"""
+
+# ╔═╡ 38936079-3618-4529-a4b6-fee154e5bfca
+optf = Optimization.OptimizationFunction((x,p) -> loss_neuralode_struct(x), adtype)
+
+# ╔═╡ 2fa85b44-92cc-491a-977e-aaf2924f6f10
+md"""
+Construct a optimization problem
+"""
+
+# ╔═╡ 1cf80a77-3b6b-4f09-880a-e8341fd109f7
+optprob = Optimization.OptimizationProblem(optf, neural_params_struct)
+
+# ╔═╡ 8e9cc019-a2b2-4a71-92d8-120042110231
+md"""
+Train the model.
+"""
+
+# ╔═╡ acc79f3b-ff63-4dce-b05f-303db6090acf
+# ╠═╡ show_logs = false
+res1 = Optimization.solve(optprob, ADAM(0.05), callback = callback_struct, maxiters = 300)
 
 # ╔═╡ a18a366e-6b9a-4151-b0f6-c099da545f25
 md"""
@@ -398,9 +529,11 @@ DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 LeastSquaresOptim = "0fc2ff8b-aaa3-5acd-a817-1944a5e08891"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Optimization = "7f7a1694-90dd-40f0-9382-eb1efda571ba"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 
 [compat]
 BenchmarkTools = "~1.3.1"
@@ -409,8 +542,10 @@ DiffEqParamEstim = "~1.25.0"
 DifferentialEquations = "~7.2.0"
 Documenter = "~0.27.21"
 LeastSquaresOptim = "~0.8.3"
+Optimization = "~3.7.1"
 Plots = "~1.31.2"
 RecursiveArrayTools = "~2.31.1"
+Revise = "~3.3.3"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -610,6 +745,12 @@ deps = ["ArrayInterface", "Static"]
 git-tree-sha1 = "5522c338564580adf5d58d91e43a55db0fa5fb39"
 uuid = "fb6a15b2-703c-40df-9091-08a04967cfa9"
 version = "0.1.10"
+
+[[deps.CodeTracking]]
+deps = ["InteractiveUtils", "UUIDs"]
+git-tree-sha1 = "6d4fa04343a7fc9f9cb9cff9558929f3d2752717"
+uuid = "da1fd8a2-8d9e-5ec2-8556-3022fb5608a2"
+version = "1.0.9"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -918,6 +1059,9 @@ git-tree-sha1 = "acebe244d53ee1b461970f8910c235b259e772ef"
 uuid = "9aa1b823-49e4-5ca5-8b0f-3971ec8bab6a"
 version = "0.3.2"
 
+[[deps.FileWatching]]
+uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
+
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
 git-tree-sha1 = "246621d23d1f43e3b9c368bf3b72b2331a27c286"
@@ -1169,6 +1313,12 @@ git-tree-sha1 = "b53380851c6e6664204efb2e62cd24fa5c47e4ba"
 uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
 version = "2.1.2+0"
 
+[[deps.JuliaInterpreter]]
+deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
+git-tree-sha1 = "52617c41d2761cc05ed81fe779804d3b7f14fff7"
+uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
+version = "0.9.13"
+
 [[deps.JumpProcesses]]
 deps = ["ArrayInterfaceCore", "DataStructures", "DiffEqBase", "DocStringExtensions", "FunctionWrappers", "Graphs", "LinearAlgebra", "Markdown", "PoissonRandom", "Random", "RandomNumbers", "RecursiveArrayTools", "Reexport", "SciMLBase", "StaticArrays", "TreeViews", "UnPack"]
 git-tree-sha1 = "4aa139750616fee7216ddcb30652357c60c3683e"
@@ -1377,6 +1527,12 @@ deps = ["ArrayInterface", "ArrayInterfaceCore", "ArrayInterfaceOffsetArrays", "A
 git-tree-sha1 = "adc9421494fd93e31a18a66e49d79615ad6b2efa"
 uuid = "bdcacae8-1622-11e9-2a5c-532679323890"
 version = "0.12.120"
+
+[[deps.LoweredCodeUtils]]
+deps = ["JuliaInterpreter"]
+git-tree-sha1 = "dedbebe234e06e1ddad435f5c6f4b85cd8ce55f7"
+uuid = "6f1432cf-f94c-5a45-995e-cdbf5db27b0b"
+version = "2.2.2"
 
 [[deps.LsqFit]]
 deps = ["Distributions", "ForwardDiff", "LinearAlgebra", "NLSolversBase", "OptimBase", "Random", "StatsBase"]
@@ -1793,6 +1949,12 @@ deps = ["ChainRulesCore", "DiffResults", "DiffRules", "ForwardDiff", "FunctionWr
 git-tree-sha1 = "b8e2eb3d8e1530acb73d8949eab3cedb1d43f840"
 uuid = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 version = "1.14.1"
+
+[[deps.Revise]]
+deps = ["CodeTracking", "Distributed", "FileWatching", "JuliaInterpreter", "LibGit2", "LoweredCodeUtils", "OrderedCollections", "Pkg", "REPL", "Requires", "UUIDs", "Unicode"]
+git-tree-sha1 = "4d4239e93531ac3e7ca7e339f15978d0b5149d03"
+uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
+version = "3.3.3"
 
 [[deps.Rmath]]
 deps = ["Random", "Rmath_jll"]
@@ -2389,9 +2551,33 @@ version = "0.9.1+5"
 # ╠═09d914c4-71a8-4b08-bd4a-5c51f8139094
 # ╟─895434f2-9077-4001-9fd0-36e57ff1fd9e
 # ╠═751b6342-fc56-42fa-9fc7-7dbe17359dcd
-# ╟─36f9e294-9dbf-44f0-ab79-e282f5330955
+# ╠═36f9e294-9dbf-44f0-ab79-e282f5330955
+# ╠═34549a60-aa77-4fbe-b772-c831da3a849b
 # ╠═e014f9cb-c930-4098-abec-4afe1b8da420
+# ╠═c110dd6c-b6de-44bd-9fad-6b7806aaaf33
 # ╠═83671ac5-04ab-459a-b18d-0e36255a0f7f
+# ╠═55b5a6e8-f6b3-46aa-86d5-4144e1ef0001
+# ╠═f635b771-0de0-466d-9593-eda42466a8c6
+# ╠═608b05e7-0922-4847-9101-f8c25e6232f8
+# ╠═d17cb817-d535-4f02-965d-4f8c989f0aef
+# ╠═3b58ff42-9dec-4dbb-85bb-8406251fd2a5
+# ╠═c15b3fd4-161d-4a30-bf1a-a8dba71b7d11
+# ╠═0e26676a-a90f-4755-b838-0553e388d2ac
+# ╠═b242c47e-bcef-4158-a269-bec99b6d85b7
+# ╠═549e686b-f14e-4620-872b-16b891b958ab
+# ╠═371a19cd-883a-4a47-aa87-64ec18117ecd
+# ╠═8fd79683-91aa-4c9c-b941-e6fbf563223d
+# ╠═d5040ea9-fd2e-43a0-af63-c3bce7c89616
+# ╠═f16b6608-2e29-4248-a1c2-9fc6a50ef8e0
+# ╠═4171a8c4-558c-4651-b608-a408d967b55e
+# ╠═9972976b-c0d5-44c4-b1a3-6cb2feee6ffd
+# ╠═0e560952-e93b-4df4-a732-e77846c8ae34
+# ╠═cf8bdb19-579a-4f24-be89-99f14d8ba843
+# ╠═38936079-3618-4529-a4b6-fee154e5bfca
+# ╠═2fa85b44-92cc-491a-977e-aaf2924f6f10
+# ╠═1cf80a77-3b6b-4f09-880a-e8341fd109f7
+# ╠═8e9cc019-a2b2-4a71-92d8-120042110231
+# ╠═acc79f3b-ff63-4dce-b05f-303db6090acf
 # ╠═a18a366e-6b9a-4151-b0f6-c099da545f25
 # ╠═a6d6f0d5-414c-47b5-8488-7123926618ed
 # ╟─6e126760-6234-430c-b5d3-a7216f180a3f

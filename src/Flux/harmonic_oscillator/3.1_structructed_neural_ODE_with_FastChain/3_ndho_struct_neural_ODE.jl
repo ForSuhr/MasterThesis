@@ -124,3 +124,5 @@ ode_data
 data_pred = predict_neuralode(res2.u)
 plt = plot(ode_data[1,:], ode_data[2,:], label = "Ground truth")
 plt = plot!(data_pred[1,:], data_pred[2,:], label = "Prediction")
+
+NN(u0, res2.u)

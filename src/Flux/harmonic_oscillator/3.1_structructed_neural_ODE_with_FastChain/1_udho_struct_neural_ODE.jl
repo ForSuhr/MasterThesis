@@ -111,4 +111,4 @@ res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback,maxiters = 
 ode_data
 data_pred = predict_neuralode(res2.u)
 plt = plot(ode_data[1,:], ode_data[2,:], label = "Ground truth")
-plt = plot!(data_pred[1,:], data_pred[2,:], label = "Prediction")
+plt = plot!(ode_data[1,:], data_pred[2,:], label = "Prediction")
