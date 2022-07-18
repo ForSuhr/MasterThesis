@@ -82,8 +82,17 @@ callback = function(params, loss, pred_data)
   println(loss)
   x_axis_pred_data = pred_data[1,:]
   y_axis_pred_data = pred_data[2,:]
-  plt = plot(x_axis_ode_data, y_axis_ode_data, label="Ground truth")
-  plot!(plt,x_axis_ode_data, y_axis_pred_data, label = "Prediction")
+  plt = plot(x_axis_ode_data, y_axis_ode_data, label="Ground truth", xlabel="q", ylabel="p")
+  plot!(plt,x_axis_ode_data, y_axis_pred_data, label = "Prediction", xlabel="q", ylabel="p")
+  """
+  q = pred_data[1,:]
+  p = pred_data[2,:]
+  m, c = init_params
+  H = p.^2/(2m) + q.^2/(2c)
+  plt = plot(tsteps, q, label="Position")
+  plt = plot!(tsteps, p, label="Momentum")
+  plt = plot!(tsteps, H, label="Hamiltonian")
+  """
   display(plot(plt))
   if loss > 0.1 
     return false
@@ -98,7 +107,7 @@ end
 adtype = Optimization.AutoZygote()
 optf = Optimization.OptimizationFunction((x,p) -> loss_neuralode(x), adtype)
 optprob = Optimization.OptimizationProblem(optf, neural_params)
-res1 = Optimization.solve(optprob, ADAM(0.05), callback = callback, maxiters = 300)
+res1 = Optimization.solve(optprob, ADAM(0.05), callback = callback, maxiters = 100)
 
 
 optprob2 = Optimization.OptimizationProblem(optf, res1.u)
