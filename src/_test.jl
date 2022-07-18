@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 A = [LegendreBasis(2), LegendreBasis(2)]
 nn = TensorLayer(A, 1)
 f = x -> min(30one(x),x)
