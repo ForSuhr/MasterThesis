@@ -32,17 +32,21 @@ ode_data = Array(sol)
 x_axis_ode_data = ode_data[1,:]
 y_axis_ode_data = ode_data[2,:]
 plt = plot(x_axis_ode_data, y_axis_ode_data, label="Ground truth")
+## print Hamiltonian
+q = ode_data[1,:]
+p = ode_data[2,:]
+m, c = init_params
+H = p.^2/(2m) + q.^2/(2c)
+plt = plot(tsteps, round.(H, digits=2), ylims = (0,1), label="Hamiltonian", xlabel="timesteps", ylabel="Energy")
+
 
 ## Make a neural network with a NeuralODE layer, where FastChain is a fast neural net structure for NeuralODEs
 NN = FastChain(FastDense(1, 20, tanh), ### Multilayer perceptron for the part we don't know
                   FastDense(20, 20, tanh),
                   FastDense(20, 1))
 # prob_neuralode = NeuralODE(NN, tspan, Tsit5(), saveat = tsteps)
-### check the parameters prob_neuralode.p in prob_neuralode
 neural_params = initial_params(NN)
 
-
-NN
 # The model weights are destructured into a vector of parameters
 size_neural_params = length(neural_params)
 zeros_params = zeros(size_neural_params)
@@ -107,17 +111,17 @@ end
 adtype = Optimization.AutoZygote()
 optf = Optimization.OptimizationFunction((x,p) -> loss_neuralode(x), adtype)
 optprob = Optimization.OptimizationProblem(optf, neural_params)
-res1 = Optimization.solve(optprob, ADAM(0.05), callback = callback, maxiters = 100)
+res1 = Optimization.solve(optprob, ADAM(0.05), callback = callback, maxiters = 200)
 
 
 optprob2 = Optimization.OptimizationProblem(optf, res1.u)
-res2 = Optimization.solve(optprob2, ADAM(0.01), callback = callback,maxiters = 100)
+res2 = Optimization.solve(optprob2, ADAM(0.01), callback = callback,maxiters = 200)
 
 optprob3 = Optimization.OptimizationProblem(optf, res2.u)
 res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback,maxiters = 100)
 
 
 ode_data
-data_pred = predict_neuralode(res2.u)
+data_pred = predict_neuralode(res3.u)
 plt = plot(ode_data[1,:], ode_data[2,:], label = "Ground truth")
 plt = plot!(ode_data[1,:], data_pred[2,:], label = "Prediction")

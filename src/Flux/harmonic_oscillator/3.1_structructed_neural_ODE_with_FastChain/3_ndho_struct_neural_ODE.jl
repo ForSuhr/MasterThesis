@@ -36,6 +36,15 @@ z1_axis_ode_data = ode_data[3,:]
 z2_axis_ode_data = ode_data[4,:]
 plt = plot(x_axis_ode_data, y_axis_ode_data, z1_axis_ode_data, label="Ground truth")
 plt = plot!(x_axis_ode_data, y_axis_ode_data, z2_axis_ode_data, label="Ground truth")
+## print Hamiltonian
+q = ode_data[1,:]
+p = ode_data[2,:]
+sd = ode_data[3,:]
+sₑ = ode_data[4,:]
+m, c = init_params
+H = p.^2/(2m) + q.^2/(2c)
+plt = plot(tsteps, H, label="Hamiltonian", xlabel="timesteps", ylabel="Energy")
+
 
 ## Make a neural network with a NeuralODE layer, where FastChain is a fast neural net structure for NeuralODEs
 NN = FastChain(FastDense(2, 20, tanh), ### Multilayer perceptron for the part we don't know

@@ -1,6 +1,5 @@
 # Acset
 ## using package
-using Revise
 using Catlab, Catlab.Theories
 using Catlab.CategoricalAlgebra
 using Catlab.WiringDiagrams
