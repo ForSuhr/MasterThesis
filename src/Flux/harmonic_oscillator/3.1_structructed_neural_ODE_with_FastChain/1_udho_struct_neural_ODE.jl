@@ -1,5 +1,3 @@
-# https://docs.juliahub.com/DiffEqFlux/BdO4p/1.20.0/examples/feedback_control/
-# https://docs.juliahub.com/DiffEqFlux/BdO4p/1.20.0/examples/optimal_control/
 
 ## use packages
 using DiffEqFlux, DifferentialEquations, LinearAlgebra
