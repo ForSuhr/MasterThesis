@@ -58,7 +58,7 @@ function (n::NeuralODE)(x, ps, st)
      u_, _ = n.model(u, p, st)
      return u_
  end
- prob = ODEProblem{false}(ODEFunction{false}(dudt), x, n.tspan, ps)
+ prob = ODEProblem{false}(ODEFunction{false}(dudt), x, n.tspan, ps) ## "false" means out-of-place usage, as we don't have real dudt in neural ODE, so the out-of-place usage is neccessary.
  return solve(prob, n.solver; sensealg=n.sensealg, saveat = tsteps), st
 end
 
