@@ -34,7 +34,7 @@ plt = plot(x_axis_ode_data, y_axis_ode_data, label="Ground truth")
 NN = FastChain(FastDense(2, 20, tanh), ### Multilayer perceptron for the part we don't know
                   FastDense(20, 10, tanh),
                   FastDense(10, 2))
-prob_neuralode = NeuralODE(NN, tspan, Tsit5(), saveat = tsteps)
+prob_neuralode = DiffEqFlux.NeuralODE(NN, tspan, Tsit5(), saveat = tsteps)
 ### check the parameters prob_neuralode.p in prob_neuralode
 neural_params = prob_neuralode.p
 
@@ -59,7 +59,7 @@ callback = function(p, loss, pred_data)
     plt = plot(x_axis_ode_data, y_axis_ode_data, label="Ground truth")
     plot!(plt,x_axis_pred_data, y_axis_pred_data, label = "Prediction")
     display(plot(plt))
-    if loss > 20 
+    if loss > 0.1 
       return false
     else
       return true
@@ -70,13 +70,13 @@ end
 adtype = Optimization.AutoZygote()
 optf = Optimization.OptimizationFunction((x,p) -> loss_neuralode(x), adtype)
 optprob1 = Optimization.OptimizationProblem(optf, neural_params)
-res1 = Optimization.solve(optprob1, ADAM(0.05), callback = callback, maxiters = 100)
+@time res1 = Optimization.solve(optprob1, ADAM(0.05), callback = callback, maxiters = 100)
 
 optprob2 = Optimization.OptimizationProblem(optf, res1.u)
-res2 = Optimization.solve(optprob2, ADAM(0.01), callback = callback, maxiters = 1000)
+@time res2 = Optimization.solve(optprob2, ADAM(0.01), callback = callback, maxiters = 300)
 
 optprob3 = Optimization.OptimizationProblem(optf, res2.u)
-res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback, maxiters = 1000)
+@time res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback, maxiters = 1000)
 
 ## check the trained NN
 NN(u0, res2.u)

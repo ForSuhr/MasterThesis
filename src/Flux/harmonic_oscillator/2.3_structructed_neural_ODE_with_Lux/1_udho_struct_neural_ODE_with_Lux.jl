@@ -5,6 +5,7 @@ using DiffEqSensitivity
 using Optimization
 using OptimizationFlux
 using Plots
+using BenchmarkTools
 
 ## ODE function of undamped harmonic oscillator
 function ODEfunc_udho(du,u,params,t)
@@ -55,8 +56,8 @@ end
 ## replace the RHS with neural network
 function (n::NeuralODE)(x, ps, st) 
  function dudt(u, p, t)
-     u_, _ = n.model(u, p, st)
-     return u_
+     du, _ = n.model(u, p, st)
+     return du
  end
  prob = ODEProblem{false}(ODEFunction{false}(dudt), x, n.tspan, ps) ## "false" means out-of-place usage, as we don't have real dudt in neural ODE, so the out-of-place usage is neccessary.
  return solve(prob, n.solver; sensealg=n.sensealg, saveat = tsteps), st
@@ -116,13 +117,13 @@ callback = function(params, loss, pred_data)
 adtype = Optimization.AutoZygote()
 optf = Optimization.OptimizationFunction((x,p) -> loss_neuralode(x), adtype)
 optprob1 = Optimization.OptimizationProblem(optf, Lux.ComponentArray(ps))
-res1 = Optimization.solve(optprob1, ADAM(0.05), callback = callback, maxiters = 100)
+@time res1 = Optimization.solve(optprob1, ADAM(0.05), callback = callback, maxiters = 100)
 ## second round of training
 optprob2 = Optimization.OptimizationProblem(optf, res1.u)
-res2 = Optimization.solve(optprob2, ADAM(0.01), callback = callback, maxiters = 300)
+@time res2 = Optimization.solve(optprob2, ADAM(0.01), callback = callback, maxiters = 300)
 ## third round of training
 optprob3 = Optimization.OptimizationProblem(optf, res2.u)
-res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback, maxiters = 500)
+@time res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback, maxiters = 1000)
 
 ## inspect the trained model
 out_NN, _ = NN(u0, res3.u, st)
