@@ -39,5 +39,5 @@ q = ode_data[1,:]
 p = ode_data[2,:]
 m, c = init_params
 H = p.^2/(2m) + q.^2/(2c)
-plt = plot(tsteps, round.(H, digits=2), ylims = (0,1.5), label="H(t)", xlabel="t", ylabel="H", yguidefontrotation=-90)
+plt = plot(tsteps, round.(H, digits=10), ylims = (0,1.5), label="H(t)", xlabel="t", ylabel="H", yguidefontrotation=-90)
 savefig("udho_time_evolution_Hamiltonian")
