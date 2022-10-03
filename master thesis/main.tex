@@ -107,6 +107,7 @@
 \chapter{Introduction}
 \section{Motivation}
 \section{Main Contributions}
+The main contributions of this thesis is two-fold
 \section{Outline}
 
 
@@ -206,6 +207,7 @@ The Hamiltonian or Hamiltonian function $H$ is a smooth function on the manifold
 
 where $T$ is kinetic energy and $V$ is potential energy of the system.
 
+\subsection{Conservation of Energy}
 Let the state variables $\mathbf{x}=(\mathbf{q},\mathbf{p}) \in \mathbb{X}$. Since the Hamiltonian is invariant with respect to time, it holds
 
 \begin{equation}
@@ -366,7 +368,7 @@ In the figure \ref{fig:Hamiltonian_udho}, the Hamilton is as time-invariant as o
 Artificial neural networks (ANNs), also referred to as neural networks (NNs), are algorithmic mathematical models that mimic the behavioral characteristics of animal neural networks for distributed parallel information processing, even though this mimicry is superficial \cite{russell2010artificial}. Such networks rely on the complexity of the system to process information by adjusting the relationship between a large number of internal nodes connected to each other.
 
 \section{Perceptron}
-Neural network technology originated in the 1950s as perceptron by McCulloch and Pitts. The characteristics of perceptrons are strongly contemporary: their inputs and outputs are in binary form. Each of these perceptrons is characterized as either "on" or "off", with an "on" response occurring when stimulated by a sufficient number of neighboring perceptrons.
+Neural network technology originated in the 1950s as perceptron by McCulloch and Pitts \cite{mcculloch1943logical}. The characteristics of perceptrons are strongly contemporary: their inputs and outputs are in binary form. Each of these perceptrons is characterized as either "on" or "off", with an "on" response occurring when stimulated by a sufficient number of neighboring perceptrons.
 
 \begin{figure}[h!]
     \centering
@@ -497,7 +499,7 @@ In fact, the whole feedforward neural network can be seen as a function $f(\math
 An optimization algorithm is ordinarily an algorithm that seeks the optimum. In general, finding the global optimum on a convex objective function is the simplest problem. However, if the objective function is unfortunately a non-convex function, then one has to settle for second best, i.e., seeking the local optimum.
 
 \subsection{Data Set}
-A set of samples (or data) is called a data set. In machine learning, there are two types of data set: training set and test set. The training set is used to train the model, while the test set is used to evaluate the model. Such a data set (whether for training or for testing) can be denoted by $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{N}^{n=1} = \{ (\mathbf{x}_{1}, \mathbf{y}_{1}),  (\mathbf{x}_{2}, \mathbf{y}_{2}), ..., (\mathbf{x}_{N}, \mathbf{y}_{N}) \}$.
+A set of samples (or data) is called a data set. In machine learning, there are two types of data set: training set and test set. The training set is used to train the model, while the test set is used to evaluate the model. Such a data set (whether for training or for testing) can be denoted by $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n})  \: \vert \:  n \in (1, 2, ..., N)  \} = \{ (\mathbf{x}_{1}, \mathbf{y}_{1}),  (\mathbf{x}_{2}, \mathbf{y}_{2}), ..., (\mathbf{x}_{N}, \mathbf{y}_{N}) \}$.
 
 \subsection{Loss Functions}
 The loss function $\mathcal{L}\left( y,f(\mathbf{x};\mathbf{\theta}) \right)$ is a non-negative real-valued function that quantifies the error between the target function $y$ and the model prediction $f(\mathbf{x};\mathbf{\theta})$. A small error is always expected, as it implies the prediction is very close to the truth. The following are three commonly used loss functions: zero-one loss function, absolute error loss function and squared error loss function.
@@ -652,7 +654,7 @@ The regularization parameter $\lambda$ is used to prevent overfitting. The reaso
 \subsection{Adam Algorithm}
 As can be seen from the backpropagation algorithm \ref{alg:BP_alg} above, the gradient descent algorithm is actually applied in the step of updating the parameters. So are there any other algorithms to update the parameters besides the gradient descent algorithm? The answer is yes. For example, one can use the momentum method to replace the gradient $\nabla \mathcal{L}(\cdot)$ with momenta and the RMSProp algorithm (Root Mean Squared Propagation algorithm) \cite{tieleman2012divide} to update the learning rate $\alpha$. An algorithms that combines the ideas of the momentum method and the RMSProp algorithm is the Adam algorithms (Adaptive Moment Estimation Algorithm) \cite{kingma2014adam}. In practice, the Adam algorithm shows better performance, i.e. fewer parameters to tune, resulting in higher computational efficiency.
 
-The Adam algorithm uses mini-batch gradient descent \cite{bottou2010large}. Consider a neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$, a training set $\mathcal{D}=\{(\mathbf{x}_{n}, \mathbf{y}_{n})\}_{N}^{n=1}$. Mini-batch gradient descent algorithm splits the training set $\mathcal{D}$ into a sequence of subsets (or mini batches) $\mathcal{S}_t=\{(\mathbf{x}_{m}, \mathbf{y}_{m})\}_{M}^{m=1}$ for each iteration $t$, where $M$ is the batch size of one of the mini batches.
+The Adam algorithm uses mini-batch gradient descent \cite{bottou2010large}. Consider a neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$, a training set $\mathcal{D}=\{(\mathbf{x}_{n}, \mathbf{y}_{n})   \: \vert \:  n \in (1, ..., N)  \}$. Mini-batch gradient descent algorithm splits the training set $\mathcal{D}$ into a sequence of subsets (or mini batches) $\mathcal{S}_t=\{(\mathbf{x}_{m}, \mathbf{y}_{m})   \: \vert \:  m \in (1, ..., M)  \}$ for each iteration $t$, where $M$ is the batch size of one of the mini batches.
 
 Similar to the idea of gradient descent (see \ref{eq:GD}), the point of the Adam algorithm is to iterate the following procedure:
 
@@ -707,7 +709,7 @@ The Adam algorithm also requires initial parameters $\theta_{0}$, which is compu
     \Require constant $\epsilon$
     \Ensure $\nabla \mathcal{L}\left( y_{m},f(\mathbf{x};\mathbf{\theta}) \right) = 0$
     \While{$\nabla \mathcal{L}\left( y_{m},f(\mathbf{x};\mathbf{\theta}) \right) \neq 0$}
-    \For{$n=1...N$}
+    \For{$m=1...M$}
         \For{$l=1...L$}
             \State $\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$ \Comment{Compute the input of neurons in the $l$th layer}
             \State $\mathbf{a}^{(l)} = g_{l}(\mathbf{z}^{(l)})$ \Comment{Compute the output of neurons in the $l$th layer}
@@ -878,7 +880,8 @@ The corresponding gradient of the adjoint state is of the form:
     \frac{d\mathcal{L}}{d\theta} = - \int_{T}^{0} \mathbf{a(t)}^T \frac{\partial f(\mathbf{z}(t), t; \theta)}{\partial \mathbf{\theta}} dt
 \end{equation}
 
-The detailed deduction procedures for $\frac{d\mathcal{L}}{d\theta}$ can be found in the original paper \cite{chen2018neural}.
+
+More detailed deduction procedures for $\frac{d\mathcal{L}}{d\theta}$ can be found in the original paper \cite{chen2018neural}.
 
 A short summary: From the above procedures, it can be concluded that the idea of the adjoint method in Neural ODE is to compute a sequence of adjoint states in a "backward" direction by solving ODEs, and therefore the gradients can also be computed in an indirect manner.
 
@@ -889,6 +892,15 @@ A short summary: From the above procedures, it can be concluded that the idea of
 
 \clearpage
 \chapter{Structured Neural ODE}
+\section{Physics Prior}
+In machine learning, some optimization algorithms tend to make some assumptions to improve the learning efficiency, and these assumptions are called inductive bias (also known as prior) \cite{mitchell1997machine}. These inductive biases may have different names in specific fields. For example, in the field of physics, it is most frequently referred to as physics prior or physically informed inductive bias.
+
+The experiments in \cite{gupta2019general} introduced a framework to model the Lagrangian and the generalized forces of mechanical systems by using neural networks. Their experiments show the advantage of a gray-box model endowed with physics priors in terms of data efficiency compared to a black-box model without prior knowledge. Another similar work related to Lagrangian is \cite{lutter2019deep}.
+
+In the field of Hamiltonian systems, \cite{greydanus2019hamiltonian} proposed an approach to learn the parametric Hamiltonian function by using HNNs (Hamiltonian Neural Networks) from the time derivatives of coordinates in the way that $\frac{d\mathbf{q}}{dt} = \frac{\partial \mathcal{H}}{\partial \mathbf{p}}, \frac{d\mathbf{p}}{dt} = \frac{\partial \mathcal{H}}{\partial \mathbf{q}}$. Such a physics prior allows the HNN to learn a conserved quantity. However, this conserved quantity is only analogous to the total energy, but not exactly equivalent.
+
+Unlike HNNs, SRNNs (Symplectic Recurrent Neural Networks) by \cite{chen2019symplectic} learn Hamiltonians directly from the coordinates using a symplectic integrator. In their comparative experiments, SRNNs performed better than HNNs in modelling complex and noisy Hamiltonian systems.
+
 \section{Structure}
 \section{Dynamic Simulation with Structured Neural ODE}
 
@@ -905,7 +917,7 @@ A short summary: From the above procedures, it can be concluded that the idea of
 %%%%%%%%%%%%%%
 % REFERENCES %
 %%%%%%%%%%%%%%
-\bibliographystyle{unsrt}
+\bibliographystyle{apalike}
 \renewcommand{\bibname}{References} % Title References instead of Bibliography
 \bibliography{literature/literature}
 
