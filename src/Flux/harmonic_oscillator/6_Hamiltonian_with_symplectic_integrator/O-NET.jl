@@ -1,5 +1,6 @@
 using DiffEqFlux, DifferentialEquations, Statistics, Plots
 using Noise
+using ReverseDiff
 
 ## define ODEs
 function ODEfunc_udho(du,u,params,t)
@@ -9,7 +10,7 @@ function ODEfunc_udho(du,u,params,t)
     ## ODEs
     du[1] = p/m
     du[2] = -q/c
-  end
+end
   
 ## give initial condition, timespan, parameters, which construct a ODE problem
 u0 = [1.0; 1.0]
@@ -19,7 +20,8 @@ init_params = [1.0, 1.0]
 prob = ODEProblem(ODEfunc_udho, u0, tspan, init_params)
   
 ## solve the ODE problem
-sol = solve(prob, ImplicitMidpoint(), tstops=tsteps)
+sol = solve(prob, Midpoint(), saveat=tsteps)
+#sol = solve(prob, ImplicitMidpoint(), tstops=tsteps)
 
 ## print origin data
 ode_data = Array(sol)
@@ -80,9 +82,39 @@ end
 pred
 
 
+function (nhde::NeuralHamiltonianDE)(x, p = nhde.p)
+    function neural_hamiltonian!(du, u, p, t)
+        du .= reshape(nhde.hnn(u, p), size(du))
+    end
+    prob = ODEProblem(neural_hamiltonian!, x, nhde.tspan, p)
+    # NOTE: Nesting Zygote is an issue. So we can't use ZygoteVJP
+    sense = InterpolatingAdjoint(autojacvec = false)
+    solve(prob, nhde.args...; sensealg = sense, nhde.kwargs...)
+end
+
+
+function fake_neural_hamiltonian(du, u, p, t)
+    du .= reshape(NN_re(u, ps), size(du))
+end
+prob = ODEProblem(fake_neural_hamiltonian, u0, tspan, ps)
+# NOTE: Nesting Zygote is an issue. So we can't use ZygoteVJP
+sense = InterpolatingAdjoint(autojacvec = false)
+sol = solve(prob, ImplicitMidpoint(), tstops = tsteps, sensealg = sense)
+pred_data = Array(sol)
+
+model = NeuralHamiltonianDE(
+    NN_re, tspan,
+    ImplicitMidpoint(), save_everystep = false,
+    save_start = true, tstops = tsteps
+)
+
+model(pred, ps)
+
+model(data[ : , 1], ps)
+model(data[1, :])
 
 plot(data[1, :], data[2, :], lw=3, label="Original", xlabel="Position (q)", ylabel="Momentum (p)")
-plot!(pred[1, :], pred[2, :], lw=3, label="Predicted")
+plot!(pred_data[1, :], pred_data[2, :], lw=3, label="Predicted")
 
 H = data[2, :].^2/(2) + data[1, :].^2/(2)
 plot(tsteps, H, ylims = (0.8, 1.3))

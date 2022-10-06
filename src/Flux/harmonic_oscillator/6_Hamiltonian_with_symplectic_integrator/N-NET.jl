@@ -14,18 +14,21 @@ function ODEfunc_udho(du,u,params,t)
   
 ## give initial condition, timespan, parameters, which construct a ODE problem
 u0 = [1.0; 1.0]
-tspan = (0.0, 100.0)
-tsteps = range(tspan[1], tspan[2], length = 1024)
+tspan = (0.0f0, 100.0f0)
+tsteps = range(tspan[1], tspan[2], length = 1000)
 init_params = [1.0, 1.0]
 prob = ODEProblem(ODEfunc_udho, u0, tspan, init_params)
   
 ## solve the ODE problem
+
+#sol = solve(prob, Midpoint(), saveat=tsteps)
 sol = solve(prob, ImplicitMidpoint(), tstops=tsteps)
 
 ## print origin data
 ode_data = Array(sol)
 q_ode_data = ode_data[1,:]
 p_ode_data = ode_data[2,:]
+
 dqdt = p_ode_data ./ init_params[1]
 dpdt = q_ode_data ./ init_params[2]
 
@@ -34,10 +37,19 @@ plot!(tsteps, q_ode_data)
 plot(tsteps, dpdt)
 plot!(tsteps, p_ode_data)
 
-
-data = cat(reshape(q_ode_data, 1, :), reshape(p_ode_data, 1, :), dims = 1)
-target = cat(reshape(dqdt, 1, :), reshape(dpdt, 1, :), dims = 1)
+q_ode_data = reshape(q_ode_data, 1, :)
+p_ode_data = reshape(p_ode_data, 1, :)
+dqdt = reshape(dqdt, 1, :)
+dpdt = reshape(dpdt, 1, :)
+data = cat(q_ode_data, p_ode_data, dims = 1)
+target = cat(dqdt, dpdt, dims = 1)
 dataloader = Flux.Data.DataLoader((data, target); batchsize=256, shuffle=true)
+
+
+H = data[2, :].^2/(2) + data[1, :].^2/(2)
+plot(tsteps, round.(H, digits=5), ylims = (0.999, 1.001))
+
+
 
 
 
@@ -66,14 +78,7 @@ for epoch in 1:epochs
 end
 callback()
 
-"""
-model = NeuralHamiltonianDE(
-    hnn, tspan,
-    ImplicitMidpoint(), save_everystep = false,
-    save_start = true, tstops = tsteps
-)
-"""
-
+Flux.train!
 
 pred = hnn(data[ : , 1], hnn.p)
 for i in 2:size(data)[2]

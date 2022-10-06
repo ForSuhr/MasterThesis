@@ -16,7 +16,7 @@ dpdt = -2π_32 .* q_t
 
 data = cat(q_t, p_t, dims = 1)
 target = cat(dqdt, dpdt, dims = 1)
-dataloader = Flux.Data.DataLoader(data, target; batchsize=256, shuffle=true)
+dataloader = Flux.Data.DataLoader((data, target); batchsize=256, shuffle=true)
 
 ## Training the HamiltonianNN: We parameterize the HamiltonianNN with a small MultiLayered Perceptron 
 ## (HNN also works with the Fast* Layers provided in DiffEqFlux). 
@@ -35,7 +35,7 @@ loss(x, y, p) = mean((hnn(x, p) .- y) .^ 2)
 
 callback() = println("Loss Neural Hamiltonian DE = $(loss(data, target, p))")
 
-epochs = 500
+epochs = 100
 for epoch in 1:epochs
     for (x, y) in dataloader
         gs = ReverseDiff.gradient(p -> loss(x, y, p), p) ## https://diffeqflux.sciml.ai/stable/layers/HamiltonianNN/#Hamiltonian-Neural-Network
@@ -53,6 +53,7 @@ model = NeuralHamiltonianDE(
     Tsit5(), save_everystep = false,
     save_start = true, saveat = t
 )
+
 
 pred = Array(model(data[:, 1]))
 plot(data[1, :], data[2, :], lw=4, label="Original")
