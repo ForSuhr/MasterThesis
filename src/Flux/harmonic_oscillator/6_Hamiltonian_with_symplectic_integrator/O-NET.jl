@@ -13,15 +13,16 @@ function ODEfunc_udho(du,u,params,t)
 end
   
 ## give initial condition, timespan, parameters, which construct a ODE problem
-u0 = [1.0; 1.0]
-tspan = (0.0, 100.0)
-tsteps = range(tspan[1], tspan[2], length = 1024)
+u0 = [1, 1]
+tspan = (0.0f0, 49.0f0)
+tsteps = range(tspan[1], tspan[2], length = 500)
 init_params = [1.0, 1.0]
 prob = ODEProblem(ODEfunc_udho, u0, tspan, init_params)
-  
+
+
 ## solve the ODE problem
-sol = solve(prob, Midpoint(), saveat=tsteps)
-#sol = solve(prob, ImplicitMidpoint(), tstops=tsteps)
+#sol = solve(prob, Midpoint(), saveat=tsteps)
+sol = solve(prob, ImplicitMidpoint(), tstops=tsteps)
 
 ## print origin data
 ode_data = Array(sol)
@@ -40,7 +41,7 @@ plot!(tsteps, p_ode_data)
 
 data = cat(reshape(q_ode_data, 1, :), reshape(p_ode_data, 1, :), dims = 1)
 target = cat(reshape(dqdt, 1, :), reshape(dpdt, 1, :), dims = 1)
-dataloader = Flux.Data.DataLoader((data, target); batchsize=256, shuffle=true)
+dataloader = Flux.Data.DataLoader((data, target); batchsize=100, shuffle=true)
 
 
 
@@ -75,48 +76,37 @@ callback()
 ps = neural_params
 NN_re(data[ : , 1],ps)
 
-pred = NN_re(data[ : , 1], ps)
-for i in 2:size(data)[2]
-    pred = hcat(pred, NN_re(data[ : , i], ps))
-end
-pred
 
-
-function (nhde::NeuralHamiltonianDE)(x, p = nhde.p)
-    function neural_hamiltonian!(du, u, p, t)
-        du .= reshape(nhde.hnn(u, p), size(du))
+begin
+    function counting(count)
+        global count += 1
     end
-    prob = ODEProblem(neural_hamiltonian!, x, nhde.tspan, p)
-    # NOTE: Nesting Zygote is an issue. So we can't use ZygoteVJP
-    sense = InterpolatingAdjoint(autojacvec = false)
-    solve(prob, nhde.args...; sensealg = sense, nhde.kwargs...)
+    count = 0
 end
 
 
-function fake_neural_hamiltonian(du, u, p, t)
-    du .= reshape(NN_re(u, ps), size(du))
+function EulerMethod(u1, i, j)
+    u2 = u1 + i .* NN_re(data[ : , j], ps)
+    return u2
 end
-prob = ODEProblem(fake_neural_hamiltonian, u0, tspan, ps)
-# NOTE: Nesting Zygote is an issue. So we can't use ZygoteVJP
-sense = InterpolatingAdjoint(autojacvec = false)
-sol = solve(prob, ImplicitMidpoint(), tstops = tsteps, sensealg = sense)
-pred_data = Array(sol)
 
-model = NeuralHamiltonianDE(
-    NN_re, tspan,
-    ImplicitMidpoint(), save_everystep = false,
-    save_start = true, tstops = tsteps
-)
+global initial_state = u0
 
-model(pred, ps)
+pred = [0,0]
+for i in tsteps
+    j = counting(count)
+    # Euler method
+    initial_state = EulerMethod(initial_state, 0.1, j)
+    #println(initial_state)
+    pred = hcat(pred, initial_state)
+end
+pred_data = pred[1:2, 2:501]
 
-model(data[ : , 1], ps)
-model(data[1, :])
 
 plot(data[1, :], data[2, :], lw=3, label="Original", xlabel="Position (q)", ylabel="Momentum (p)")
 plot!(pred_data[1, :], pred_data[2, :], lw=3, label="Predicted")
 
 H = data[2, :].^2/(2) + data[1, :].^2/(2)
 plot(tsteps, H, ylims = (0.8, 1.3))
-H_pred = pred[2, :].^2/(2) + pred[1, :].^2/(2)
+H_pred = pred_data[2, :].^2/(2) + pred_data[1, :].^2/(2)
 plot!(tsteps, H_pred)
