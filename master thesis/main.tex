@@ -809,31 +809,38 @@ Equation \ref{eq:Euler_discretization} can be rewritten in the form:
     \frac{\mathbf{z}_{t+1}-\mathbf{z}_{t}}{\Delta t} = f(\mathbf{z}_{t}; \theta),
 \end{equation}
 
-where $\Delta t = (t+1)-t = 1$. If $\Delta t$ is a very small step, and then, a Euler discretization
+where $\Delta t = (t+1)-t = 1$. If $\Delta t$ is a very small step, and then, an Euler discretization
 
 \begin{equation}
     \label{eq:Euler_discretization_small_step}
     \lim_{\Delta t \to 0} \frac{\mathbf{z}_{t+1}-\mathbf{z}_{t}}{\Delta t} = f(\mathbf{z}_{t}; \theta)
 \end{equation}
 
-can be seen as the gradient of $z(t)$ by the definition of differentiation, i.e.
+can be considered as the gradient of $z(t)$ by the definition of differentiation, i.e.
 
 \begin{equation}
     \label{eq:Euler_discretization_differentiation}
-    \frac{d\mathbf{z}(t)}{dt} = f(\mathbf{z}(t), t; \theta).
+    \frac{d\mathbf{z}(t)}{dt} = f(\mathbf{z}(t), t; \theta),
 \end{equation}
 
-The above equation \ref{eq:Euler_discretization_differentiation} is called Neural ODE (Neural Ordinary Differential Equation). Different from the explicit ODE in the form of equation \ref{eq:explicit_ODE} that can be solved by using traditional numerical methods such as Euler method, the Neural ODE is solved by using an special ODE solver that treated as a black box \cite{chen2018neural}. The RHS $f(\mathbf{z}(t), t; \theta)$ can be considered as a neural network $NN(\mathbf{z}(t), t; \theta)$. Thus, the loss function to be optimized looks like:
+where the RHS $f(\mathbf{z}(t), t; \theta)$ can be considered as a neural network $NN(\mathbf{z}(t), t; \theta)$.
+
+Integral \ref{eq:Euler_discretization_differentiation} and plug it into \ref{eq:Euler_discretization}. An equation such as 
+
+\begin{equation}
+    \label{eq:Neural_ODE}
+    \mathbf{z}(t+\varepsilon ) = \mathbf{z}(t) + \int_{t}^{t+\varepsilon } f(\mathbf{z}(t), t, \theta)dt
+\end{equation}
+
+is called Neural ODE (Neural Ordinary Differential Equation) \cite{chen2018neural}, where $\varepsilon $ is a very small time step. An ODE solver is treated as a black box that provides a solution to the ODE. Thus, the loss function to be optimized is of the form
 
 \begin{equation}
     \label{eq:Neural_ODE_Gradient_loss}
     \begin{aligned}
     \mathcal{L}(\mathbf{z}(t+\varepsilon )) &= \mathcal{L}(\mathbf{z}(t) + \int_{t}^{t+\varepsilon } f(\mathbf{z}(t), t, \theta)dt \:)\\
-    &= \mathcal{L}(ODESolver(\mathbf{z}(t), f, t, t+\varepsilon , \theta)),
+    &= \mathcal{L}(ODESolver(\mathbf{z}(t), f, t, t+\varepsilon , \theta)).
     \end{aligned}
 \end{equation}
-
-where $\varepsilon $ is a very small time step.
 
 To optimize the loss function \ref{eq:Neural_ODE_Gradient_loss} in backpropagation, one needs to compute the gradient of the loss function as the form of equation \ref{eq:Gradient_loss}. The next step, to calculate the error, is to mimic the procedure in equation \ref{eq:error_in_one_layer}:
 
@@ -921,17 +928,32 @@ A short summary: From the above procedures, it can be concluded that the idea of
 
 
 \clearpage
-\chapter{Structured Neural ODE}
+\chapter{Structured O-NET}
 \section{Physics Prior}
 In machine learning, some optimization algorithms tend to make some assumptions to improve the learning efficiency, and these assumptions are called inductive bias (also known as prior) \cite{mitchell1997machine}. These inductive biases may have different names in specific fields. For example, in the field of physics, it is most frequently referred to as physics prior or physically informed inductive bias.
 
 The experiments in \cite{gupta2019general} introduced a framework to model the Lagrangian and the generalized forces of mechanical systems by using neural networks. Their experiments show the advantage of a gray-box model endowed with physics priors in terms of data efficiency compared to a black-box model without prior knowledge. Another similar work related to Lagrangian is \cite{lutter2019deep}.
 
-In the field of Hamiltonian systems, \cite{greydanus2019hamiltonian} proposed an approach to learn the parametric Hamiltonian function by using HNNs (Hamiltonian Neural Networks) from the time derivatives of coordinates in the way that $\frac{d\mathbf{q}}{dt} = \frac{\partial \mathcal{H}}{\partial \mathbf{p}}, \frac{d\mathbf{p}}{dt} = \frac{\partial \mathcal{H}}{\partial \mathbf{q}}$. Such a physics prior allows the HNN to learn a conserved quantity. However, this conserved quantity is only analogous to the total energy, but not exactly equivalent.
+In the field of Hamiltonian systems, \cite{greydanus2019hamiltonian} proposed an approach to learn a parametric Hamiltonian function $H_{\theta}$ from the time derivatives of coordinates in the way that $\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}} - \frac{d\mathbf{q}}{dt} = 0, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}} - \frac{d\mathbf{p}}{dt} = 0 $. Such an approach allows the HNNs (Hamiltonian Neural Networks) to learn a conserved quantity that analogous to the total energy.
 
-Unlike HNNs, SRNNs (Symplectic Recurrent Neural Networks) by \cite{chen2019symplectic} learn Hamiltonians directly from the coordinates using a symplectic integrator. In their comparative experiments, SRNNs performed better than HNNs in modelling complex and noisy Hamiltonian systems.
+\section{Neural Networks of Hamiltonian Systems}
+In \cite{chen2019symplectic}, they introduced two neural network models of Hamiltonian systems: N-NET (Hamiltonian Neural Networks) and O-NET (ODE Neural Networks), where N-NET is equivalent to HNNs. 
 
-\section{Structure}
+Before introducing O-NET, recall that a Neural ODE \ref{eq:Neural_ODE} contains a parametric neural network $f_{\theta}: (\mathbf{z}(t), t, \theta) \mapsto f(\mathbf{z}(t), t, \theta)$. And an ODE solver provides a solution to the ODE such that $\mathbf{z}(t+\varepsilon) = ODESolver(\mathbf{z}(t), f, t, t+\varepsilon , \theta)$.
+
+Follow this idea and suppose that $\{ z_{t}  \: \vert \:  t \in (1, 2, ..., T)  \}$ is a training set, where $\mathbf{z}_{t}$ are some discrete points from an observed trajectory. Given an initial state $z_{0}$ and a time points set $\{ t  \: \vert \:  t \in (1, 2, ..., T)  \}$, an ODE solver can yield a solution
+
+\begin{equation}
+    \label{eq:discrete_neural_ODE}
+    \{ z_{t}  \: \vert \:  t \in (1, 2, ..., T)  \} = ODESolver(z_{0}, f_{\theta}, \{ t  \: \vert \:  t \in (1, 2, ..., T)  \}),
+\end{equation}
+
+where $f_{\theta}$ can be considered as either a N-NET or an O-NET. Unlike N-NET, the output of O-NET at a fixed time $t$ estimates the time derivative of coordinates $\dot z_{t}$ such that $f_{\theta}(\mathbf{z}(t), t) = \dot z_{t}$. In the case of Hamiltonian systems, let $z_{t} = [q_{t}, p_{t}]$, it holds that $f_{\theta}(q, p, t) = [\dot q_{t}, \dot p_{t}]$.
+
+Similar to \ref{eq:Neural_ODE_Gradient_loss}, the loss function $\mathcal{L}(z_{t}) = \mathcal{L}(ODESolver(z_{0}, f_{\theta}, t  \}))$ can also be optimized by computing the gradient with the adjoint method.
+
+
+\section{Structured O-NET}
 \section{Dynamic Simulation with Structured Neural ODE}
 
 \clearpage

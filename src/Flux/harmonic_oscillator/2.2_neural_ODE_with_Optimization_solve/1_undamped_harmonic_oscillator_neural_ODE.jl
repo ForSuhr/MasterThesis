@@ -79,4 +79,6 @@ optprob3 = Optimization.OptimizationProblem(optf, res2.u)
 @time res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback, maxiters = 1000)
 
 ## check the trained NN
-NN(u0, res2.u)
+data = transpose(hcat(x_axis_ode_data, y_axis_ode_data))
+nn_data = NN(data, res3.u)
+plt = plot(nn_data[1,:], nn_data[2,:])
