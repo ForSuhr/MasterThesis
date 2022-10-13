@@ -105,14 +105,31 @@
 
 % chapters
 \chapter{Introduction}
+\label{ch:chapter1}
 \section{Motivation}
 \section{Main Contributions}
 The main contributions of this thesis is two-fold
 \section{Outline}
+An outline for the following chapters:
+
+\textbf{Chapter} \ref{ch:chapter2} provides a quick overview of ordinary differential equation and initial value problem. It also introduces some numerical methods, in particular a symplectic integrator that will be used in later chapters.
+
+\textbf{Chapter} \ref{ch:chapter3} introduces Hamiltonian systems and port-Hamiltonian systems, since this thesis will focus on modelling them.
+
+\textbf{Chapter} \ref{ch:chapter4} gives an introduction to neural networks. This is an important fundamental for the understanding of later chapters.
+
+\textbf{Chapter} \ref{ch:chapter5} reviews the idea of Neural ODE. The kernel of Neural ODE is the adjoint method, which is essential to data-driven system identification.
+
+\textbf{Chapter} \ref{ch:chapter6} first explores the implementations of priors in the field of physics. Then, it overviews two neural network models of Hamiltonian systems: N-NET and O-NET, where only O-NET can be used for port-Hamiltonian systems. A structured O-NET, which is an O-NET endowed with physics priors, is proposed and tested in experiments.
+
+\textbf{Chapter} \ref{ch:chapter7} gives an overview of traditional approaches to parameter estimation. Then, an approach with structured O-NET is proposed and compared with other approaches in experiments.
+
+\textbf{Chapter} \ref{ch:chapter8} draws conclusions and provides an outlook for future work.
 
 
 \clearpage
 \chapter{Differential Equation}
+\label{ch:chapter2}
 
 \section{Ordinary Differential Equation}
 Consider a real-valued function $x$ with $k$ continuous derivatives: $x \in C^{k}(I)$, where $ I \subseteq \mathbb{R}, \: k \in \mathbb{N}_{0}, \: x: \mathbb{R} \rightarrow \mathbb{R}$. An implicit ordinary differential equation (ODE) is a functional relation of the form:
@@ -208,7 +225,9 @@ The implicit midpoint rule is a symplectic integrator. In contrast to \ref{eq:Eu
 Such an inversion only changes the direction of the trajectory but does not affect the solution trajectory itself. This property of symplectic integrator makes it useful for some reversible systems, such as Hamiltonian systems.
 
 \clearpage
-\chapter{Hamiltonian Systems}
+\chapter{Port-Hamiltonian Systems}
+\label{ch:chapter3}
+
 \section{Hamiltonian Systems}
 A Hamiltonian system is a triple $(M,\omega,H)$, where $(M,\omega)$ is a symplectic manifold which consists of a manifold $M$ and a symplectic structure $\omega$.
 
@@ -395,6 +414,7 @@ In the figure \ref{fig:Hamiltonian_udho}, the Hamilton is as time-invariant as o
 
 \clearpage
 \chapter{Neural Networks}
+\label{ch:chapter4}
 Artificial neural networks (ANNs), also referred to as neural networks (NNs), are algorithmic mathematical models that mimic the behavioral characteristics of animal neural networks for distributed parallel information processing, even though this mimicry is superficial \cite{russell2010artificial}. Such networks rely on the complexity of the system to process information by adjusting the relationship between a large number of internal nodes connected to each other.
 
 \section{Perceptron}
@@ -768,6 +788,7 @@ The Adam algorithm also requires initial parameters $\theta_{0}$, which is compu
 
 \clearpage
 \chapter{Neural ODE}
+\label{ch:chapter5}
 In order to obtain more accurate results from a neural network model, one may tend to think of stacking more hidden layers. However, when some data scientists try to build complex models using neural networks with hundreds of hidden layers, they found that the vanishing or exploding gradient problem often occurs in backpropagation, which seriously affects the learning efficiency of the upstream hidden layers \cite{glorot2010understanding}. Due to the vanishing or exploding gradient problem, a deeper neural network could even yield worse results than a shallower one. And ResNet (Residual Neural Network) was exactly designed to tackle these problems \cite{he2016deep}. The proposers of ResNet argue that the results of deeper neural networks can be better or at least equal to the results of shallower neural networks, but should not be worse.
 
 \section{Residual Neural Network}
@@ -929,6 +950,7 @@ A short summary: From the above procedures, it can be concluded that the idea of
 
 \clearpage
 \chapter{Structured O-NET}
+\label{ch:chapter6}
 \section{Physics Prior}
 In machine learning, some optimization algorithms tend to make some assumptions to improve the learning efficiency, and these assumptions are called inductive bias (also known as prior) \cite{mitchell1997machine}. These inductive biases may have different names in specific fields. For example, in the field of physics, it is most frequently referred to as physics prior or physically informed inductive bias.
 
@@ -958,10 +980,11 @@ Similar to \ref{eq:Neural_ODE_Gradient_loss}, the loss function $\mathcal{L}(z_{
 
 \clearpage
 \chapter{Parameter Estimation}
-
+\label{ch:chapter7}
 
 \clearpage
 \chapter{Conclusion}
+\label{ch:chapter8}
 \section{Summary}
 \section{Outlook}
 
