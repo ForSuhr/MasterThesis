@@ -27,6 +27,7 @@ sol = solve(prob, Tsit5(), saveat = tsteps)
 
 ## print origin data
 ode_data = Array(sol)
+plot(sol)
 q_ode_data = ode_data[1,:]
 p_ode_data = ode_data[2,:]
 plt = plot(q_ode_data, p_ode_data, label="Ground truth")
@@ -49,15 +50,13 @@ function NeuralODE_H_NET(model::Lux.AbstractExplicitLayer; solver=Tsit5(),
 return NeuralODE_H_NET(model, solver, sensealg, tspan, kwargs)
 end
 
+
 ## replace the RHS with neural network
 function (n::NeuralODE_H_NET)(x, ps, st) 
-  function dudt(u, p, t)
-    #du, _ = n.model(u, p, st)
-    du = vec(hamiltonian_forward(n.model, p, st, u))
-  end
-  prob = ODEProblem{false}(ODEFunction{false}(dudt), x, n.tspan, ps)
-  return solve(prob, n.solver; sensealg=n.sensealg, saveat = tsteps), st
+    prob = ODEProblem{false}(ODEFunction{false}(dudt), x, n.tspan, ps)
+    return solve(prob, n.solver; sensealg=n.sensealg, saveat = tsteps), st
 end
+
 
 
 H_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
@@ -67,32 +66,44 @@ prob_neuralode = NeuralODE_H_NET(H_NET, solver=Tsit5(), tspan=tspan)
 # initial random parameters and states
 rng = Random.default_rng()
 neural_params, state = Lux.setup(rng, H_NET)
-output, _ = prob_neuralode(u0, neural_params, state)
-output
-plot(output)
-Array(output)
 
-function hamiltonian_forward(NN, ps, st, x)
-  #H = Flux.gradient(x -> sum(NN(x, ps, st)[1]), x)[1]
-  #H = ReverseDiff.gradient(x -> sum(NN(x, ps, st)[1]), x)
-  #H = ForwardDiff.gradient(x -> sum(NN(x, ps, st)[1]), x)  
-  H = FiniteDiff.finite_difference_gradient(x -> sum(NN(x, ps, st)[1]), x)
-  n = size(x, 1) ÷ 2
-  return cat(H[(n + 1):2n, :], -H[1:n, :], dims=1)
+function dudt(u, ps, t)
+    q, p = u
+    m, c = init_params
+    # du = u
+    du = [p/m, hamiltonian_forward(H_NET, ps, state, u)[2]]
+    # du[1] = hamiltonian_forward(H_NET, ps, state, u)[1]
+    # du[2] = hamiltonian_forward(H_NET, ps, state, u)[2]
+    # du[1] = p/m
+    # du[2] = hamiltonian_forward(H_NET, ps, state, u)[2]
+    return du
 end
 
+# dudt(u0, neural_params, tspan)
 
-#AutoForwardDiff
-H = ForwardDiff.gradient(x -> sum(H_NET(x, neural_params, state)[1]), u0)
+
+function hamiltonian_forward(NN, ps, st, x)
+    #H = Flux.gradient(x -> sum(NN(x, ps, st)[1]), x)[1]
+    #H = ReverseDiff.gradient(x -> sum(NN(x, ps, st)[1]), x)
+    #H = ForwardDiff.gradient(x -> sum(NN(x, ps, st)[1]), x) 
+    ∇H = FiniteDiff.finite_difference_gradient(x -> sum(NN(x, ps, st)[1]), x)
+    return return cat(∇H[2, :], -∇H[1, :], dims=1)
+end
+
+∇H = FiniteDiff.finite_difference_gradient(x -> sum(H_NET(x, neural_params, state)[1]), u0)
 # symplectic gradient of H_NET
-X_H = vec(hamiltonian_forward(H_NET, neural_params, state, u0))
-output, _ = prob_neuralode(X_H, neural_params, state)
+X_H = hamiltonian_forward(H_NET, neural_params, state, u0)[2]
+
+
+output = prob_neuralode(u0, neural_params, state)[1]
 plot(output)
+Array(prob_neuralode(u0, neural_params, state)[1])
+
 
 ## Array of predictions from NeuralODE with parameters p starting at initial condition x0
 function predict_neuralode(p)
-  pred_data, _ = prob_neuralode(u0, p, state)
-  return Array(pred_data)
+  pred_data = Array(prob_neuralode(u0, p, state)[1])
+  return pred_data
 end
 
 
@@ -120,20 +131,20 @@ end
 #adtype = Optimization.AutoReverseDiff()
 #adtype = Optimization.AutoForwardDiff()
 adtype = Optimization.AutoFiniteDiff()
-
 optf = Optimization.OptimizationFunction((x, p) -> loss_neuralode(x), adtype)
 optprob1 = Optimization.OptimizationProblem(optf, Lux.ComponentArray(neural_params))
-@time res1 = Optimization.solve(optprob1, ADAM(0.05), callback = callback, maxiters = 100)
+@time res1 = Optimization.solve(optprob1, ADAM(0.001), callback = callback, maxiters = 10)
 ## second round of training
 optprob2 = Optimization.OptimizationProblem(optf, res1.u)
-@time res2 = Optimization.solve(optprob2, ADAM(0.01), callback = callback, maxiters = 300)
+@time res2 = Optimization.solve(optprob2, ADAM(0.0005), callback = callback, maxiters = 300)
 ## third round of training
 optprob3 = Optimization.OptimizationProblem(optf, res2.u)
-@time res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback, maxiters = 300)
+@time res3 = Optimization.solve(optprob3, ADAM(0.0001), callback = callback, maxiters = 1000)
 
 
 ## check the trained NN
-params_H_NET = res3.u
-trajectory_estimate = Array(prob_neuralode(u0, res3.u, state)[1])
+params_structured_N_NET = res3.u
+plot(prob_neuralode(u0, params_structured_N_NET, state)[1])
+trajectory_estimate = Array(prob_neuralode(u0, params_structured_N_NET, state)[1])
 plt = plot(q_ode_data, p_ode_data, label="Ground truth")
 plt = plot!(trajectory_estimate[1,:], trajectory_estimate[2,:],  label = "Prediction")

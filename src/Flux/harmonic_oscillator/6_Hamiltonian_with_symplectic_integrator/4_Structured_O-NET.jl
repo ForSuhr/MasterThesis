@@ -30,16 +30,35 @@ p_ode_data = ode_data[2,:]
 plt = plot(q_ode_data, p_ode_data, label="Ground truth")
 
 
-NN = Chain(Dense(2, 40, tanh),
+NN = Chain(Dense(1, 40, tanh),
             Dense(40, 20, tanh),
-            Dense(20, 2))
-prob_neuralode = DiffEqFlux.NeuralODE(NN, tspan, Tsit5(), saveat = tsteps)
-### check the parameters prob_neuralode.p in prob_neuralode
-neural_params = prob_neuralode.p
+            Dense(20, 1))
+p, re = Flux.destructure(NN)
+neural_params = p
+# The model weights are destructured into a vector of parameters
+size_neural_params = length(neural_params)
+zeros_params = zeros(size_neural_params)
+## the first output of the NN
+re(zeros_params)([u0[1]])
+re(neural_params)([u0[1]])[1]
+
+function Structured_O_NET(du,u,ps,t) ### params = params_PIML
+    ## conversion
+    q, p = u
+    m, c = init_params
+    ## ODEs
+    du[1] = p/m
+    du[2] = re(ps)([q])[1]
+    #du[2] = NN(q, ps[1:size_neural_params])[1]
+end
+
+
+prob_pred = ODEProblem(Structured_O_NET, u0, tspan, init_params)
 
 ## Array of predictions from NeuralODE with parameters p starting at initial condition x0
 function predict_neuralode(p)
-    Array(prob_neuralode(u0, p))
+    Array(solve(prob_pred, Tsit5(), p=p, saveat=tsteps,
+    sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))))
 end
 
 
@@ -72,11 +91,12 @@ optprob2 = Optimization.OptimizationProblem(optf, res1.u)
 @time res2 = Optimization.solve(optprob2, ADAM(0.01), callback = callback, maxiters = 300)
 ## third round of training
 optprob3 = Optimization.OptimizationProblem(optf, res2.u)
-@time res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback, maxiters = 300)
+@time res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback, maxiters = 500)
 
 
 ## check the trained NN
-params_O_NET = res3.u
-trajectory_estimate = Array(prob_neuralode(u0, res3.u))
+params_structured_O_NET = res3.u
+trajectory_estimate = Array(solve(prob_pred, Tsit5(), p=res3.u, saveat=tsteps,
+sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))))
 plt = plot(q_ode_data, p_ode_data, label="Ground truth")
 plt = plot!(trajectory_estimate[1,:], trajectory_estimate[2,:],  label = "Prediction")
