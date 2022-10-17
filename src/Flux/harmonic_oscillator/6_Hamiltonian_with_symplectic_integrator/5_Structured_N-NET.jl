@@ -23,7 +23,7 @@ init_params = [2.0, 1.0]
 prob = ODEProblem(ODEfunc_udho, u0, tspan, init_params)
 
 ## solve the ODE problem once, then add some noise to the solution
-sol = solve(prob, Tsit5(), saveat = tsteps)
+sol = solve(prob, ImplicitMidpoint(), tstops = tsteps)
 
 ## print origin data
 ode_data = Array(sol)
@@ -44,7 +44,7 @@ kwargs::K
 end
 
 ## define neural ODE function
-function NeuralODE_H_NET(model::Lux.AbstractExplicitLayer; solver=Tsit5(),
+function NeuralODE_H_NET(model::Lux.AbstractExplicitLayer; solver=ImplicitMidpoint(),
               sensealg=InterpolatingAdjoint(; autojacvec=ZygoteVJP()),
               tspan=tspan, kwargs...)
 return NeuralODE_H_NET(model, solver, sensealg, tspan, kwargs)
@@ -54,7 +54,7 @@ end
 ## replace the RHS with neural network
 function (n::NeuralODE_H_NET)(x, ps, st) 
     prob = ODEProblem{false}(ODEFunction{false}(dudt), x, n.tspan, ps)
-    return solve(prob, n.solver; sensealg=n.sensealg, saveat = tsteps), st
+    return solve(prob, n.solver; sensealg=n.sensealg, tstops = tsteps), st
 end
 
 
@@ -62,7 +62,7 @@ end
 H_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
                   Lux.Dense(40, 20, tanh),
                   Lux.Dense(20, 1))
-prob_neuralode = NeuralODE_H_NET(H_NET, solver=Tsit5(), tspan=tspan)
+prob_neuralode = NeuralODE_H_NET(H_NET, solver=ImplicitMidpoint(), tspan=tspan)
 # initial random parameters and states
 rng = Random.default_rng()
 neural_params, state = Lux.setup(rng, H_NET)

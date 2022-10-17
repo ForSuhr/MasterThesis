@@ -21,7 +21,7 @@ init_params = [2.0, 1.0]
 prob = ODEProblem(ODEfunc_udho, u0, tspan, init_params)
 
 ## solve the ODE problem once, then add some noise to the solution
-sol = solve(prob, Tsit5(), saveat = tsteps)
+sol = solve(prob, ImplicitMidpoint(), tstops = tsteps)
 
 ## print origin data
 ode_data = Array(sol)
@@ -30,10 +30,10 @@ p_ode_data = ode_data[2,:]
 plt = plot(q_ode_data, p_ode_data, label="Ground truth")
 
 
-NN = Chain(Dense(2, 40, tanh),
-            Dense(40, 20, tanh),
-            Dense(20, 2))
-prob_neuralode = DiffEqFlux.NeuralODE(NN, tspan, Tsit5(), saveat = tsteps)
+NN = Flux.Chain(Flux.Dense(2, 40, tanh),
+           Flux.Dense(40, 20, tanh),
+          Flux.Dense(20, 2))
+prob_neuralode = DiffEqFlux.NeuralODE(NN, tspan, ImplicitMidpoint(), tstops = tsteps)
 ### check the parameters prob_neuralode.p in prob_neuralode
 neural_params = prob_neuralode.p
 

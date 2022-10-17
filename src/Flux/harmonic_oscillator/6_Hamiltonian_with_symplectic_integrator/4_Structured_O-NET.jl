@@ -21,7 +21,7 @@ init_params = [2.0, 1.0]
 prob = ODEProblem(ODEfunc_udho, u0, tspan, init_params)
 
 ## solve the ODE problem once, then add some noise to the solution
-sol = solve(prob, Tsit5(), saveat = tsteps)
+sol = solve(prob, ImplicitMidpoint(), tstops = tsteps)
 
 ## print origin data
 ode_data = Array(sol)
@@ -57,7 +57,7 @@ prob_pred = ODEProblem(Structured_O_NET, u0, tspan, init_params)
 
 ## Array of predictions from NeuralODE with parameters p starting at initial condition x0
 function predict_neuralode(p)
-    Array(solve(prob_pred, Tsit5(), p=p, saveat=tsteps,
+    Array(solve(prob_pred, ImplicitMidpoint(), p=p, tstops = tsteps,
     sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))))
 end
 
@@ -96,7 +96,7 @@ optprob3 = Optimization.OptimizationProblem(optf, res2.u)
 
 ## check the trained NN
 params_structured_O_NET = res3.u
-trajectory_estimate = Array(solve(prob_pred, Tsit5(), p=res3.u, saveat=tsteps,
+trajectory_estimate = Array(solve(prob_pred, Tsit5(), p=params_structured_O_NET, tstops = tsteps,
 sensealg=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))))
 plt = plot(q_ode_data, p_ode_data, label="Ground truth")
 plt = plot!(trajectory_estimate[1,:], trajectory_estimate[2,:],  label = "Prediction")

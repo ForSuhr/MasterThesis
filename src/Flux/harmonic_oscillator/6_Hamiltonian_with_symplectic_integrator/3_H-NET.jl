@@ -23,7 +23,7 @@ init_params = [2.0, 1.0]
 prob = ODEProblem(ODEfunc_udho, u0, tspan, init_params)
 
 ## solve the ODE problem once, then add some noise to the solution
-sol = solve(prob, Tsit5(), saveat = tsteps)
+sol = solve(prob, ImplicitMidpoint(), tstops = tsteps)
 
 ## print origin data
 ode_data = Array(sol)
@@ -43,7 +43,7 @@ kwargs::K
 end
 
 ## define neural ODE function
-function NeuralODE_H_NET(model::Lux.AbstractExplicitLayer; solver=Tsit5(),
+function NeuralODE_H_NET(model::Lux.AbstractExplicitLayer; solver=ImplicitMidpoint(),
               sensealg=InterpolatingAdjoint(; autojacvec=ZygoteVJP()),
               tspan=tspan, kwargs...)
 return NeuralODE_H_NET(model, solver, sensealg, tspan, kwargs)
@@ -56,19 +56,18 @@ function (n::NeuralODE_H_NET)(x, ps, st)
     du = vec(hamiltonian_forward(n.model, p, st, u))
   end
   prob = ODEProblem{false}(ODEFunction{false}(dudt), x, n.tspan, ps)
-  return solve(prob, n.solver; sensealg=n.sensealg, saveat = tsteps), st
+  return solve(prob, n.solver; sensealg=n.sensealg, tstops = tsteps), st
 end
 
 
 H_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
                   Lux.Dense(40, 20, tanh),
                   Lux.Dense(20, 1))
-prob_neuralode = NeuralODE_H_NET(H_NET, solver=Tsit5(), tspan=tspan)
+prob_neuralode = NeuralODE_H_NET(H_NET, solver=ImplicitMidpoint(), tspan=tspan)
 # initial random parameters and states
 rng = Random.default_rng()
 neural_params, state = Lux.setup(rng, H_NET)
-output, _ = prob_neuralode(u0, neural_params, state)
-output
+output = prob_neuralode(u0, neural_params, state)[1]
 plot(output)
 Array(output)
 
@@ -86,7 +85,7 @@ end
 H = ForwardDiff.gradient(x -> sum(H_NET(x, neural_params, state)[1]), u0)
 # symplectic gradient of H_NET
 X_H = vec(hamiltonian_forward(H_NET, neural_params, state, u0))
-output, _ = prob_neuralode(X_H, neural_params, state)
+output = prob_neuralode(X_H, neural_params, state)[1]
 plot(output)
 
 ## Array of predictions from NeuralODE with parameters p starting at initial condition x0
@@ -134,6 +133,6 @@ optprob3 = Optimization.OptimizationProblem(optf, res2.u)
 
 ## check the trained NN
 params_H_NET = res3.u
-trajectory_estimate = Array(prob_neuralode(u0, res3.u, state)[1])
+trajectory_estimate = Array(prob_neuralode(u0, params_H_NET, state)[1])
 plt = plot(q_ode_data, p_ode_data, label="Ground truth")
 plt = plot!(trajectory_estimate[1,:], trajectory_estimate[2,:],  label = "Prediction")
