@@ -333,7 +333,8 @@ Moving along the symplectic gradient holds the total energy of the conserve syst
     \dot{H}=\frac{\partial H}{\partial q}\dot{q}+\frac{\partial H}{\partial p}\dot{p}=0
 \end{equation}
 
-Referring to the equations \ref{eq:ODE_system}, the ordinary differential equation system of the undamped harmonic oscillator could be written as
+Referring to the equations \ref{eq:ODE_system}, the system of ODE of undamped harmonic oscillator could be written as
+
 \begin{equation}
     \label{eq:ODE_undamped_harmonic_oscillator}
     \begin{bmatrix}
@@ -511,7 +512,7 @@ Take one of the simplest neural network models as an example: a feedforward neur
     \label{fig:feedforward}
 \end{figure}
 
-To clarify the principle of feedforward neural network, there are some notations to declare first. The uppercase $L$ stands for the number of total layers (input layer not included) in the feedforward neural network, the lowercase $l$ for the $l$th layer and $M_{l}$ for the number of neurons in $l$th layer. The same as the equation \ref{eq:activation_function}, $g_{l}(z^{(l)})$ denotes the activation function in $l$th layer, where $z^{l} \in \mathbb{R}^{M_{l}}$. The parameters weight and bias are represented by the weight matrix $\mathbf{W}^{(l)} \in \mathbb{R}^{M_{l} \times M_{l-1}}$ and the bias matrix $\mathbf{b}^{(l)} \in \mathbb{R}^{M_{l}}$. Thus, the input $\mathbf{z}^{(l)}$ and output $\mathbf{a}^{(l)}$ of a neuron in $l$th layer could be written as:
+To clarify the principle of feedforward neural network, there are some notations to declare first. The uppercase $L$ stands for the number of total layers (input layer not included) in the feedforward neural network, the lowercase $l$ for the $l$th layer and $M_{l}$ for the number of neurons in $l$th layer. The same as the equation \ref{eq:activation_function}, $g_{l}(z^{(l)})$ denotes the activation function in $l$th layer, where $z^{l} \in \mathbb{R}^{M_{l}}$. The parameters weight and bias are represented by the weight matrix $\mathbf{W}^{(l)} \in \mathbb{R}^{M_{l} \times M_{l-1}}$ and the bias vector $\mathbf{b}^{(l)} \in \mathbb{R}^{M_{l}}$. Thus, the input $\mathbf{z}^{(l)}$ and output $\mathbf{a}^{(l)}$ of a neuron in $l$th layer could be written as:
 
 \begin{equation}
     \label{eq:input_output_neuron}
@@ -530,7 +531,7 @@ In fact, the whole feedforward neural network can be seen as a function $f(\math
 \label{alg:feedforward_alg}
     \begin{algorithmic}
     \Require neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$ with $l$th layer
-    \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias matrix $\mathbf{b} \in \mathbb{R}^{M_{l}}$
+    \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias vector $\mathbf{b} \in \mathbb{R}^{M_{l}}$
     \Require activation function $g(z)$
     \Require input $\mathbf{x}$
     \State $\mathbf{a}^{(0)}=\mathbf{x}$ \Comment{The output of the input layer}
@@ -549,10 +550,10 @@ In fact, the whole feedforward neural network can be seen as a function $f(\math
 An optimization algorithm is ordinarily an algorithm that seeks the optimum. In general, finding the global optimum on a convex objective function is the simplest problem. However, if the objective function is unfortunately a non-convex function, then one has to settle for second best, i.e., seeking the local optimum.
 
 \subsection{Data Set}
-A set of samples (or data) is called a data set. In machine learning, there are two types of data set: training set and test set. The training set is used to train the model, while the test set is used to evaluate the model. Such a data set (whether for training or for testing) can be denoted by $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n})  \: \vert \:  n \in (1, 2, ..., N)  \} = \{ (\mathbf{x}_{1}, \mathbf{y}_{1}),  (\mathbf{x}_{2}, \mathbf{y}_{2}), ..., (\mathbf{x}_{N}, \mathbf{y}_{N}) \}$.
+A set of samples (or data) is called a data set. In machine learning, there are two types of data set: training set and test set. The training set is used to train the model, while the test set is used to evaluate the model. Such a data set (whether for training or for testing) can be denoted by $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{n=1}^{N} = \{ (\mathbf{x}_{1}, \mathbf{y}_{1}),  (\mathbf{x}_{2}, \mathbf{y}_{2}), ..., (\mathbf{x}_{N}, \mathbf{y}_{N}) \}$.
 
 \subsection{Loss Functions}
-The loss function $\mathcal{L}\left( y,f(\mathbf{x};\mathbf{\theta}) \right)$ is a non-negative real-valued function that quantifies the error between the target function $y$ and the model prediction $f(\mathbf{x};\mathbf{\theta})$. A small error is always expected, as it implies the prediction is very close to the truth. The following are three commonly used loss functions: zero-one loss function, absolute error loss function and squared error loss function.
+The loss function $\mathcal{L}\left( y,f(\mathbf{x};\mathbf{\theta}) \right)$ is a non-negative real-valued function that quantifies the error between the target function $y$ and the model prediction $f(\mathbf{x};\mathbf{\theta})$. The following are three common loss functions: zero-one loss function, absolute error loss function and squared error loss function.
 
 Zero-one loss function:
 
@@ -664,17 +665,17 @@ After the above deduction, the equation \ref{eq:Chain_rule_partial} together wit
     \end{aligned}
 \end{equation}
 
-The algorithm \ref{alg:BP_alg} presents the gradient descent training procedure using the backpropagation algorithm.
+The algorithm \ref{alg:BP_alg} presents the gradient descent training procedure through backpropagation.
 
 \clearpage
 \begin{algorithm}[h!]
 \caption{Backpropagation in Stochastic Gradient Descent}
-The backpropagation algorithm requires initial parameters $\theta_{0}$, which is computed by the feedforward propagation algorithm \ref{alg:feedforward_alg}. After the neural network model adapts to the initial parameters $\theta_{0}$:
+The backpropagation algorithm requires initial parameters $\theta_{0}$, which is computed by the feedforward propagation algorithm \ref{alg:feedforward_alg}.
 \label{alg:BP_alg}
     \begin{algorithmic}
     \Require neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$ with $l$th layer
     \Require training set $\mathcal{D}=\{(\mathbf{x}_{n}, \mathbf{y}_{n})\}_{N}^{n=1}$
-    \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias matrix $\mathbf{b} \in \mathbb{R}^{M_{l}}$, initial parameters $\theta_{0}$
+    \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias vector $\mathbf{b} \in \mathbb{R}^{M_{l}}$, initial parameters $\theta_{0}$
     \Require activation function $g(z)$
     \Require regularization parameter $\lambda$
     \Ensure $\nabla \mathcal{L}\left( y_{n},f(\mathbf{x};\mathbf{\theta}) \right) = 0$
@@ -687,10 +688,10 @@ The backpropagation algorithm requires initial parameters $\theta_{0}$, which is
             \State $\delta^{(l)} = (\mathbf{W}^{(l+1)})^T \delta^{(l+1)} \odot g_{l}'(\mathbf{z}^{(l)})$ \Comment{Compute the error in the $l$th layer}
             \State \Comment{See the equation \ref{eq:error_in_one_layer}}
             \State $\frac{\partial \mathcal{L}\left( y_n,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{W}^{(l)}} = \delta^{(l)} (\mathbf{a}^{(l-1)})^T$ \Comment{Compute the gradient on the weight matrix}
-            \State $\frac{\partial \mathcal{L}\left( y_n,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{b}^{(l)}} = \delta^{(l)}$ \Comment{Compute the gradient on the bias matrix}
+            \State $\frac{\partial \mathcal{L}\left( y_n,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{b}^{(l)}} = \delta^{(l)}$ \Comment{Compute the gradient on the bias vector}
             \State \Comment{See the equation \ref{eq:Chain_rule_partial_deducted}}
             \State $\mathbf{W}^{(l+1)} \gets  \mathbf{W}^{(l)}-\alpha (\delta^{(l)} (\mathbf{a}^{(l-1)})^T + \lambda \mathbf{W}^{(l)})$ \Comment{Update the weight matrix}
-            \State $\mathbf{b}^{(l+1)} \gets  \mathbf{b}^{(l)}-\alpha \delta^{(l)}$ \Comment{Update the bias matrix}
+            \State $\mathbf{b}^{(l+1)} \gets  \mathbf{b}^{(l)}-\alpha \delta^{(l)}$ \Comment{Update the bias vector}
             \State \Comment{See the equation \ref{eq:GD}}
         \EndFor
     \EndFor
@@ -702,9 +703,9 @@ The backpropagation algorithm requires initial parameters $\theta_{0}$, which is
 The regularization parameter $\lambda$ is used to prevent overfitting. The reason for overfitting is that some of the parameters are way too large. Adding a regularization term can restrict the parameters in order to prevent overfitting. Note that the regularization parameter $\lambda$ may also appear in the step of computing the gradient on the weight and bias matrices in some other backpropagation algorithms.
 
 \subsection{Adam Algorithm}
-As can be seen from the backpropagation algorithm \ref{alg:BP_alg} above, the gradient descent algorithm is actually applied in the step of updating the parameters. So are there any other algorithms to update the parameters besides the gradient descent algorithm? The answer is yes. For example, one can use the momentum method to replace the gradient $\nabla \mathcal{L}(\cdot)$ with momenta and the RMSProp algorithm (Root Mean Squared Propagation algorithm) \cite{tieleman2012divide} to update the learning rate $\alpha$. An algorithms that combines the ideas of the momentum method and the RMSProp algorithm is the Adam algorithms (Adaptive Moment Estimation Algorithm) \cite{kingma2014adam}. In practice, the Adam algorithm shows better performance, i.e. fewer parameters to tune, resulting in higher computational efficiency.
+As can be seen from the backpropagation algorithm \ref{alg:BP_alg} above, the gradient descent algorithm is actually applied in the step of updating the parameters. So are there any other algorithms to update the parameters besides the gradient descent algorithm? The answer is yes. For example, one can use the momentum method to replace the gradient $\nabla \mathcal{L}(\cdot)$ with momenta and the RMSProp algorithm (Root Mean Squared Propagation algorithm) \cite{tieleman2012divide} to update the learning rate $\alpha$. An algorithms that combines the ideas of the momentum method and the RMSProp algorithm is the Adam algorithms (Adaptive Moment Estimation Algorithm) \cite{kingma2014adam}. In practice, the Adam algorithm shows better performance, i.e., fewer parameters to tune and resulting in higher computational efficiency.
 
-The Adam algorithm uses mini-batch gradient descent \cite{bottou2010large}. Consider a neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$, a training set $\mathcal{D}=\{(\mathbf{x}_{n}, \mathbf{y}_{n})   \: \vert \:  n \in (1, ..., N)  \}$. Mini-batch gradient descent algorithm splits the training set $\mathcal{D}$ into a sequence of subsets (or mini batches) $\mathcal{S}_t=\{(\mathbf{x}_{m}, \mathbf{y}_{m})   \: \vert \:  m \in (1, ..., M)  \}$ for each iteration $t$, where $M$ is the batch size of one of the mini batches.
+The Adam algorithm uses mini-batch gradient descent \cite{bottou2010large}. Consider a neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$, a training set $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{n=1}^{N}$. Mini-batch gradient descent algorithm splits the training set $\mathcal{D}$ into a sequence of subsets (or mini batches) $\mathcal{S}_t=\{(\mathbf{x}_{m}, \mathbf{y}_{m}) \}_{m=1}^{M}$ for each iteration $t$, where $M$ is the batch size of one of the mini batches.
 
 Similar to the idea of gradient descent (see \ref{eq:GD}), the point of the Adam algorithm is to iterate the following procedure:
 
@@ -752,7 +753,7 @@ The Adam algorithm also requires initial parameters $\theta_{0}$, which is compu
 \label{alg:Adam_alg}
     \begin{algorithmic}
     \Require neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$ with $l$th layer
-    \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias matrix $\mathbf{b} \in \mathbb{R}^{M_{l}}$, initial parameters $\theta_{0}$
+    \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias vector $\mathbf{b} \in \mathbb{R}^{M_{l}}$, initial parameters $\theta_{0}$
     \Require activation function $g(z)$
     \Require decay rate $\beta_1$ and $\beta_2$
     \Require learning rate $\alpha$
@@ -767,7 +768,7 @@ The Adam algorithm also requires initial parameters $\theta_{0}$, which is compu
             \State $\delta^{(l)} = (\mathbf{W}^{(l+1)})^T \delta^{(l+1)} \odot g_{l}'(\mathbf{z}^{(l)})$ \Comment{Compute the error in the $l$th layer}
             \State \Comment{See the equation \ref{eq:error_in_one_layer}}
             \State $\frac{\partial \mathcal{L}\left( y_m,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{W}^{(l)}} = \delta^{(l)} (\mathbf{a}^{(l-1)})^T$ \Comment{Compute the gradient on the weight matrix}
-            \State $\frac{\partial \mathcal{L}\left( y_m,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{b}^{(l)}} = \delta^{(l)}$ \Comment{Compute the gradient on the bias matrix}
+            \State $\frac{\partial \mathcal{L}\left( y_m,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{b}^{(l)}} = \delta^{(l)}$ \Comment{Compute the gradient on the bias vector}
             \State \Comment{See the equation \ref{eq:Chain_rule_partial_deducted}}
         \EndFor
     \EndFor
@@ -792,7 +793,7 @@ The Adam algorithm also requires initial parameters $\theta_{0}$, which is compu
 In order to obtain more accurate results from a neural network model, one may tend to think of stacking more hidden layers. However, when some data scientists try to build complex models using neural networks with hundreds of hidden layers, they found that the vanishing or exploding gradient problem often occurs in backpropagation, which seriously affects the learning efficiency of the upstream hidden layers \cite{glorot2010understanding}. Due to the vanishing or exploding gradient problem, a deeper neural network could even yield worse results than a shallower one. And ResNet (Residual Neural Network) was exactly designed to tackle these problems \cite{he2016deep}. The proposers of ResNet argue that the results of deeper neural networks can be better or at least equal to the results of shallower neural networks, but should not be worse.
 
 \section{Residual Neural Network}
-The ResNet breaks the traditional convention that the output of $l$th layers of a neural network can only be given to $l+1$th layers as input. The ResNet allows the output of one layer $\mathbf{x}$ can directly skip several weight layers $F(\mathbf{x};\theta)$ and then used as the input to a later layer:
+In the traditional convention, the output of a layer of a neural network can only be given as input to the next neighboring layer of the neural network. The ResNet breaks this traditional convention, i.e., it allows the output of a layer $\mathbf{x}$ to skip several weight layers $F(\mathbf{x};\theta)$ directly. Then, the output $\mathbf{x}$ can be used as the input to a latter layer:
 
 \begin{equation}
     \label{eq:ResNet}
@@ -809,19 +810,19 @@ where $H$ is the output or target function. The residual building block illustra
     \label{fig:ResNet}
 \end{figure}
 
-The weight layers could be thought of as two or more hidden layers that is squeezed up and then skipped over by a shortcut connection. This shortcut connection changes the learning target from learning the complete output $H(\mathbf{x})$ to the residual $H(\mathbf{x})-\mathbf{x}$. And the goal of the optimization is to minimize the residual $H(\mathbf{x})-\mathbf{x}$ and make it close to zero. In this case, when $F(\mathbf{x};\theta)=H(\mathbf{x})-\mathbf{x}=0$, then $H(\mathbf{x})=\mathbf{x}$. Since the output $H(\mathbf{x})$ and the input $\mathbf{x}$ are identical, $\mathbf{x}$ is also called identity. The proposers of ResNet hypothesized that the residual is easier to optimize than the complete output and then verified this hypothesis in their experiments. 
+The weight layers could be thought of as two or more hidden layers that are skipped over by a shortcut connection. This shortcut connection changes the learning target from learning the complete output $H(\mathbf{x})$ to the residual $H(\mathbf{x})-\mathbf{x}$. And the goal of the optimization is to minimize the residual $H(\mathbf{x})-\mathbf{x}$ and make it close to zero. In this case, if $F(\mathbf{x};\theta)=H(\mathbf{x})-\mathbf{x}=0$, then $H(\mathbf{x})=\mathbf{x}$. Since the output $H(\mathbf{x})$ and the input $\mathbf{x}$ are identical, $\mathbf{x}$ can be called identity. The proposers of ResNet hypothesized that the residual is easier to optimize than the complete output and then verified this hypothesis in their experiments. 
 
  The significance of ResNet is that it provides a new direction to address the challenges of stacking more and more hidden layers to the neural networks. Benefiting from the ResNet, the vanishing or exploding gradient problem can be solved to some extent.
 
 \section{Neural ODE}
-The hidden layers in a ResNet are built by a sequence of transformations in equation \ref{eq:ResNet}. This sequence of transformations was found to be remarkably similar to the Euler method \ref{eq:Eulers_method_explicit} \cite{ruthotto2020deep}. In view of this, equation \ref{eq:ResNet} can also be recasted into:
+The hidden layers in a ResNet are built by a sequence of transformations in equation \ref{eq:ResNet}. This sequence of transformations was found to be remarkably similar to the Euler method \ref{eq:Eulers_method_explicit} \cite{ruthotto2020deep}. In view of this, equation \ref{eq:ResNet} can also be rewritten as
 
 \begin{equation}
     \label{eq:Euler_discretization}
     \mathbf{z}_{t+1} = \mathbf{z}_{t} + f(\mathbf{z}_{t}; \theta),
 \end{equation}
 
-where $t \in {0 ... T}$ and $\mathbf{z}_{t}$ are some Euler discretizations of a continuous transformation.
+where $t \in {0 ... T}$. Such a sequence of iterations is an Euler discretization of a continuous transformation.
 
 Equation \ref{eq:Euler_discretization} can be rewritten in the form:
 
@@ -830,30 +831,28 @@ Equation \ref{eq:Euler_discretization} can be rewritten in the form:
     \frac{\mathbf{z}_{t+1}-\mathbf{z}_{t}}{\Delta t} = f(\mathbf{z}_{t}; \theta),
 \end{equation}
 
-where $\Delta t = (t+1)-t = 1$. If $\Delta t$ is a very small step, and then, an Euler discretization
+where $\Delta t = (t+1)-t = 1$. If $\Delta t$ is a very small step, rewrite \ref{eq:Euler_discretization_rewritten} as
 
 \begin{equation}
     \label{eq:Euler_discretization_small_step}
-    \lim_{\Delta t \to 0} \frac{\mathbf{z}_{t+1}-\mathbf{z}_{t}}{\Delta t} = f(\mathbf{z}_{t}; \theta)
+    \lim_{\Delta t \to 0} \frac{\mathbf{z}_{t+1}-\mathbf{z}_{t}}{\Delta t} = f(\mathbf{z}_{t}; \theta).
 \end{equation}
 
-can be considered as the gradient of $z(t)$ by the definition of differentiation, i.e.
+The LHS of \ref{eq:Euler_discretization_small_step} can be considered as the gradient of $z(t)$ by the definition of differentiation, i.e.,
 
 \begin{equation}
     \label{eq:Euler_discretization_differentiation}
-    \frac{d\mathbf{z}(t)}{dt} = f(\mathbf{z}(t), t; \theta),
+    \frac{d\mathbf{z}(t)}{dt} = f(\mathbf{z}(t), t; \theta).
 \end{equation}
 
-where the RHS $f(\mathbf{z}(t), t; \theta)$ can be considered as a neural network $NN(\mathbf{z}(t), t; \theta)$.
-
-Integral \ref{eq:Euler_discretization_differentiation} and plug it into \ref{eq:Euler_discretization}. An equation such as 
+Plug \ref{eq:Euler_discretization_differentiation} into \ref{eq:Euler_discretization}. An equation such as 
 
 \begin{equation}
     \label{eq:Neural_ODE}
     \mathbf{z}(t+\varepsilon ) = \mathbf{z}(t) + \int_{t}^{t+\varepsilon } f(\mathbf{z}(t), t, \theta)dt
 \end{equation}
 
-is called Neural ODE (Neural Ordinary Differential Equation) \cite{chen2018neural}, where $\varepsilon $ is a very small time step. An ODE solver is treated as a black box that provides a solution to the ODE. Thus, the loss function to be optimized is of the form
+is called Neural ODE (Neural Ordinary Differential Equation) \cite{chen2018neural}, where $\varepsilon $ is a small time step and the RHS $f(\mathbf{z}(t), t; \theta)$ can be considered as a neural network $NN(\mathbf{z}(t), t; \theta)$. An ODE solver is treated as a black box that provides a solution to the ODE. Thus, the loss function to be optimized is of the form
 
 \begin{equation}
     \label{eq:Neural_ODE_Gradient_loss}
@@ -863,7 +862,7 @@ is called Neural ODE (Neural Ordinary Differential Equation) \cite{chen2018neura
     \end{aligned}
 \end{equation}
 
-To optimize the loss function \ref{eq:Neural_ODE_Gradient_loss} in backpropagation, one needs to compute the gradient of the loss function as the form of equation \ref{eq:Gradient_loss}. The next step, to calculate the error, is to mimic the procedure in equation \ref{eq:error_in_one_layer}:
+To optimize the loss function \ref{eq:Neural_ODE_Gradient_loss} through backpropagation, one needs to compute the gradient of the loss function \ref{eq:Gradient_loss}. The next step, to calculate the error, is to mimic the procedure in equation \ref{eq:error_in_one_layer}:
 
 \begin{equation}
     \label{eq:Neural_ODE_error}
@@ -871,9 +870,9 @@ To optimize the loss function \ref{eq:Neural_ODE_Gradient_loss} in backpropagati
 \end{equation}
 
 \section{Adjoint Method}
-The adjoint method (or adjoint sensitivity method) is a method used to compute the gradients of functions efficiently, which can be dated back to the 1960s \cite{boltyanskiy1962mathematical}. Due to the continuity of Neural ODE, computing the gradient of the loss function in backpropagation leads to a huge memory cost. The significance of using the adjoint method is that the gradient of the loss function can still be computed efficiently without storing the intermediate activations which cost a huge memory overhead.
+The adjoint method (or adjoint sensitivity method) is a method used to compute the gradients of functions efficiently, which can be dated back to the 1960s \cite{boltyanskiy1962mathematical}. Due to the continuity of Neural ODE, computing the gradient of the loss function in backpropagation leads to a huge memory cost. The significance of using the adjoint method is that the gradient of the loss function can still be computed efficiently without storing the intermediate activations which have a huge memory overhead.
 
-Similar to the stochastic gradient descent algorithm \ref{alg:BP_alg} in the preceding chapter, the goal of the adjoint method is also to compute the gradient of the loss function with respect to the state $\frac{d\mathcal{L}}{d\mathbf{z}(t)}$ and with respect to the parameters $\frac{d\mathcal{L}}{d\theta}$.
+Similar to the algorithm \ref{alg:BP_alg} in the preceding chapter, the goal of the adjoint method is also to compute the gradient of the loss function with respect to the state $\frac{d\mathcal{L}}{d\mathbf{z}(t)}$ and with respect to the parameters $\frac{d\mathcal{L}}{d\theta}$.
 
 To use the adjoint method, the first step is to define an adjoint state that equal to the gradient of the loss function with respect to the state:
 
@@ -922,7 +921,7 @@ Now perform the feedforward propagation algorithm \ref{alg:feedforward_alg}  to 
     \end{aligned}
 \end{equation}
 
-Note that the state adjoint $\mathbf{a(t)}^T$ is transposed due to the "backward" direction.
+Note that the adjoint state $\mathbf{a(t)}^T$ is transposed due to the "backward" direction.
 
 Similar to the equation \ref{eq:adjoint_state} $\mathbf{a}(t) = \frac{d\mathcal{L}}{d\mathbf{z}(t)}$, the gradient of the loss function with respect to the parameters is defined by:
 
@@ -939,44 +938,167 @@ The corresponding gradient of the adjoint state is of the form:
 \end{equation}
 
 
-More detailed deduction procedures for $\frac{d\mathcal{L}}{d\theta}$ can be found in the original paper \cite{chen2018neural}.
+More details for $\frac{d\mathcal{L}}{d\theta}$ can be found in the original paper \cite{chen2018neural}.
 
 A short summary: From the above procedures, it can be concluded that the idea of the adjoint method in Neural ODE is to compute a sequence of adjoint states in a "backward" direction by solving ODEs, and therefore the gradients can also be computed in an indirect manner.
 
-\section{Dynamic Simulation With Neural ODE}
-\subsection{Undamped Harmonic Oscillator}
-\subsection{Isothermal Damped Harmonic Oscillator}
-
 
 \clearpage
-\chapter{Structured O-NET}
+\chapter{Structured ODE Neural Network}
 \label{ch:chapter6}
 \section{Physics Prior}
-In machine learning, some optimization algorithms tend to make some assumptions to improve the learning efficiency, and these assumptions are called inductive bias (also known as prior) \cite{mitchell1997machine}. These inductive biases may have different names in specific fields. For example, in the field of physics, it is most frequently referred to as physics prior or physically informed inductive bias.
+In machine learning, some optimization algorithms tend to make some assumptions to improve the learning efficiency, and these assumptions are called inductive biases (also known as priors) \cite{mitchell1997machine}. Inductive biases or priors may have different names in specific fields. For example, in the field of physics, they are most frequently referred to as physics priors or physically informed inductive biases.
 
 The experiments in \cite{gupta2019general} introduced a framework to model the Lagrangian and the generalized forces of mechanical systems by using neural networks. Their experiments show the advantage of a gray-box model endowed with physics priors in terms of data efficiency compared to a black-box model without prior knowledge. Another similar work related to Lagrangian is \cite{lutter2019deep}.
 
-In the field of Hamiltonian systems, \cite{greydanus2019hamiltonian} proposed an approach to learn a parametric Hamiltonian function $H_{\theta}$ from the time derivatives of coordinates in the way that $\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}} - \frac{d\mathbf{q}}{dt} = 0, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}} - \frac{d\mathbf{p}}{dt} = 0 $. Such an approach allows the HNNs (Hamiltonian Neural Networks) to learn a conserved quantity that analogous to the total energy.
+In the field of Hamiltonian systems, \cite{greydanus2019hamiltonian} proposed an approach to learn a parametric Hamiltonian function $H_{\theta}$ from the time derivatives of coordinates in the way that $\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}} - \frac{d\mathbf{q}}{dt} = 0, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}} - \frac{d\mathbf{p}}{dt} = 0 $. Such an approach allows HNNs (Hamiltonian Neural Networks) to learn a conserved quantity that is analogous to the total energy.
 
 \section{Neural Networks of Hamiltonian Systems}
-In \cite{chen2019symplectic}, they introduced two neural network models of Hamiltonian systems: N-NET (Hamiltonian Neural Networks) and O-NET (ODE Neural Networks), where N-NET is equivalent to HNNs. 
+In \cite{chen2019symplectic}, they compared two neural network models of Hamiltonian systems: O-NET (ODE Neural Networks) and N-NET (Hamiltonian Neural Networks), where N-NET follows the idea of HNNs. 
+Before introducing O-NET and H-NET, recall that a Neural ODE \ref{eq:Neural_ODE} contains a neural network $f$. An ODE solver provides a solution to the ODE such that $\mathbf{z}(t+\varepsilon) = ODESolver(\mathbf{z}(t), f, t, t+\varepsilon , \theta)$. Note that in \cite{chen2019symplectic}, $f$ is considered as a neural network (e.g. in the case of O-NET). However, $f$ can also be a function that contains a neural network (e.g. in the case of HNNs or N-NET).
 
-Before introducing O-NET, recall that a Neural ODE \ref{eq:Neural_ODE} contains a parametric neural network $f_{\theta}: (\mathbf{z}(t), t, \theta) \mapsto f(\mathbf{z}(t), t, \theta)$. And an ODE solver provides a solution to the ODE such that $\mathbf{z}(t+\varepsilon) = ODESolver(\mathbf{z}(t), f, t, t+\varepsilon , \theta)$.
-
-Follow this idea and suppose that $\{ z_{t}  \: \vert \:  t \in (1, 2, ..., T)  \}$ is a training set, where $\mathbf{z}_{t}$ are some discrete points from an observed trajectory. Given an initial state $z_{0}$ and a time points set $\{ t  \: \vert \:  t \in (1, 2, ..., T)  \}$, an ODE solver can yield a solution
+\textbf{O-NET} is a neural network in a Neural ODE, which can be denoted by $f_{\theta}$. Suppose that $\{ z_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{z}_{t}$ are some discrete points from an observed trajectory. Given an initial state $z_{0}$ and time steps $\{ t \}_{t=1}^{T}$, an ODE solver yields a solution
 
 \begin{equation}
-    \label{eq:discrete_neural_ODE}
-    \{ z_{t}  \: \vert \:  t \in (1, 2, ..., T)  \} = ODESolver(z_{0}, f_{\theta}, \{ t  \: \vert \:  t \in (1, 2, ..., T)  \}),
+    \label{eq:O-NET_ODE}
+    \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, f_{\theta}, \{ t \}_{t=1}^{T}).
 \end{equation}
 
-where $f_{\theta}$ can be considered as either a N-NET or an O-NET. Unlike N-NET, the output of O-NET at a fixed time $t$ estimates the time derivative of coordinates $\dot z_{t}$ such that $f_{\theta}(\mathbf{z}(t), t) = \dot z_{t}$. In the case of Hamiltonian systems, let $z_{t} = [q_{t}, p_{t}]$, it holds that $f_{\theta}(q, p, t) = [\dot q_{t}, \dot p_{t}]$.
+where $f_{\theta}$ can be considered as an O-NET. The output of $f_{\theta}$ at a fixed time $t$ estimates the time derivative of coordinates $\dot z_{t}$ such that $\dot z_{t} = f_{\theta}(\mathbf{z}(t), t)$. In the case of Hamiltonian systems, let $z_{t} = [q_{t}, p_{t}]$, it holds that $f_{\theta}(q, p, t) = [\dot q_{t}, \dot p_{t}]$.
 
-Similar to \ref{eq:Neural_ODE_Gradient_loss}, the loss function $\mathcal{L}(z_{t}) = \mathcal{L}(ODESolver(z_{0}, f_{\theta}, t  \}))$ can also be optimized by computing the gradient with the adjoint method.
+
+\textbf{N-NET} is a neural network $\mathcal{H}_{\theta}$ that learns the Hamiltonian. The idea of N-NET is to replace the O-NET $f_{\theta}$ in \ref{eq:O-NET_ODE} with the estimate of the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$. Then, the ODE can be rewritten as
+
+\begin{equation}
+    \label{eq:H-NET_ODE}
+    \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, X_{\mathcal{H}_{\theta}}, \{ t \}_{t=1}^{T}).
+\end{equation}
+
+
+Both O-NET and N-NET are trained by optimizing the loss function
+
+\begin{equation}
+    \label{eq:loss_O-NET}
+    \mathcal{L} = \lVert \mathbf{z}_{t} - \hat{\mathbf{z}_{t}} \rVert_{2}.
+\end{equation}
+
+Note that a subtle difference between N-NET and HNNs is that HNNs use the loss function $\mathcal{L}_{HNN} = \lVert \dot z_{t} - X_{\mathcal{H}_{\theta}} \rVert_{2}$. It means that N-NET learns dynamics from the coordinates rather than from the time derivative of coordinates.
 
 
 \section{Structured O-NET}
-\section{Dynamic Simulation with Structured Neural ODE}
+An O-NET $f_{\theta}$ is considered as a pure black box. Such a pure data-driven modeling approach provides no guarantees of convergence if only small training sets are available. How about big training sets? In the field of physics, especially for some complex systems, the acquisition of data from observations is often costly. Therefore, it is also not easy to obtain big training sets. Nevertheless, in the field of physics, there exists a large accumulation of physics laws. If these physical laws are encoded as some prior information, will it compensate for the lack of data?
+
+The idea of structured O-NET is to replace the neural network $f_{\theta}$ in \ref{eq:O-NET_ODE} with a new function $h_{\theta}$. 
+
+\begin{equation}
+    \label{eq:structured_O-NET_ODE}
+    \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, h_{\theta}, \{ t \}_{t=1}^{T}).
+\end{equation}
+
+The codomain of the new function $h_{\theta}$ is composed of two parts, the known part and the unknown part. The known part could be a part of a system of ODEs $f(t, x)$, while the unknown part is represented by the output of a neural network $g(\mathbf{z}(t), t; \theta)$. Such a function can be be referred to as a physics informed function and defined as
+
+\begin{equation}
+    \label{eq:physics_informed_function}
+    h_{\theta} : \left( f(t, x) \times g(\mathbf{z}(t), t; \theta) \right) \longmapsto h(f, x, g, \mathbf{z}(t), t; \theta),
+\end{equation}
+
+where $\times$ is a binary operator and $g$ is referred to as structured O-NET. The output of $h_{\theta}$ at a fixed time $t$ estimates the time derivative of coordinates $\dot z_{t}$ such that $\dot z_{t} = h_{\theta}(f, x, g, \mathbf{z}(t), t)$.
+
+
+\section{Experiments}
+\subsection{Experiment 1: Undamped Harmonic Oscillator}
+For simplicity, take a Hamiltonian system such as harmonic oscillator as an example. The system of ODE of an undamped harmonic oscillator is of the form
+
+\begin{equation}
+    \label{eq:ODE_udho}
+    \dot{x} =
+    \begin{bmatrix}
+    \dot{q}\\
+    \dot{p}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+    \frac{p}{m}\\
+    -\frac{q}{c}
+    \end{bmatrix}.
+\end{equation}
+
+Suppose that the RHS of $\dot{q}$ only has known part (without unknown part as well as binary operator) and the RHS of $\dot{p}$ only has unknown part (without known part as well as binary operator), the system of ODEs can be rewritten as
+
+\begin{equation}
+    \label{eq:structured_ODE_udho}
+    \dot{x} =
+    \begin{bmatrix}
+    \dot{q}\\
+    \dot{p}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+    {f(q)}\\
+    {g(p;\theta)}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+    \frac{p}{m}\\
+    g(p;\theta)
+    \end{bmatrix}.
+\end{equation}
+
+\textbf{Experiment Setup}.\\
+Initial parameters: $m = 2.0$\\
+Initial state: $x_0 = [1.0, 1.0]$\\
+Time steps: $\{ 0.0, 0.1, 0.2, ..., 9.9 \}$\\
+Integrator: implicit midpoint method\\
+Gaussian Noise: $\sigma^2 = 0.1$
+
+\subsection{Experiment 2: Isothermal Damped Harmonic Oscillator}
+Unlike in experiment 1, an isothermal damped harmonic oscillator is a port-Hamiltonian system. The system of ODEs is of the form
+
+\begin{equation}
+    \label{eq:ODE_idho}
+    \dot{x} =
+    \begin{bmatrix}
+    \dot{q}\\
+    \dot{p}\\
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+    \frac{p}{m}\\
+    -\frac{q}{c}-d\frac{p}{m}\\
+    \end{bmatrix}.
+\end{equation}
+
+In the case of port-Hamiltonian systems, the total energy is not conserved. One might be more interested in irreversible components than reversible components. Hence, assume that the irreversible component $-d\frac{p}{m}$ is unknown and replace it with the output of a structured O-NET:
+
+\begin{equation}
+    \label{eq:structured_ODE_idho}
+    \dot{x} =
+    \begin{bmatrix}
+    \dot{q}\\
+    \dot{p}\\
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+    {f(q)}\\
+    -\frac{q}{c} + {g(p;\theta)}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+    \frac{p}{m}\\
+    -\frac{q}{c} + {g(p;\theta)}\\
+    \end{bmatrix}.
+\end{equation}
+
+In comparison to experiment 1, the RHS of $\dot{p}$ has both known part $-\frac{q}{c}$ and unknown part $g(p;\theta)$. And the binary operator is $+$.
+
+\textbf{Remark}. A special case of binary operation is division. If the known part is used as the numerator and the unknown part as the denominator, e.g., $\frac{f(t, x)}{g(\mathbf{z}(t), t; \theta)}$, then one needs to add a constant $\varepsilon$ to the denominator to avoid instability, i.e., $\frac{f(t, x)}{g(\mathbf{z}(t), t; \theta) + \varepsilon}$. This constant should be very small and not affect the learning result, e.g. $\varepsilon = 1 \times 10^{-8}$.
+
+\textbf{Experiment Setup}.\\
+Initial parameters: $m = 2.0, c = 1.0$\\
+Initial state: $x_0 = [1.0, 1.0]$\\
+Time steps: $\{ 0.0, 0.1, 0.2, ..., 9.9 \}$\\
+Integrator: implicit midpoint method\\
+Gaussian Noise: $\sigma^2 = 0.1$
 
 \clearpage
 \chapter{Parameter Estimation}

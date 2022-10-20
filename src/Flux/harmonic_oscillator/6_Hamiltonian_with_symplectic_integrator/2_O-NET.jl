@@ -42,7 +42,6 @@ function predict_neuralode(p)
     Array(prob_neuralode(u0, p))
 end
 
-
 ## L2 loss function
 function loss_neuralode(p)
     pred_data = predict_neuralode(p) # solve the Neural ODE with adjoint method
@@ -69,7 +68,7 @@ optprob1 = Optimization.OptimizationProblem(optf, neural_params)
 @time res1 = Optimization.solve(optprob1, ADAM(0.05), callback = callback, maxiters = 100)
 ## second round of training
 optprob2 = Optimization.OptimizationProblem(optf, res1.u)
-@time res2 = Optimization.solve(optprob2, ADAM(0.01), callback = callback, maxiters = 300)
+@time res2 = Optimization.solve(optprob2, ADAM(0.001), callback = callback, maxiters = 300)
 ## third round of training
 optprob3 = Optimization.OptimizationProblem(optf, res2.u)
 @time res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback, maxiters = 300)
