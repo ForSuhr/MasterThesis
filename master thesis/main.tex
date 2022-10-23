@@ -1048,9 +1048,49 @@ Suppose that the RHS of $\dot{q}$ only has known part (without unknown part as w
 Initial parameters: $m = 2.0$\\
 Initial state: $x_0 = [1.0, 1.0]$\\
 Time steps: $\{ 0.0, 0.1, 0.2, ..., 9.9 \}$\\
+Gaussian Noise: $\sigma^2 = 0.01$\\
 Integrator: implicit midpoint method\\
-Gaussian Noise: $\sigma^2 = 0.1$
+Optimization algorithm: ADAM
 
+\clearpage
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=1]{figures/phase_portrait_O_NET.pdf}
+    \caption{Phase portrait}
+    \label{fig:phase_portrait_O_NET}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=1]{figures/prediction_error_structured_O_NET.pdf}
+    \caption{Prediction error}
+    \label{fig:prediction_error_structured_O_NET}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=1]{figures/Hamiltonian_structured_O_NET.pdf}
+    \caption{Time evolution of the total energy}
+    \label{fig:Hamiltonian_error_structured_O_NET}
+\end{figure}
+
+\begin{table}[h!]
+	\centering
+	\caption{Training and test error of experiment 1}
+	\label{tab:error_experiment1}
+	\begin{tabularx}{\textwidth}{lcc}
+		\toprule
+		\textbf{Experiment 1} & \textbf{O-NET} & \textbf{Structured O-NET}\\
+		\midrule
+		Training error & $3.81\mathrm{e}{-4} \pm 0.57\mathrm{e}{-4}$ & $1.63\mathrm{e}{-4} \pm 0.15\mathrm{e}{-4}$ \\
+		Test error & $7.75\mathrm{e}{-4} \pm 1.17\mathrm{e}{-4}$ & $4.38\mathrm{e}{-4} \pm 0.12\mathrm{e}{-4}$ \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+
+
+\clearpage
 \subsection{Experiment 2: Isothermal Damped Harmonic Oscillator}
 Unlike in experiment 1, an isothermal damped harmonic oscillator is a port-Hamiltonian system. The system of ODEs is of the form
 
@@ -1094,11 +1134,48 @@ In comparison to experiment 1, the RHS of $\dot{p}$ has both known part $-\frac{
 \textbf{Remark}. A special case of binary operation is division. If the known part is used as the numerator and the unknown part as the denominator, e.g., $\frac{f(t, x)}{g(\mathbf{z}(t), t; \theta)}$, then one needs to add a constant $\varepsilon$ to the denominator to avoid instability, i.e., $\frac{f(t, x)}{g(\mathbf{z}(t), t; \theta) + \varepsilon}$. This constant should be very small and not affect the learning result, e.g. $\varepsilon = 1 \times 10^{-8}$.
 
 \textbf{Experiment Setup}.\\
-Initial parameters: $m = 2.0, c = 1.0$\\
+Initial parameters: $m = 2.0, c = 1.0, d = 1.0$\\
 Initial state: $x_0 = [1.0, 1.0]$\\
-Time steps: $\{ 0.0, 0.1, 0.2, ..., 9.9 \}$\\
+Time steps: $\{ 0.0, 0.1, 0.2, ..., 49.9 \}$\\
+Gaussian Noise: $\sigma^2 = 0.01$\\
 Integrator: implicit midpoint method\\
-Gaussian Noise: $\sigma^2 = 0.1$
+Optimization algorithm: ADAM
+
+\clearpage
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=1]{figures/phase_portrait_O_NET_idho.pdf}
+    \caption{Phase portrait}
+    \label{fig:phase_portrait_O_NET_idho}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=1]{figures/prediction_error_structured_O_NET_idho.pdf}
+    \caption{Prediction error}
+    \label{fig:prediction_error_structured_O_NET_idho}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=1]{figures/Hamiltonian_structured_O_NET_idho.pdf}
+    \caption{Time evolution of the total energy}
+    \label{fig:Hamiltonian_error_structured_O_NET_idho}
+\end{figure}
+
+\begin{table}[h!]
+	\centering
+	\caption{Training and test error of experiment 2}
+	\label{tab:error_experiment2}
+	\begin{tabularx}{\textwidth}{lcc}
+		\toprule
+		\textbf{Experiment 2} & \textbf{O-NET} & \textbf{Structured O-NET}\\
+		\midrule
+		Training error & $3.61\mathrm{e}{-4} \pm 1.28\mathrm{e}{-4}$ & $0.09\mathrm{e}{-4} \pm 0.07\mathrm{e}{-4}$ \\
+		Test error & $6.94\mathrm{e}{-4} \pm 1.16\mathrm{e}{-4}$ & $2.88\mathrm{e}{-4} \pm 1.37\mathrm{e}{-4}$ \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
 
 \clearpage
 \chapter{Parameter Estimation}
