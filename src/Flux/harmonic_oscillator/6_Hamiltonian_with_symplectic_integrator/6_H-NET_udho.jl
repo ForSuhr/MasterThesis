@@ -43,7 +43,7 @@ kwargs::K
 end
 
 ## define neural ODE function
-function NeuralODE_H_NET(model::Lux.AbstractExplicitLayer; solver=Midpoint(),
+function NeuralODE_H_NET(model::Lux.AbstractExplicitLayer; solver=ImplicitMidpoint(),
               sensealg=InterpolatingAdjoint(; autojacvec=ZygoteVJP()),
               tspan=tspan, kwargs...)
 return NeuralODE_H_NET(model, solver, sensealg, tspan, kwargs)
@@ -56,15 +56,15 @@ function (n::NeuralODE_H_NET)(x, ps, st)
     du = vec(hamiltonian_forward(n.model, p, st, u))
   end
   prob = ODEProblem{false}(ODEFunction{false}(dudt), x, n.tspan, ps)
-  return solve(prob, n.solver; sensealg=n.sensealg, saveat = tsteps), st
+  return solve(prob, n.solver; sensealg=n.sensealg, tstops = tsteps), st
 end
 
 
 H_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
-                  Lux.Dense(40, 20, tanh),
-                  Lux.Dense(20, 1))
+                  Lux.Dense(40, 40, tanh),
+                  Lux.Dense(40, 1))
 #prob_neuralode = NeuralODE_H_NET(H_NET, solver=ImplicitMidpoint(), tspan=tspan)
-prob_neuralode = NeuralODE_H_NET(H_NET, solver=Midpoint(), tspan=tspan)
+prob_neuralode = NeuralODE_H_NET(H_NET, solver=ImplicitMidpoint(), tspan=tspan)
 
 # initial random parameters and states
 rng = Random.default_rng()
@@ -125,26 +125,21 @@ adtype = Optimization.AutoFiniteDiff()
 
 optf = Optimization.OptimizationFunction((x, p) -> loss_neuralode(x), adtype)
 optprob1 = Optimization.OptimizationProblem(optf, Lux.ComponentArray(neural_params))
-@time res1 = Optimization.solve(optprob1, ADAM(0.01), callback = callback, maxiters = 10)
+@time res1 = Optimization.solve(optprob1, ADAM(0.02), callback = callback, maxiters = 10)
 ## second round of training
 optprob2 = Optimization.OptimizationProblem(optf, res1.u)
-@time res2 = Optimization.solve(optprob2, ADAM(0.001), callback = callback, maxiters = 10)
+@time res2 = Optimization.solve(optprob2, ADAM(0.004), callback = callback, maxiters = 10)
 ## third round of training
 optprob3 = Optimization.OptimizationProblem(optf, res2.u)
-@time res3 = Optimization.solve(optprob3, ADAM(0.0005), callback = callback, maxiters = 10)
+@time res3 = Optimization.solve(optprob3, ADAM(0.001), callback = callback, maxiters = 10)
 params_H_NET = res3.u
 
 # repeat training
 optprob4 = Optimization.OptimizationProblem(optf, params_H_NET)
-@time res = Optimization.solve(optprob4, ADAM(0.00001), callback = callback, maxiters = 100)
+@time res = Optimization.solve(optprob4, ADAM(0.001), callback = callback, maxiters = 10)
 params_H_NET = res.u
 
 ## check the trained NN
 trajectory_estimate = Array(prob_neuralode(u0, params_H_NET, state)[1])
 plt = plot(q_ode_data, p_ode_data, label="Ground truth")
 plt = plot!(trajectory_estimate[1,:], trajectory_estimate[2,:],  label = "Prediction")
-
-## save the parameters
-using JLD
-save(joinpath(@__DIR__, "results", "params_H_NET.jld"), "params_H_NET", params_H_NET)
-params_H_NET = load(joinpath(@__DIR__, "results", "params_H_NET.jld"), "params_H_NET")

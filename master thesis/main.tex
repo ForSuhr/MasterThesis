@@ -229,10 +229,10 @@ Such an inversion only changes the direction of the trajectory but does not affe
 \label{ch:chapter3}
 
 \section{Hamiltonian Systems}
-A Hamiltonian system is a triple $(M,\omega,H)$, where $(M,\omega)$ is a symplectic manifold which consists of a manifold $M$ and a symplectic structure $\omega$.
+A Hamiltonian system is a triple $(\mathcal{X},\omega,H)$, where $(\mathcal{X},\omega)$ is a symplectic manifold which consists of a manifold $\mathcal{X}$ and a symplectic structure $\omega$.
 
 \subsection{Formulation}
-The Hamiltonian or Hamiltonian function $H$ is a smooth function on the manifold $M$ that assigns the coordinates to conserved quantities of physical systems \cite{rudolph2017differential}. Normally, the Hamiltonian of an isolated physical system represents the total energy. In a mechanical system, the Hamiltonian can be formulated by $H(\mathbf{q},\mathbf{p})=T(\mathbf{q},\mathbf{p})+V(\mathbf{q})$, where $T(\mathbf{q},\mathbf{p})$ is the kinetic energy and $V(\mathbf{q})$ is the potential energy of the system. With the generalized coordinate $\mathbf{q}$ and generalized momentum $\mathbf{p}$, such a Hamiltonian is of the form
+The Hamiltonian or Hamiltonian function $H: \mathcal{X} \mapsto \mathbb{R} $ is a smooth function on the manifold $\mathcal{X}$ that assigns the coordinates to conserved quantities of physical systems \cite{rudolph2017differential}. Normally, the Hamiltonian of an isolated physical system represents the total energy. In a mechanical system, the Hamiltonian can be formulated by $H(\mathbf{q},\mathbf{p})=T(\mathbf{q},\mathbf{p})+V(\mathbf{q})$, where $T(\mathbf{q},\mathbf{p})$ is the kinetic energy and $V(\mathbf{q})$ is the potential energy of the system. With the generalized coordinate $\mathbf{q}$ and generalized momentum $\mathbf{p}$, such a Hamiltonian is of the form
 
 \begin{equation}
     \label{eq:Hamiltonian}
@@ -291,16 +291,8 @@ Recall that the implicit midpoint rule \ref{eq:Midpoint_rule_implicit} works wel
     y_{n+1} = y_{n} + h \cdot J \nabla H (\frac{y_{n} + y_{n+1}}{2}).
 \end{equation}
 
-\section{Port-Hamiltonian Systems}
-A port-Hamiltonian system is a Hamiltonian system endowed with a geometric structure, which is known as Dirac structure. A Dirac structure is a subspace $\mathcal{D} \subset \mathcal{F} \times \mathcal{E}$, where $\mathcal{F}$ and $\mathcal{E}$ are the spaces of the port variables (i.e. flows $f$ and efforts $e$), such that for all pair $(f,e)$ in the Dirac structure $\mathcal{D}$ the power $<e \mid f>$ equal to zero (Vincent section 2.1.2). Note that $\mathcal{E}$ is the dual space of $\mathcal{F}$.
-
-The concept of "ports" comes from the port-based physical system modeling approach (Vincent). It reveals that subsystems interact with each other via ports. In port-Hamiltonian systems, such interactions are assumed to be exchanges of energy.
-
-
-TODO: more details
-\section{Dynamic Simulation with Numerical Method}
-\subsection{Undamped Harmonic Oscillator}
-In the classical simple undamped harmonic oscillator model, a mass $m$ is fixed to one end of a spring with spring compliance $c$ and the other end of the spring is fixed to a fixed rigid body. The spring displacement $q$ is in the positive direction of the direction of stretching by the mass. See figure \ref{fig:physical_model_undamped_harmonic_oscillator}.
+\subsection{Example: Undamped Harmonic Oscillator}
+An undamped harmonic oscillator is a classical Hamiltonian system. a mass $m$ is connected to one end of a spring with spring compliance $c$ and the other end of the spring is fixed. The spring displacement $q$ is in the positive direction of the direction of stretching by the mass.
 
 \clearpage
 \begin{figure}[h!]
@@ -310,30 +302,30 @@ In the classical simple undamped harmonic oscillator model, a mass $m$ is fixed 
     \label{fig:physical_model_undamped_harmonic_oscillator}
 \end{figure}
 
-According to Newton's second law $F=ma=m\ddot{x}$ and Hooke's law $F=-kx$, it holds $m\ddot{x}+kx=0$, which is an implicit ODE in the form of the equation \ref{eq:implicit_ODE}. As the highest order in the ODE is second order, it is called second order differential equation.
+In Newtonian mechanics, according to Newton's second law $F=ma=m\ddot{x}$ and Hooke's law $F_s=-kx$ ($F_s$ is the restoring force of a spring, which is always in the opposite direction to the displacement), it holds $m\ddot{x}+kx=0$, which is an implicit ODE in the form of equation \ref{eq:implicit_ODE}. As the highest order in the ODE is second order, it is called second order differential equation.
 
-In the undamped harmonic oscillator model, referring to the equation \ref{eq:Hamiltonian}, the Hamiltonian is the sum of the kinetic energy $T=\frac{1}{2m}p^2$ and the potential energy $\frac{1}{2c}q^2$:
+In Hamiltonian mechanics, referring to equation \ref{eq:Hamiltonian}, the Hamiltonian is the sum of the kinetic energy $\frac{1}{2}\mathbf{p}^T\mathbf{M}^{-1}(\mathbf{q})\mathbf{p}$ and the potential energy $\mathbf{V}(\mathbf{q})$. In the case of undamped harmonic oscillator, this can be rewritten as
 
 \begin{equation}
     \label{eq:Hamiltonian_udho}
     H(q,p)=\frac{1}{2c}q^2+\frac{1}{2m}p^2,
 \end{equation}
 
-where p is the momentum of the mass. The state of the system (also known as canonical coordinates) $x=(q,p)$ moves along the symplectic gradient $\dot{x}=(\dot{q},\dot{p})$:
+where p is the momentum of the mass. The state of the system (in canonical coordinates) $x=(q,p)$ moves along the symplectic gradient $X_{\mathcal{H}} = \dot{x}=(\dot{q},\dot{p})$, where
 
 \begin{equation}
     \label{eq:symplectic_gradient}
     \dot{q}=\frac{\partial H}{\partial p}, \quad \dot{p}=-\frac{\partial H}{\partial q}.
 \end{equation}
 
-Moving along the symplectic gradient holds the total energy of the conserve system, i.e. the Hamiltonian, constant. So that the derivative of the Hamiltonian in Equation \ref{eq:derivative_Hamiltonian} is hold as zero.
+Moving along such a symplectic gradient keeps the total energy of a Hamiltonian system constant. In this way, the derivative of Hamiltonian can stay at zero:
 
 \begin{equation}
     \label{eq:derivative_Hamiltonian}
-    \dot{H}=\frac{\partial H}{\partial q}\dot{q}+\frac{\partial H}{\partial p}\dot{p}=0
+    \dot{H}=\frac{\partial H}{\partial q}\dot{q}+\frac{\partial H}{\partial p}\dot{p}=0.
 \end{equation}
 
-Referring to the equations \ref{eq:ODE_system}, the system of ODE of undamped harmonic oscillator could be written as
+Referring to equations \ref{eq:ODE_system}, the system of ODE of undamped harmonic oscillator is of the form:
 
 \begin{equation}
     \label{eq:ODE_undamped_harmonic_oscillator}
@@ -348,69 +340,52 @@ Referring to the equations \ref{eq:ODE_system}, the system of ODE of undamped ha
     \end{bmatrix}.
 \end{equation}
 
-\subsection{Isothermal Damped Harmonic Oscillator}
-In contrast to undamped harmonic oscillator, the isothermal damped harmonic oscillator should be regarded as a port-Hamiltonian system.
+\section{Port-Hamiltonian Systems}
+The point of port-Hamiltonian systems is a Dirac structure defined by
 
-TODO: more details
+\begin{equation}
+    \label{eq:Dirac_structure}
+    \mathcal{D} \subset T_{x}\mathcal{X} \times T_{x}^{*}\mathcal{X} \times \mathcal{F}_R \times \mathcal{E}_R \times \mathcal{F}_P \times \mathcal{E}_P,
+\end{equation}
 
-The ordinary differential equation system of the isothermal damped harmonic oscillator are written as
+where energy-storing port $(f_S, e_S) \in T_{x}\mathcal{X} \times T_{x}^{*}\mathcal{X}$, energy-dissipating port $(f_R, e_R) \in \mathcal{F}_R \times \mathcal{E}_R$ and external port $(f_P, e_P) \in \mathcal{F}_P \times \mathcal{E}_P$.
+
+As can be seen in \ref{eq:Dirac_structure}, a Dirac structure is a subspace $\mathcal{D} \subset \mathcal{F} \times \mathcal{E}$, where $\mathcal{F}$ and $\mathcal{E}$ are the spaces of the port variables (i.e. flows $f$ and efforts $e$). Such a pair $(f,e)$ of vectors of flow and effort variables is known as a port. The concept of "port" comes from the port-based physical system modeling approach \cite{duindam2009modeling}. In port-Hamiltonian systems, the subsystems interact with each other via ports. Such interactions are assumed to be exchanges of energy.
+
+\subsection{Example: Isothermal Damped Harmonic Oscillator}
+An isothermal damped harmonic oscillator is a port-Hamiltonian system. Its Dirac structure can be defined by a skew-symmetric matrix. The subsystems interact with each other via the interconnection
+
+\begin{equation}
+    \label{eq:interconnection_idho}
+    \left[\begin{array}{c}
+    \dot{q} \\
+    \dot{p} \\
+    \hline e_{R}
+    \end{array}\right]=\left[\begin{array}{rr|r}
+    0 & 1 & 0 \\
+    -1 & 0 & -1 \\
+    \hline 0 & 1 & 0
+    \end{array}\right]\left[\begin{array}{c}
+    \partial_q H \\
+    \partial_p H \\
+    \hline f_{R}
+    \end{array}\right],
+\end{equation}
+
+where $e_{R}=p/m$ and $f_{R}=de_{R}$. The pair $(f_R, e_R)$ is an energy-dissipating port of the damping and $d$ is the damping coefficient. Referring to \ref{eq:Hamiltonian_udho}, the system of ODEs can be expressed by
 
 \begin{equation}
     \label{eq:ODE_isothermal_damped_harmonic_oscillator}
     \begin{bmatrix}
     \dot{q}\\
     \dot{p}\\
-    \dot{s_{e}}
     \end{bmatrix}
     =
     \begin{bmatrix}
     \frac{p}{m}\\
     -\frac{q}{c}-d\frac{p}{m}\\
-    d(\frac{p^2}{m^2})\frac{1}{\theta_{o}}
-    \end{bmatrix},
+    \end{bmatrix}.
 \end{equation}
-
-where $d$ is the damping coefficient, $s_{e}$ is the entropy of the environment, $\theta_{o}$ is the environmental temperature.
-
-To investigate the dynamics of the physical system, it is common to simulate the trajectories of the dynamical system with respect to time. The following block diagram illustrates this process.
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[scale=1]{figures/dynamic simulation.pdf}
-    \caption{The process of dynamic simulation}
-    \label{fig:simulation}
-\end{figure}
-
-For simplicity, consider an undamped harmonic oscillator model. The Hamiltonian on the left in figure \ref{fig:simulation} is $H(q,p)$ in equation \ref{eq:Hamiltonian_udho}. The next block of automatic differentiation (AD) stands for a set of techniques that allow a computer program to yield the derivative of a function. Automatic differentiation uses the fact that any computer program that implements a vector-valued function could be decomposed into a sequence of basic specified operations, each of which can be easily differentiated by looking up a table. These basic partial derivatives that compute a particular term are combined into a differential form, such as gradient, Jacobian, etc. In the case of simple undamped harmonic oscillator, the output of the automatic differentiation block is the symplectic gradient $\dot{x}=(\dot{q},\dot{p})$ in the equation \ref{eq:symplectic_gradient}. In fact, this symplectic gradient is consistent with the form of a 2-dimensional ordinary differential equations system mentioned in the equation \ref{eq:ODE_system}, also see the equation \ref{eq:ODE_undamped_harmonic_oscillator}. This ODE system together with initial condition $x_{0}$ and the independent variable $t$ specifies an IVP problem (also called ODE problem in the block diagram). To evaluate the trajectories of the states, or in other words, to integrate the ODEs, it is efficient to introduce numerical methods to solve this ODE problem. For instance, the integrator block may embed a fourth order symplectic Runge–Kutta method, which integrates the symplectic 2-form $dq \wedge dp$ over a symplectic manifold. The solution of the integrator would be the time evolution of the canonical coordinates $x(t)=\left( q(t), p(t) \right)$ with respect to time in the figure \ref{fig:simulation_udho}.
-
-\clearpage
-\begin{figure}[h!]
-    \centering
-    \begin{subfigure}{1\textwidth}
-        \centering
-        \includegraphics[scale=0.8]{figures/udho_time_evolution.png}
-        \caption{Time evolution of the canonical coordinates}
-        \label{fig:simulation_udho}
-    \end{subfigure}
-    \vspace{1em}
-    \begin{subfigure}{1\textwidth}
-        \centering
-        \includegraphics[scale=0.8]{figures/udho_time_evolution_Hamiltonian.png}
-        \caption{Time evolution of the Hamiltonian}
-        \label{fig:Hamiltonian_udho}
-    \end{subfigure}
-    \caption{Time evolution of a simple undamped harmonic oscillator model}
-    \label{fig:time_evolution_udho}
-\end{figure}
-
-In the figure \ref{fig:Hamiltonian_udho}, the Hamilton is as time-invariant as one might imagine. Thus, the canonical coordinates in phase space would be an ellipse in the figure \ref{fig:phase_portrait_udho}.
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[scale=0.8]{figures/phase_portrait_canonical_coordinates.png}
-    \caption{Phase portrait of a simple undamped harmonic oscillator model}
-    \label{fig:phase_portrait_udho}
-\end{figure}
 
 
 \clearpage
@@ -473,7 +448,12 @@ A good activation function should be continuous and differentiable, such that th
 
 Sigmoid is a classical saturating function. It is common to use sigmoid as activation function when the output is expected to be probabilistic. Since the probability in the real world is always limited to the range of 0 to 1, this is consistent with the range of sigmoid.
 
-TODO: plot sigmoid
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.7]{figures/sigmoid.pdf}
+    \caption{Logistic sigmoid}
+    \label{fig:sigmoid}
+\end{figure}
 
 Another activation function similar to the sigmoid function is the tanh function:
 
@@ -484,10 +464,14 @@ Another activation function similar to the sigmoid function is the tanh function
 
 Compared to sigmoid, tanh function has the output range of -1 to 1:
 
-TODO: plot tanh
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.7]{figures/tanh.pdf}
+    \caption{Tanh}
+    \label{fig:tanh}
+\end{figure}
 
 One characteristic of the tanh function is zero-centered, while the sigmoid function is non-zero-centered. The non-zero-centered output causes a bias shift in the input of the neurons in the later layer and further slows down the convergence of gradient descent. That is the reason why the tanh function converges faster than sigmoid.
-
 
 The ReLU function (Rectified Linear Unit):
 
@@ -496,9 +480,14 @@ The ReLU function (Rectified Linear Unit):
     ReLU(x) = max(0,x).
 \end{equation}
 
-Neurons with ReLU only need to perform addition, multiplication and comparison operations, which is more efficient in computation. However, the ReLU function is still non-zero-centered, which may affect the efficiency of gradient descent. Furthermore, the use of ReLU activation functions may lead to the well-known dying ReLU problem. One may need to try other functions in ReLU family to avoid this problem.
+Neurons with ReLU only need to perform addition, multiplication and comparison operations, which is more efficient in computation. However, the ReLU function is still non-zero-centered, which may affect the efficiency of gradient descent. 
 
-TODO: plot ReLU
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.7]{figures/ReLU.pdf}
+    \caption{ReLU}
+    \label{fig:ReLU}
+\end{figure}
 
 
 \section{Neural Networks Architecture}
@@ -523,7 +512,6 @@ To clarify the principle of feedforward neural network, there are some notations
 \end{equation}
 
 In fact, the whole feedforward neural network can be seen as a function $f(\mathbf{x};\mathbf{\theta})$, where $\mathbf{x}$ is the input of the neural network and $\mathbf{\theta}$ is the set of the parameters (including weight and bias). Note that the input $\mathbf{x}$ here is the output of the neurons in the input layer, i.e., $\mathbf{x}=[x_1, ..., x_n]=\mathbf{a}^{(0)}$ and the function itself is the output of the neurons in the ouput layer, i.e., $f(\mathbf{x};\mathbf{\theta})=\mathbf{a}^{(L)}$. In general, one can use the feedforward propagation algorithm as the first step to yield initial output to compute the loss function for further optimization. The following is the algorithmic procedure for feedforward propagation:
-
 
 \clearpage
 \begin{algorithm}[h!]
@@ -581,12 +569,14 @@ Squared error loss function, also called $\mathcal{L}_{2}$ loss:
 
 The $\mathcal{L}_{1}$ and $\mathcal{L}_{2}$ loss are widely used in linear regression models to evaluate the error. In general, the $\mathcal{L}_{2}$ loss is preferred since it is more sensitive. Yet the $\mathcal{L}_{1}$ loss performs better than the $\mathcal{L}_{2}$ loss in terms of robustness, especially when there are some outliers in the data.
 
-In addition to the mentioned loss function, it is worth noting one more concept in statistics: the mean squared error (MSE). In machine learning, the following errors are commonly used as the target function for the optimization:
+In addition to the mentioned loss function, it is worth noting one concept in statistics: the mean squared error (MSE). In machine learning, MSE is commonly used as the target function for the optimization:
 
 \begin{equation}
     \label{eq:MSE}
-    MSE = \frac{1}{N} \sum\nolimits_{n=1}^N \mathcal{L}_{2}\left( y_n,f(\mathbf{x}_n;\mathbf{\theta}) \right) = \frac{1}{N} \sum\nolimits_{n=1}^N (y_n-f(\mathbf{x}_n;\mathbf{\theta}))^2
+    MSE = \frac{1}{N} \sum\nolimits_{n=1}^N \mathcal{L}_{2}\left( y_n,f(\mathbf{x}_n;\mathbf{\theta}) \right) = \frac{1}{N} \sum\nolimits_{n=1}^N (y_n-f(\mathbf{x}_n;\mathbf{\theta}))^2.
 \end{equation}
+
+
 \subsection{Gradient Descent}
 Gradient Descent (GD) is the most usual optimization algorithm in machine learning. The idea is to iterate the following procedure:
 
@@ -700,10 +690,13 @@ The backpropagation algorithm requires initial parameters $\theta_{0}$, which is
     \end{algorithmic}
 \end{algorithm}
 
-The regularization parameter $\lambda$ is used to prevent overfitting. The reason for overfitting is that some of the parameters are way too large. Adding a regularization term can restrict the parameters in order to prevent overfitting. Note that the regularization parameter $\lambda$ may also appear in the step of computing the gradient on the weight and bias matrices in some other backpropagation algorithms.
+As can be seen, backpropagation involves the calculation of derivatives in computer programs, and automatic differentiation is a powerful tool in this regard.
+
+\subsection{Automatic Differentiation}
+Automatic differentiation (AD) is a set of techniques that allow a computer program to yield the derivative of a function. Automatic differentiation uses the fact that any computer program that implements a vector-valued function could be decomposed into a sequence of basic specified operations, each of which can be easily differentiated by looking up a table. These basic partial derivatives that compute a particular term are combined into a differential form, such as gradient, Jacobian, etc.
 
 \subsection{Adam Algorithm}
-As can be seen from the backpropagation algorithm \ref{alg:BP_alg} above, the gradient descent algorithm is actually applied in the step of updating the parameters. So are there any other algorithms to update the parameters besides the gradient descent algorithm? The answer is yes. For example, one can use the momentum method to replace the gradient $\nabla \mathcal{L}(\cdot)$ with momenta and the RMSProp algorithm (Root Mean Squared Propagation algorithm) \cite{tieleman2012divide} to update the learning rate $\alpha$. An algorithms that combines the ideas of the momentum method and the RMSProp algorithm is the Adam algorithms (Adaptive Moment Estimation Algorithm) \cite{kingma2014adam}. In practice, the Adam algorithm shows better performance, i.e., fewer parameters to tune and resulting in higher computational efficiency.
+As can be seen from the process of backpropagation above, the gradient descent algorithm is actually applied in the step of updating the parameters. So are there any other algorithms to update the parameters besides the gradient descent algorithm? The answer is yes. For example, one can use the momentum method to replace the gradient $\nabla \mathcal{L}(\cdot)$ with momenta and the RMSProp algorithm (Root Mean Squared Propagation algorithm) \cite{tieleman2012divide} to update the learning rate $\alpha$. An algorithms that combines the ideas of the momentum method and the RMSProp algorithm is the Adam algorithms (Adaptive Moment Estimation Algorithm) \cite{kingma2014adam}. In practice, the Adam algorithm shows better performance, i.e., fewer parameters to tune and resulting in higher computational efficiency.
 
 The Adam algorithm uses mini-batch gradient descent \cite{bottou2010large}. Consider a neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$, a training set $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{n=1}^{N}$. Mini-batch gradient descent algorithm splits the training set $\mathcal{D}$ into a sequence of subsets (or mini batches) $\mathcal{S}_t=\{(\mathbf{x}_{m}, \mathbf{y}_{m}) \}_{m=1}^{M}$ for each iteration $t$, where $M$ is the batch size of one of the mini batches.
 
