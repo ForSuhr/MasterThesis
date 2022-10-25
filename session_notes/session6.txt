@@ -1,0 +1,26 @@
+x = [q, p] ∈ R^(2n) ∈ X
+q ∈ R^n
+p ∈ R^n
+
+symplectic vector space is always even dimensional
+dimension(X) = 2n
+
+# (co)symplectic matrix
+# a skew-symmetric, non-degenerate (2n) x (2n) matrix
+# makes a R^(2n) into a symplectic vector space
+J = [0 1;
+    -1 0]
+
+# Hamiltonian's equations
+dx/dt = J * dH/dx
+
+# skew-symmetry of J implies the conservation of the Hamiltonian
+dH/dt = (dH/dx)' * dx/dt = (dH/dx)' * J * dH/dx = 0
+
+(a' * M * b) = (a' * M * b)' = (b' * M' * a) = -(b' * M * a)
+J' = -J
+(a' * J * a) = -(a' * J * a) = 0
+
+# or equivalently
+dq/dt = +dH/dp
+dp/dt = -dH/dq
