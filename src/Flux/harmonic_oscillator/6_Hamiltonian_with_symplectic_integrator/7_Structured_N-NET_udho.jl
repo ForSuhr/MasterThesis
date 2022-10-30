@@ -68,10 +68,10 @@ rng = Random.default_rng()
 neural_params, state = Lux.setup(rng, H_NET)
 
 function dudt(u, ps, t)
-    q, p = u
-    m, c = init_params
+    # q, p = u
+    # m, c = init_params
     # du = u
-    du = [p/m, hamiltonian_forward(H_NET, ps, state, u)[2]]
+    du = hamiltonian_forward(H_NET, ps, state, u)
     # du[1] = hamiltonian_forward(H_NET, ps, state, u)[1]
     # du[2] = hamiltonian_forward(H_NET, ps, state, u)[2]
     # du[1] = p/m
@@ -86,13 +86,15 @@ function hamiltonian_forward(NN, ps, st, x)
     #H = Flux.gradient(x -> sum(NN(x, ps, st)[1]), x)[1]
     #H = ReverseDiff.gradient(x -> sum(NN(x, ps, st)[1]), x)
     #H = ForwardDiff.gradient(x -> sum(NN(x, ps, st)[1]), x) 
-    ∇H = FiniteDiff.finite_difference_gradient(x -> sum(NN(x, ps, st)[1]), x)
+    #∇H = FiniteDiff.finite_difference_gradient(x -> sum(NN(x, ps, st)[1]), x)
+    ∇H = FiniteDiff.finite_difference_gradient(x -> sum(NN(x, ps, st)[1]) + x[1]^2/(2 * init_params[1]), x)
     return return cat(∇H[2, :], -∇H[1, :], dims=1)
 end
 
 ∇H = FiniteDiff.finite_difference_gradient(x -> sum(H_NET(x, neural_params, state)[1]), u0)
+∇H = FiniteDiff.finite_difference_gradient(x -> sum(H_NET(x, neural_params, state)[1]) + x[1]^2/(2 * init_params[1]), u0)
 # symplectic gradient of H_NET
-X_H = hamiltonian_forward(H_NET, neural_params, state, u0)[2]
+X_H = hamiltonian_forward(H_NET, neural_params, state, u0)
 
 
 output = prob_neuralode(u0, neural_params, state)[1]
@@ -125,6 +127,15 @@ callback = function(p, loss, pred_data)
         return true
       end
 end
+
+train_loader = Flux.Data.DataLoader((ode_data, t), batchsize = 20)
+numEpochs = 300
+l1 = loss_adjoint(pp, train_loader.data[1], train_loader.data[2])[1]
+
+optfun = OptimizationFunction((θ, p, batch, time_batch) -> loss_adjoint(θ, batch, time_batch), Optimization.AutoZygote())
+optprob = OptimizationProblem(optfun, pp)
+using IterTools: ncycle
+res1 = Optimization.solve(optprob, Optimisers.ADAM(0.05), ncycle(train_loader, numEpochs), callback = callback)
 
 ## first round of training
 #adtype = Optimization.AutoZygote()

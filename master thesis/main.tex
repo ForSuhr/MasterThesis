@@ -980,8 +980,11 @@ Before introducing O-NET and H-NET, recall that a Neural ODE \ref{eq:Neural_ODE}
 For better understanding, We will use Julia code to explain the central ideas of O-NET and N-NET.
 
 \subsection{O-NET}
-O-NET is a neural network in a Neural ODE, which can be denoted by $f_{\theta}$. We can construct a 2-input and 2-output O-NET via:
+O-NET is a neural network in a Neural ODE, which can be denoted by $f_{\theta}$. The training of an O-NET can be split into four steps.
 
+\textbf{Step 1}: construct a neural network
+
+ We can construct a 2-input and 2-output O-NET via a deep learning framework Flux.jl or Lux.jl (sometimes a mix of both may be needed).
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # Dense: construct a layer. For instance, Dense(2, 40, tanh) constructs a 2-input and 40-output layer with the activation function tanh.
     # Chain: connect layers.
@@ -992,6 +995,32 @@ O-NET is a neural network in a Neural ODE, which can be denoted by $f_{\theta}$.
                   Dense(40, 2))
 \end{minted}
 
+If we use both Flux.jl and Lux.jl simultaneously, then it is advisable to specify them explicitly, as they both contain the chain and dense functions. However, the ways of generating initial parameters and obtaining output are different in both.
+
+In Flux:
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    O_NET = Flux.Chain(Flux.Dense(2, 40, tanh),
+                       Flux.Dense(40, 40, tanh),
+                       Flux.Dense(40, 2))
+    # ps: the initial parameters of the neural network. 
+    # re: a method to reconstruct the neural network with the given parameters ps and input x, e.g., re(ps)(x) is the output of the neural network with the given parameters.
+    ps, re = Flux.destructure(NN)
+\end{minted}
+
+In Lux:
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    O_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
+                      Lux.Dense(40, 40, tanh),
+                      Lux.Dense(40, 2))
+    # Generate random number
+    rng = Random.default_rng()
+    # ps: the initial parameters of the neural network.
+    # st: the state of the neural network. It stores information (layers number, neurons number, activation function etc.) for reconstructing the neural network. For example, the output of the neural network with the given parameters is O_NET(x, ps, st)
+    ps, st = Lux.setup(rng, O_NET)
+\end{minted}
+
+\textbf{Step 2}: construct an IVP
+
 Suppose that $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{z}_{t}$ are some discrete points from an observed trajectory. Given an initial state $\mathbf{z}_{0}=[0.0, 1.0]$ and time steps $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, we can define an IVP
 
 \begin{equation}
@@ -1001,7 +1030,7 @@ Suppose that $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{
 
 The output of $f_{\theta}$ at a fixed time $t$ estimates the time derivative of coordinates $\dot{\mathbf{z}}_{t}$ such that $\dot{ \mathbf{z}}_{t} = f_{\theta}(\mathbf{z}_t)$. In the case of Hamiltonian systems, let $\mathbf{z}_{t} = [q_{t}, p_{t}]$, we can rewrite the ODE as $[\dot q_{t}, \dot p_{t}] = f_{\theta}(q_t, p_t) = \text{O\_NET}(\mathbf{z_t}, \theta)$, $\mathbf{z}_{0}= [q_{0}, p_{0}] = [0.0, 1.0]$.
 
-We can also construct the IVP in code:
+We can also construct this IVP in code:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # dz is the time derivative of z at a fixed time
@@ -1018,7 +1047,9 @@ We can also construct the IVP in code:
     IVP = SciMLBase.ODEProblem(ODE, initial_state, time_span, θ)
 \end{minted}
 
-To obtain the trajectories of the coordinates $q_t$ and $p_t$, we can use an ODE solver to yield the solution of the IVP \ref{eq:O-NET_IVP}
+\textbf{Step 3}: solve the IVP
+
+To obtain the estimate of the coordinates trajectories $q_t$ and $p_t$, we can use an ODE solver to yield the solution of the IVP \ref{eq:O-NET_IVP}
 
 \begin{equation}
     \label{eq:O-NET_solver}
@@ -1031,12 +1062,43 @@ To solve the IVP \ref{eq:O-NET_IVP} in Julia code, we use the package CommonSolv
     # Select a numerical method to solve the IVP
     numerical_method = ImplicitMidpoint()
     
-    # Select the adjoint method to computer the gradient of the loss with respect to the parameters. ReverseDiffVJP is a callable function in the automatic differentiation package ReverseDiff.jl. It allows us to compute the vector-Jacobian products efficiently. Please refer to the Neural ODE chapter.
+    # Select the adjoint method to computer the gradient of the loss with respect to the parameters. ReverseDiffVJP is a callable function in the automatic differentiation package ReverseDiff.jl. It allows us to compute the vector-Jacobian products (VJP) efficiently. For more details about adjoint method, please refer to the Neural ODE chapter.
     sensitivity_analysis = InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))
     
-    # Use the ODE Solver CommonSolve.solve to yield solution. And the solution is the trajectories.
+    # Use the ODE Solver CommonSolve.solve to yield solution. And the solution is the estimate of the coordinates trajectories.
     solution = CommonSolve.solve(O_NET, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
+    # Convert the solution into a 2D-array
+    pred_data = Array(solution)
 \end{minted}
+
+\textbf{Step 4}: train the neural network
+
+The "pred\_data" in step 3 is the estimate of the coordinates trajectories $\{ \hat{z_{t}} \}_{t=1}^{T}$. To train the neural network model, we define a loss function
+
+\begin{equation}
+    \label{eq:loss_O-NET}
+    \mathcal{L} = \lVert \mathbf{z}_{t} - \hat{\mathbf{z}_{t}} \rVert_{2},
+\end{equation}
+
+where $\hat{\mathbf{z}_{t}}$ is the estimate at a fixed time $t$ and $\mathbf{z}_{t}$ is assumed to be a point from observation. The goal of the optimization is to minimize the error between them.
+
+However, in code, instead of using real observations we use the system of ODEs to generate and add some Gaussian noise to simulate them. For instance, the ODE data of an undamped harmonic oscillator can be generated according to the system of ODEs \ref{eq:ODE_undamped_harmonic_oscillator}:
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    function ODEfunc_udho(dz, z, params, t)
+      q, p = z
+      m, c = params
+      dz[1] = p/m
+      dz[2] = -q/c
+    end
+    # params = [m, c]
+    params = [2, 1] 
+    prob = ODEProblem(ODEfunc_udho, u0, tspan, params)
+    ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = tsteps))
+    # σ2 = 0.01. "add_gauss" is a function from the package Noise.jl.
+    ode_data = add_gauss(ode_data, 0.01)
+\end{minted}
+
 
 
 \subsection{N-NET}
@@ -1048,14 +1110,8 @@ N-NET is a neural network $\mathcal{H}_{\theta}$ that learns the Hamiltonian. Th
 \end{equation}
 
 
-Both O-NET and N-NET are trained by optimizing the loss function
-
-\begin{equation}
-    \label{eq:loss_O-NET}
-    \mathcal{L} = \lVert \mathbf{z}_{t} - \hat{\mathbf{z}_{t}} \rVert_{2}.
-\end{equation}
-
-Note that a subtle difference between N-NET and HNNs is that HNNs use the loss function $\mathcal{L}_{HNN} = \lVert \dot z_{t} - X_{\mathcal{H}_{\theta}} \rVert_{2}$. It means that N-NET learns dynamics from the coordinates rather than from the time derivative of coordinates.
+\subsection{HNNs}
+A subtle difference between N-NET and HNNs is that HNNs use the loss function $\mathcal{L}_{HNN} = \lVert \dot z_{t} - X_{\mathcal{H}_{\theta}} \rVert_{2}$. It means that N-NET learns dynamics from the coordinates rather than from the time derivative of coordinates.
 
 
 \section{Structured O-NET}
