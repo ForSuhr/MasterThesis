@@ -3,6 +3,8 @@ using DiffEqFlux, DifferentialEquations, Plots
 using Optimization, OptimizationFlux
 using BenchmarkTools
 using Noise
+using IterTools: ncycle
+using ReverseDiff
 
 ## define ODEs
 function ODEfunc_udho(du,u,params,t)
@@ -35,28 +37,29 @@ plt = plot(q_ode_data, p_ode_data, lw=3, label="Ground truth")
 NN = Flux.Chain(Flux.Dense(2, 40, tanh),
            Flux.Dense(40, 40, tanh),
            Flux.Dense(40, 2))
-#prob_neuralode = DiffEqFlux.NeuralODE(NN, tspan, ImplicitMidpoint(), tstops = tsteps)
-prob_neuralode = DiffEqFlux.NeuralODE(NN, tspan, Midpoint(), saveat = tsteps)
 ### check the parameters prob_neuralode.p in prob_neuralode
 neural_params = prob_neuralode.p
 
 ## Array of predictions from NeuralODE with parameters p starting at initial condition x0
-function predict_neuralode(p)
-    Array(prob_neuralode(u0, p))
+function predict_neuralode(p, timesteps)
+  prob_neuralode = DiffEqFlux.NeuralODE(NN, tspan, Midpoint(), saveat = timesteps)
+  Array(prob_neuralode(u0, p))
 end
 
 ## L2 loss function
-function loss_neuralode(p)
-    pred_data = predict_neuralode(p) # solve the Neural ODE with adjoint method
-    loss = sum(abs2, ode_data .- pred_data)
+function loss_neuralode(p, batch_data, timesteps)
+    pred_data = predict_neuralode(p, timesteps)
+    loss = sum(abs2, batch_data .- pred_data)
     return loss ,pred_data
 end
 
 
 ## Callback function to observe training
-callback = function(p, loss, pred_data)
-    ### plot Ground truth and prediction data
-    println(loss)
+callback = function(params, loss, pred_data)
+    prob_neuralode = DiffEqFlux.NeuralODE(NN, tspan, Midpoint(), saveat = tsteps)
+    pred_data = Array(prob_neuralode(u0, params))
+    total_loss = sum(abs2, ode_data .- pred_data)
+    println(total_loss)
     if loss > 0.001 
         return false
       else
@@ -64,17 +67,22 @@ callback = function(p, loss, pred_data)
       end
 end
 
+# Use mini-batch gradient descent
+dataloader = Flux.Data.DataLoader((ode_data, tsteps), batchsize = 100)
+loss_neuralode(neural_params, dataloader.data[1], dataloader.data[2])
+epochs = 10
+
 ## first round of training
 adtype = Optimization.AutoZygote()
-optf = Optimization.OptimizationFunction((x,p) -> loss_neuralode(x), adtype)
+optf = Optimization.OptimizationFunction((θ, ps, batch_data, timesteps) -> loss_neuralode(θ, batch_data, timesteps), adtype)
 optprob1 = Optimization.OptimizationProblem(optf, neural_params)
-@time res1 = Optimization.solve(optprob1, ADAM(0.002), callback = callback, maxiters = 10)
+@time res1 = Optimization.solve(optprob1, Optimisers.ADAM(0.01), ncycle(dataloader, epochs), callback = callback)
 ## second round of training
 optprob2 = Optimization.OptimizationProblem(optf, res1.u)
-@time res2 = Optimization.solve(optprob2, ADAM(0.0005), callback = callback, maxiters = 50)
+@time res2 = Optimization.solve(optprob2, Optimisers.ADAM(0.001), ncycle(dataloader, epochs), callback = callback)
 ## third round of training
 optprob3 = Optimization.OptimizationProblem(optf, res2.u)
-@time res3 = Optimization.solve(optprob3, ADAM(0.0001), callback = callback, maxiters = 100)
+@time res3 = Optimization.solve(optprob3, Optimisers.ADAM(0.0001), ncycle(dataloader, epochs), callback = callback)
 params_O_NET = res3.u
 
 # repeat training
@@ -83,6 +91,7 @@ optprob4 = Optimization.OptimizationProblem(optf, params_O_NET)
 params_O_NET = res4.u
 
 ## check phase portrait
+prob_neuralode = DiffEqFlux.NeuralODE(NN, tspan, Midpoint(), saveat = timesteps)
 trajectory_estimate_O_NET = Array(prob_neuralode(u0, params_O_NET))
 plt = plot(q_ode_data, p_ode_data, xlims=(-2,3), ylims=(-2,3), lw=5, label="Ground truth", linestyle=:solid, xlabel="q", ylabel="p")
 plt = plot!(trajectory_estimate_O_NET[1,:], trajectory_estimate_O_NET[2,:], lw=5, label = "O-NET", linestyle=:dashdot)

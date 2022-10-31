@@ -53,6 +53,8 @@
 \usepackage{minted}
 \usepackage{newunicodechar}
 \newunicodechar{θ}{$\theta$}
+\newunicodechar{α}{$\alpha$}
+\newunicodechar{β}{$\beta$}
 
 
 %%%%%%%%%%%
@@ -544,22 +546,41 @@ In fact, the whole feedforward neural network can be seen as a function $f(\math
 \begin{algorithm}[h!]
 \caption{The feedforward propagation algorithm}
 \label{alg:feedforward_alg}
-    \begin{algorithmic}
+    \begin{algorithmic}[1]
     \Require neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$ with $l$th layer
     \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias vector $\mathbf{b} \in \mathbb{R}^{M_{l}}$
     \Require activation function $g(z)$
     \Require input $\mathbf{x}$
     \State $\mathbf{a}^{(0)}=\mathbf{x}$ \Comment{The output of the input layer}
-    \For{$n=1...N$}
-        \For{$l=1...L$}
-            \State $\mathbf{z}^{(l)} \gets \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$ \Comment{Compute the input of a neuron in $l$th layer}
-            \State $\mathbf{a}^{(l)} \gets g_{l}(\mathbf{z}^{(l)})$  \Comment{Compute the output of a neuron in $l$th layer}
-            \State \Comment{See the equation \ref{eq:input_output_neuron}}
-        \EndFor
+    \For{$l=1...L$}
+        \State $\mathbf{z}^{(l)} \gets \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$ \Comment{Compute the input of a neuron in $l$th layer}
+        \State $\mathbf{a}^{(l)} \gets g_{l}(\mathbf{z}^{(l)})$  \Comment{Compute the output of a neuron in $l$th layer}
+        \State \Comment{See equation \ref{eq:input_output_neuron}}
     \EndFor
     \State \Return $f(\mathbf{x};\mathbf{W},\mathbf{b})=\mathbf{a}^{(L)}$ \Comment{Return the initial output}
     \end{algorithmic}
 \end{algorithm}
+
+We inplement the feedforward progagation in code:
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    # 3 neurons in this layer and 2 neurons in the next layer, generate random parameters
+    W1 = rand(2, 3)
+    b1 = rand(2)
+    # 2 neurons in this layer and 4 neurons in the next layer, generate random parameters
+    W2 = rand(4, 2)
+    b2 = rand(4)
+    
+    # Input
+    a1 = rand(3)
+    # The first layer
+    z2 = (W1 * a1) .+ b1
+    a2 = sigmoid(z2)
+    # The second layer
+    z3 = (W2 * a2) .+ b2
+    a3 = sigmoid(z3)
+
+\end{minted}
 
 \section{Optimization}
 An optimization algorithm is ordinarily an algorithm that seeks the optimum. In general, finding the global optimum on a convex objective function is the simplest problem. However, if the objective function is unfortunately a non-convex function, then one has to settle for second best, i.e., seeking the local optimum.
@@ -689,35 +710,91 @@ The algorithm \ref{alg:BP_alg} presents the gradient descent training procedure 
 \caption{Backpropagation in Stochastic Gradient Descent}
 The backpropagation algorithm requires initial parameters $\theta_{0}$, which is computed by the feedforward propagation algorithm \ref{alg:feedforward_alg}.
 \label{alg:BP_alg}
-    \begin{algorithmic}
+    \begin{algorithmic}[1]
     \Require neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$ with $l$th layer
     \Require training set $\mathcal{D}=\{(\mathbf{x}_{n}, \mathbf{y}_{n})\}_{N}^{n=1}$
     \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias vector $\mathbf{b} \in \mathbb{R}^{M_{l}}$, initial parameters $\theta_{0}$
     \Require activation function $g(z)$
     \Require regularization parameter $\lambda$
-    \Ensure $\nabla \mathcal{L}\left( y_{n},f(\mathbf{x};\mathbf{\theta}) \right) = 0$
-    \While{$\nabla \mathcal{L}\left( y_{n},f(\mathbf{x};\mathbf{\theta}) \right) \neq 0$}
-    \For{$n=1...N$}
-        \For{$l=1...L$}
-            \State $\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$ \Comment{Compute the input of neurons in the $l$th layer}
-            \State $\mathbf{a}^{(l)} = g_{l}(\mathbf{z}^{(l)})$ \Comment{Compute the output of neurons in the $l$th layer}
-            \State \Comment{See the equation \ref{eq:input_output_neuron}}
-            \State $\delta^{(l)} = (\mathbf{W}^{(l+1)})^T \delta^{(l+1)} \odot g_{l}'(\mathbf{z}^{(l)})$ \Comment{Compute the error in the $l$th layer}
-            \State \Comment{See the equation \ref{eq:error_in_one_layer}}
-            \State $\frac{\partial \mathcal{L}\left( y_n,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{W}^{(l)}} = \delta^{(l)} (\mathbf{a}^{(l-1)})^T$ \Comment{Compute the gradient on the weight matrix}
-            \State $\frac{\partial \mathcal{L}\left( y_n,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{b}^{(l)}} = \delta^{(l)}$ \Comment{Compute the gradient on the bias vector}
-            \State \Comment{See the equation \ref{eq:Chain_rule_partial_deducted}}
-            \State $\mathbf{W}^{(l+1)} \gets  \mathbf{W}^{(l)}-\alpha (\delta^{(l)} (\mathbf{a}^{(l-1)})^T + \lambda \mathbf{W}^{(l)})$ \Comment{Update the weight matrix}
-            \State $\mathbf{b}^{(l+1)} \gets  \mathbf{b}^{(l)}-\alpha \delta^{(l)}$ \Comment{Update the bias vector}
-            \State \Comment{See the equation \ref{eq:GD}}
-        \EndFor
+    \Require learning rate $\alpha$
+
+    \For{$l=1...L$}
+        \State $\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$ \Comment{Compute the input of neurons in the $l$th layer}
+        \State $\mathbf{a}^{(l)} = g_{l}(\mathbf{z}^{(l)})$ \Comment{Compute the output of neurons in the $l$th layer}
+        \State \Comment{See equation \ref{eq:input_output_neuron}}
+        \State $\delta^{(l)} = (\mathbf{W}^{(l+1)})^T \delta^{(l+1)} \odot g_{l}'(\mathbf{z}^{(l)})$ \Comment{Compute the error in the $l$th layer}
+        \State \Comment{See equation \ref{eq:error_in_one_layer}}
+        \State $\frac{\partial \mathcal{L}\left( y_n,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{W}^{(l)}} = \delta^{(l)} (\mathbf{a}^{(l-1)})^T$ \Comment{Compute the gradient on the weight matrix}
+        \State $\frac{\partial \mathcal{L}\left( y_n,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{b}^{(l)}} = \delta^{(l)}$ \Comment{Compute the gradient on the bias vector}
+        \State \Comment{See equation \ref{eq:Chain_rule_partial_deducted}}
+        \State $\mathbf{W}^{(l+1)} \gets  \mathbf{W}^{(l)}-\alpha (\delta^{(l)} (\mathbf{a}^{(l-1)})^T + \lambda \mathbf{W}^{(l)})$ \Comment{Update the weight matrix}
+        \State $\mathbf{b}^{(l+1)} \gets  \mathbf{b}^{(l)}-\alpha \delta^{(l)}$ \Comment{Update the bias vector}
+        \State \Comment{See equation \ref{eq:GD}}
     \EndFor
-    \EndWhile
     \State \Return $\mathbf{W}, \mathbf{b}$ \Comment{Return the parameters}
     \end{algorithmic}
 \end{algorithm}
 
-As can be seen, backpropagation involves the calculation of derivatives in computer programs, and automatic differentiation is a powerful tool in this regard.
+We can also inplement this algorithm in Julia code. Firstly, we generate random parameters and perform the feedforward propagation with reference to the code of algorithm \ref{alg:feedforward_alg}(the same functionality as the code line 2 and 3 in \ref{alg:BP_alg}):
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    W = rand(2, 3)
+    b = rand(2)
+    
+    a1 = rand(3)
+
+    z2 = (W1 * a1) .+ b1
+    a2 = sigmoid(z2)
+\end{minted}
+
+The loss function to be optimized can be defined by:
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    # Generate random parameters
+    W = rand(2, 3)
+    b = rand(2)
+    # Perform the feedforward propagation
+    predict(x) = sigmoid((W * x) .+ b)
+    # Define the loss function
+    loss(x, y) = mean(abs2, (predict(x) .- y))
+    # Compute the loss
+    loss(rand(3), rand(2))
+\end{minted}
+
+To optimize the loss function, it is necessary to compute the gradient of the loss with respect to the parameters $\frac{\partial \mathcal{L}\left( y_{n},f(\mathbf{x_{n}};\mathbf{\theta}) \right)}{\partial \theta}$(the same functionality as the code line 5, 7 and 8 in \ref{alg:BP_alg}):
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    # "Flux" is a deep learning framework in Julia language. The function "params" creates a trainable parameters object.
+    θ = Flux.params(W, b)
+    # Compute the gradient of the loss. "Zygote" is an automatic differentiation package.
+    gs = Zygote.gradient(() -> loss(x, y), θ)
+    # Compute the gradient of the loss with respect to the parameters
+    gs[θ]
+\end{minted}
+
+The last step is to update the parameters(the same functionality as the code line 10 and 11 in \ref{alg:BP_alg}):
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    # The learning Rate
+    α = 0.1
+    # Update the parameters with the given learning rate and optimization algorithm
+    for θ in (W, b)
+        θ .-= α * gs[θ]
+    end
+\end{minted}
+
+Another alternative is to use the function "Flux.Optimise.update!":
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    # The optimization algorithm
+    opt = Flux.Descent(0.1)
+    # Update the parameters with the given learning rate and optimization algorithm
+    for θ in (W, b)
+        Flux.Optimise.update!(opt, θ, gs[θ])
+    end
+\end{minted}
+
+As can be seen, backpropagation involves the calculation of gradients in computer programs, and automatic differentiation is a powerful tool in this regard.
 
 \subsection{Automatic Differentiation}
 Automatic differentiation (AD) is a set of techniques that allow a computer program to yield the derivative of a function. Automatic differentiation uses the fact that any computer program that implements a vector-valued function could be decomposed into a sequence of basic specified operations, each of which can be easily differentiated by looking up a table. These basic partial derivatives that compute a particular term are combined into a differential form, such as gradient, Jacobian, etc.
@@ -769,43 +846,58 @@ where $\mathbf{g_t}$ stands for the gradient of the loss function with respect t
 \clearpage
 \begin{algorithm}[h!]
 \caption{The training procedure of the Adam algorithm}
-The Adam algorithm also requires initial parameters $\theta_{0}$, which is computed by the feedforward propagation algorithm \ref{alg:feedforward_alg}. The decay rates $\beta_1$ and $\beta_2$ should be within the range of $[0,1)$, f.e., $\beta_1=0.9$ and $\beta_2=0.99$. The learning rate $\alpha$ is recommended to be 0.001. And the very small constant $\epsilon$ is set to $10^{-8}$.
+The decay rates $\beta_1$ and $\beta_2$ should be within the range of $[0,1)$, f.e., $\beta_1=0.9$ and $\beta_2=0.99$ and the learning rate $\alpha$ is recommended to be 0.001. And the very small constant $\epsilon$ is set to $10^{-8}$.
 \label{alg:Adam_alg}
-    \begin{algorithmic}
+    \begin{algorithmic}[1]
     \Require neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$ with $l$th layer
     \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias vector $\mathbf{b} \in \mathbb{R}^{M_{l}}$, initial parameters $\theta_{0}$
     \Require activation function $g(z)$
     \Require decay rate $\beta_1$ and $\beta_2$
     \Require learning rate $\alpha$
     \Require constant $\epsilon$
-    \Ensure $\nabla \mathcal{L}\left( y_{m},f(\mathbf{x};\mathbf{\theta}) \right) = 0$
-    \While{$\nabla \mathcal{L}\left( y_{m},f(\mathbf{x};\mathbf{\theta}) \right) \neq 0$}
-    \For{$m=1...M$}
+    \For{$m=1...M$} \Comment{Iterate all elements in the current mini-batch}
         \For{$l=1...L$}
             \State $\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$ \Comment{Compute the input of neurons in the $l$th layer}
             \State $\mathbf{a}^{(l)} = g_{l}(\mathbf{z}^{(l)})$ \Comment{Compute the output of neurons in the $l$th layer}
-            \State \Comment{See the equation \ref{eq:input_output_neuron}}
+            \State \Comment{See equation \ref{eq:input_output_neuron}}
             \State $\delta^{(l)} = (\mathbf{W}^{(l+1)})^T \delta^{(l+1)} \odot g_{l}'(\mathbf{z}^{(l)})$ \Comment{Compute the error in the $l$th layer}
-            \State \Comment{See the equation \ref{eq:error_in_one_layer}}
+            \State \Comment{See equation \ref{eq:error_in_one_layer}}
             \State $\frac{\partial \mathcal{L}\left( y_m,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{W}^{(l)}} = \delta^{(l)} (\mathbf{a}^{(l-1)})^T$ \Comment{Compute the gradient on the weight matrix}
             \State $\frac{\partial \mathcal{L}\left( y_m,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{b}^{(l)}} = \delta^{(l)}$ \Comment{Compute the gradient on the bias vector}
-            \State \Comment{See the equation \ref{eq:Chain_rule_partial_deducted}}
+            \State \Comment{See equation \ref{eq:Chain_rule_partial_deducted}}
         \EndFor
     \EndFor
-    \State $\mathbf{g_t} \gets \frac{1}{M} \sum\nolimits_{m=1}^M \nabla \mathcal{L}\left( y_{m},f(\mathbf{x};\mathbf{\theta}) \right)$ \Comment{Compute the mean gradient, see the equation \ref{eq:mean_gradient}}
+    \State $\mathbf{g_t} \gets \frac{1}{M} \sum\nolimits_{m=1}^M \nabla \mathcal{L}\left( y_{m},f(\mathbf{x};\mathbf{\theta}) \right)$ \Comment{Compute the mean gradient, see equation \ref{eq:mean_gradient}}
     \State $s_t \gets \beta_1 s_{t-1} + (1-\beta_1) \mathbf{g_t}$ \Comment{Compute the fist moment estimate}
     \State $r_t \gets \beta_2 r_{t-1} + (1-\beta_2) \mathbf{g_t} \odot \mathbf{g_t}$ \Comment{Compute the second moment estimate}
-    \State \Comment{See the equation \ref{eq:moment_estimate}}
+    \State \Comment{See equation \ref{eq:moment_estimate}}
     \State $\hat{s_t} \gets \frac{s_t}{1-\beta_1^t}$ \Comment{Correct the bias}
     \State $\hat{r_t} \gets \frac{r_t}{1-\beta_2^t}$ \Comment{Correct the bias}
-    \State \Comment{See the equation \ref{eq:correct_moment_estimate}}
+    \State \Comment{See equation \ref{eq:correct_moment_estimate}}
     \State $\theta_{t+1} \gets \theta_{t} - \alpha \frac{\hat{s}}{\sqrt{\hat{r}} + \epsilon}$ \Comment{Update the parameters}
-    \State \Comment{See the equation \ref{eq:Adam_GD}}
-    \EndWhile
+    \State \Comment{See equation \ref{eq:Adam_GD}}
     \State \Return $\mathbf{W}, \mathbf{b}$ \Comment{Return the parameters}
     \end{algorithmic}
 \end{algorithm}
 
+The inplementation of Adam algorithm is similar to the algorithm \ref{alg:BP_alg}. However, the Adam algorithm uses mini-batch gradient descent:
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    # The ADAM algorithm with the learning rate α=0.01 and decay rates β1=0.9, β2=0.99.
+    opt = Flux.Optimise.ADAM(0.01, (0.9, 0.99))
+    # Construct a function to compute the gradients
+    θ = Flux.params(W, b)
+    gs(x, y) = Zygote.gradient(() -> loss(x, y), θ)
+    # Construct a dataloader. "dataloader" is an iterable object, which yields a batch of data with the specified batchsize in each iteration. For instance, now we have 1000 points in the training set (x, y). A dataloader with the given batchsize 10 will generate only 10 points in each iteration.
+    dataloader = Flux.Data.DataLoader((x, y), batchsize = 10)
+
+    # Update the parameters with the given learning rate and optimization algorithm
+    for (x, y) in dataloader
+        for θ in (W, b) 
+            Flux.Optimise.update!(opt, θ, gs(x, y)[θ])
+        end
+    end
+\end{minted}
 
 \clearpage
 \chapter{Neural ODE}
@@ -980,11 +1072,11 @@ Before introducing O-NET and H-NET, recall that a Neural ODE \ref{eq:Neural_ODE}
 For better understanding, We will use Julia code to explain the central ideas of O-NET and N-NET.
 
 \subsection{O-NET}
-O-NET is a neural network in a Neural ODE, which can be denoted by $f_{\theta}$. The training of an O-NET can be split into four steps.
+O-NET is a neural network in a Neural ODE, which can be denoted by $f_{\theta}$. The training of an O-NET can be split into five steps.
 
 \textbf{Step 1}: construct a neural network
 
- We can construct a 2-input and 2-output O-NET via a deep learning framework Flux.jl or Lux.jl (sometimes a mix of both may be needed).
+ We can construct a 2-input and 2-output O-NET via the deep learning framework Flux.jl or Lux.jl.
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # Dense: construct a layer. For instance, Dense(2, 40, tanh) constructs a 2-input and 40-output layer with the activation function tanh.
     # Chain: connect layers.
@@ -995,7 +1087,7 @@ O-NET is a neural network in a Neural ODE, which can be denoted by $f_{\theta}$.
                   Dense(40, 2))
 \end{minted}
 
-If we use both Flux.jl and Lux.jl simultaneously, then it is advisable to specify them explicitly, as they both contain the chain and dense functions. However, the ways of generating initial parameters and obtaining output are different in both.
+If we use both Flux.jl and Lux.jl simultaneously (sometimes a mix of both may be needed), then it is advisable to specify them explicitly, as they both contain chain and dense functions under the same name. However, the ways of generating initial parameters and obtaining output are different in both.
 
 In Flux:
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
@@ -1003,7 +1095,7 @@ In Flux:
                        Flux.Dense(40, 40, tanh),
                        Flux.Dense(40, 2))
     # ps: the initial parameters of the neural network. 
-    # re: a method to reconstruct the neural network with the given parameters ps and input x, e.g., re(ps)(x) is the output of the neural network with the given parameters.
+    # re: a method to reconstruct the neural network with the given parameters ps and input x, e.g., re(ps)(x) is the output of the neural network with the given parameters ps and input x.
     ps, re = Flux.destructure(NN)
 \end{minted}
 
@@ -1012,7 +1104,7 @@ In Lux:
     O_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
                       Lux.Dense(40, 40, tanh),
                       Lux.Dense(40, 2))
-    # Generate random number
+    # "Random.default_rng" is a random number generator. It generates a random number in preparation for generating random parameters in the next code line.
     rng = Random.default_rng()
     # ps: the initial parameters of the neural network.
     # st: the state of the neural network. It stores information (layers number, neurons number, activation function etc.) for reconstructing the neural network. For example, the output of the neural network with the given parameters is O_NET(x, ps, st)
@@ -1021,7 +1113,7 @@ In Lux:
 
 \textbf{Step 2}: construct an IVP
 
-Suppose that $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{z}_{t}$ are some discrete points from an observed trajectory. Given an initial state $\mathbf{z}_{0}=[0.0, 1.0]$ and time steps $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, we can define an IVP
+Suppose that $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{z}_{t}$ are some discrete points from a trajectory observation. Given an initial state $\mathbf{z}_{0}=[0.0, 1.0]$ and time steps $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, we can define an IVP
 
 \begin{equation}
     \label{eq:O-NET_IVP}
@@ -1030,18 +1122,20 @@ Suppose that $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{
 
 The output of $f_{\theta}$ at a fixed time $t$ estimates the time derivative of coordinates $\dot{\mathbf{z}}_{t}$ such that $\dot{ \mathbf{z}}_{t} = f_{\theta}(\mathbf{z}_t)$. In the case of Hamiltonian systems, let $\mathbf{z}_{t} = [q_{t}, p_{t}]$, we can rewrite the ODE as $[\dot q_{t}, \dot p_{t}] = f_{\theta}(q_t, p_t) = \text{O\_NET}(\mathbf{z_t}, \theta)$, $\mathbf{z}_{0}= [q_{0}, p_{0}] = [0.0, 1.0]$.
 
-We can also construct this IVP in code:
+We construct this IVP in code:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
-    # dz is the time derivative of z at a fixed time
+    # dz is the time derivative of z at a fixed time t
     function ODE(dz, z, θ, t)
-    dz = O_NET(z, θ)
+    dz = O_NET(z, θ = ps)
     end
     
     initial_state = [0.0, 1.0]
     
     time_span = (0.0, 19.9)
     time_steps = (0.0, 0.1, 19.9)
+    
+    θ = ps
     
     # ODEProblem is a IVP constructor in the Julia package SciMLBase.jl
     IVP = SciMLBase.ODEProblem(ODE, initial_state, time_span, θ)
@@ -1056,7 +1150,7 @@ To obtain the estimate of the coordinates trajectories $q_t$ and $p_t$, we can u
     \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, f_{\theta}, \{ t \}_{t=1}^{T}).
 \end{equation}
 
-To solve the IVP \ref{eq:O-NET_IVP} in Julia code, we use the package CommonSolve.jl, which provides a common framework of ODE solver:
+To solve the IVP \ref{eq:O-NET_IVP} in Julia code, we use the package CommonSolve.jl, which provides a common interface for a lot of ODE solvers:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # Select a numerical method to solve the IVP
@@ -1066,12 +1160,12 @@ To solve the IVP \ref{eq:O-NET_IVP} in Julia code, we use the package CommonSolv
     sensitivity_analysis = InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))
     
     # Use the ODE Solver CommonSolve.solve to yield solution. And the solution is the estimate of the coordinates trajectories.
-    solution = CommonSolve.solve(O_NET, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
+    solution = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
     # Convert the solution into a 2D-array
     pred_data = Array(solution)
 \end{minted}
 
-\textbf{Step 4}: train the neural network
+\textbf{Step 4}: construct a loss function
 
 The "pred\_data" in step 3 is the estimate of the coordinates trajectories $\{ \hat{z_{t}} \}_{t=1}^{T}$. To train the neural network model, we define a loss function
 
@@ -1082,7 +1176,7 @@ The "pred\_data" in step 3 is the estimate of the coordinates trajectories $\{ \
 
 where $\hat{\mathbf{z}_{t}}$ is the estimate at a fixed time $t$ and $\mathbf{z}_{t}$ is assumed to be a point from observation. The goal of the optimization is to minimize the error between them.
 
-However, in code, instead of using real observations we use the system of ODEs to generate and add some Gaussian noise to simulate them. For instance, the ODE data of an undamped harmonic oscillator can be generated according to the system of ODEs \ref{eq:ODE_undamped_harmonic_oscillator}:
+However, in code, instead of real observations we use the system of ODEs to generate training set and add some Gaussian noise to it. For instance, the ODE data of an undamped harmonic oscillator can be generated according to the system of ODEs \ref{eq:ODE_undamped_harmonic_oscillator}:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     function ODEfunc_udho(dz, z, params, t)
@@ -1093,13 +1187,57 @@ However, in code, instead of using real observations we use the system of ODEs t
     end
     # params = [m, c]
     params = [2, 1] 
-    prob = ODEProblem(ODEfunc_udho, u0, tspan, params)
-    ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = tsteps))
-    # σ2 = 0.01. "add_gauss" is a function from the package Noise.jl.
-    ode_data = add_gauss(ode_data, 0.01)
+    prob = ODEProblem(ODEfunc_udho, u0, time_span, params)
+    ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = time_steps))
 \end{minted}
 
+The "ode\_data" can be expressed by $\{ z_{t} \}_{t=1}^{T}$. The loss function \ref{eq:loss_O-NET} is the squared difference between a point in "pred\_data" $\{ \hat{z_{t}} \}_{t=1}^{T}$ and a point in "ode\_data" $\{ z_{t} \}_{t=1}^{T}$ at a fixed time $t$.
 
+Now we can construct the loss function in code:
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+function solve_IVP(θ, batch_timesteps)
+    pred_data, st = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = batch_timesteps, sensealg=sensitivity_analysis)
+    return Array(pred_data), st
+end
+
+function loss_function(θ, batch_data, batch_timesteps)
+    pred_data, _ = solve_IVP(θ, batch_timesteps)
+    # "batch_data" is a batch of ode data
+    loss = sum((batch_data .- pred_data) .^ 2)
+    return loss, pred_data
+end
+\end{minted}
+
+\textbf{Step 5}: train the neural network
+
+There are different optimization algorithm can be implemented to train the model. We will use one of the most popular algorithms, the Adam Algorithm, in the following. Note that the Adam algorithm uses mini-batch gradient descent. Hence, first create an iterable object "dataloader" to load mini-batches.
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+# The dataloader generates a batch of data according to the given batchsize from the "ode_data".
+dataloader = Flux.Data.DataLoader((ode_data, time_steps), batchsize = 100)
+\end{minted}
+
+Recall that the code in algorithm \ref{alg:Adam_alg} performed only one training epoch. In order to obtain a satisfying result, we train the model multiple times. And we use a Julia package "Optimization.jl", which is a unified interface for different optimization algorithms and automatic differentiation tools.
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+# Train the model multiple times
+epochs = 100
+# Select an automatic differentiation tool
+adtype = Optimization.AutoZygote()
+# Construct an optimization problem with the given automatic differentiation and the initial parameters θ
+optf = Optimization.OptimizationFunction((θ, ps, batch_data, batch_timesteps) -> loss_function(θ, batch_data, batch_timesteps), adtype)
+optprob = Optimization.OptimizationProblem(optf, θ)
+# Start training
+result = Optimization.solve(optprob, Optimisers.ADAM(0.01), ncycle(dataloader, epochs))
+# Access the parameters
+result.u
+\end{minted}
+
+At the end, evaluate the model by the loss over the whole training set "ode\_data":
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+# The "loss_function" returns a tuple, where the first element of the tuple is the loss
+loss_function(result.u, ode_data, time_steps)[1]
+\end{minted}
 
 \subsection{N-NET}
 N-NET is a neural network $\mathcal{H}_{\theta}$ that learns the Hamiltonian. The idea of N-NET is to replace the O-NET $f_{\theta}$ in \ref{eq:O-NET_IVP} with the estimate of the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$. Then, the ODE can be rewritten as
