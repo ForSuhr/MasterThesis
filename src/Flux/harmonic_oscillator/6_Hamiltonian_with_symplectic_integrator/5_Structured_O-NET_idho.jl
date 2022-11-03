@@ -56,6 +56,7 @@ end
 
 
 prob_pred = ODEProblem(Structured_O_NET, u0, tspan, init_params)
+predict_neuralode(neural_params)
 
 ## Array of predictions from NeuralODE with parameters p starting at initial condition x0
 function predict_neuralode(p)

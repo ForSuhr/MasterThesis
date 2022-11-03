@@ -55,6 +55,7 @@
 \newunicodechar{θ}{$\theta$}
 \newunicodechar{α}{$\alpha$}
 \newunicodechar{β}{$\beta$}
+\newunicodechar{∂}{$\partial$}
 
 
 %%%%%%%%%%%
@@ -1096,7 +1097,7 @@ In Flux:
                        Flux.Dense(40, 2))
     # ps: the initial parameters of the neural network. 
     # re: a method to reconstruct the neural network with the given parameters ps and input x, e.g., re(ps)(x) is the output of the neural network with the given parameters ps and input x.
-    ps, re = Flux.destructure(NN)
+    ps, re = Flux.destructure(O_NET)
 \end{minted}
 
 In Lux:
@@ -1105,6 +1106,7 @@ In Lux:
                       Lux.Dense(40, 40, tanh),
                       Lux.Dense(40, 2))
     # "Random.default_rng" is a random number generator. It generates a random number in preparation for generating random parameters in the next code line.
+    using Random
     rng = Random.default_rng()
     # ps: the initial parameters of the neural network.
     # st: the state of the neural network. It stores information (layers number, neurons number, activation function etc.) for reconstructing the neural network. For example, the output of the neural network with the given parameters is O_NET(x, ps, st)
@@ -1113,32 +1115,35 @@ In Lux:
 
 \textbf{Step 2}: construct an IVP
 
-Suppose that $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{z}_{t}$ are some discrete points from a trajectory observation. Given an initial state $\mathbf{z}_{0}=[0.0, 1.0]$ and time steps $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, we can define an IVP
+Suppose that $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{z}_{t}$ are some discrete points from a trajectory observation. Given an initial state $\mathbf{z}_{0}$ and time steps $\{ t \}_{t=0}^{T}$, we can define an IVP
 
 \begin{equation}
     \label{eq:O-NET_IVP}
-    \dot{\mathbf{z}}_t = f_{\theta}(\mathbf{z_t}) = \text{O\_NET}(\mathbf{z_t}, \theta), \quad \mathbf{z}_{0}=[0.0, 1.0].
+    \dot{\mathbf{z}}_t = f_{\theta}(\mathbf{z_t}) = \text{O\_NET}(\mathbf{z_t}, \theta), \quad \mathbf{z}(t_{0}) = \mathbf{z}_{0}.
 \end{equation}
 
-The output of $f_{\theta}$ at a fixed time $t$ estimates the time derivative of coordinates $\dot{\mathbf{z}}_{t}$ such that $\dot{ \mathbf{z}}_{t} = f_{\theta}(\mathbf{z}_t)$. In the case of Hamiltonian systems, let $\mathbf{z}_{t} = [q_{t}, p_{t}]$, we can rewrite the ODE as $[\dot q_{t}, \dot p_{t}] = f_{\theta}(q_t, p_t) = \text{O\_NET}(\mathbf{z_t}, \theta)$, $\mathbf{z}_{0}= [q_{0}, p_{0}] = [0.0, 1.0]$.
+The output of $f_{\theta}$ at a fixed time $t$ estimates the time derivative of coordinates $\dot{\mathbf{z}}_{t}$ such that $\dot{ \mathbf{z}}_{t} = f_{\theta}(\mathbf{z}_t)$. In the case of Hamiltonian systems, let $\mathbf{z}_{t} = [q_{t}, p_{t}]$, we can rewrite the ODE as $[\dot q_{t}, \dot p_{t}] = f_{\theta}(q_t, p_t) = \text{O\_NET}(\mathbf{z_t}, \theta)$, $\mathbf{z}_{0}= [q_{0}, p_{0}]$.
 
-We construct this IVP in code:
+Let $\mathbf{z}_{0}=[1.0, 1.0]$ and $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, we construct this IVP in code:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # dz is the time derivative of z at a fixed time t
     function ODE(dz, z, θ, t)
-    dz = O_NET(z, θ = ps)
+    dz[1] = re(θ)(z)[1]
+    dz[2] = re(θ)(z)[2]
     end
     
-    initial_state = [0.0, 1.0]
+    initial_state = [1.0, 1.0]
     
+    # Starting at 0.0 and ending at 19.9, the length of each single step is 0.1. Thus, we have 200 time steps in total.
     time_span = (0.0, 19.9)
-    time_steps = (0.0, 0.1, 19.9)
+    time_steps = range(0.0, 19.9, 200)
     
     θ = ps
     
     # ODEProblem is a IVP constructor in the Julia package SciMLBase.jl
-    IVP = SciMLBase.ODEProblem(ODE, initial_state, time_span, θ)
+    using SciMLBase
+    IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, time_span, θ)
 \end{minted}
 
 \textbf{Step 3}: solve the IVP
@@ -1154,29 +1159,35 @@ To solve the IVP \ref{eq:O-NET_IVP} in Julia code, we use the package CommonSolv
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # Select a numerical method to solve the IVP
+    using OrdinaryDiffEq
     numerical_method = ImplicitMidpoint()
     
-    # Select the adjoint method to computer the gradient of the loss with respect to the parameters. ReverseDiffVJP is a callable function in the automatic differentiation package ReverseDiff.jl. It allows us to compute the vector-Jacobian products (VJP) efficiently. For more details about adjoint method, please refer to the Neural ODE chapter.
+    # Select the adjoint method to computer the gradient of the loss with respect to the parameters. ReverseDiffVJP is a callable function in the package SciMLSensitivity.jl, it uses the automatic differentiation tool ReverseDiff.jl to compute the vector-Jacobian products (VJP) efficiently. For more details about adjoint method, please refer to the Neural ODE chapter.
+    using SciMLSensitivity
     sensitivity_analysis = InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))
     
     # Use the ODE Solver CommonSolve.solve to yield solution. And the solution is the estimate of the coordinates trajectories.
+    using CommonSolve
     solution = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
+    
     # Convert the solution into a 2D-array
     pred_data = Array(solution)
 \end{minted}
 
+The final variable "pred\_data" is a 2D-array, which stands for the estimate of the coordinates trajectories $\{ \hat{z_{t}} \}_{t=1}^{T}$. In our case, we have 2 coordinates (q, p) in the Hamiltonian system and 200 time steps. Thus, the "pred\_data" should be a $2 \times 200$ array.
+
 \textbf{Step 4}: construct a loss function
 
-The "pred\_data" in step 3 is the estimate of the coordinates trajectories $\{ \hat{z_{t}} \}_{t=1}^{T}$. To train the neural network model, we define a loss function
+To train the neural network model, we define a loss function
 
 \begin{equation}
     \label{eq:loss_O-NET}
     \mathcal{L} = \lVert \mathbf{z}_{t} - \hat{\mathbf{z}_{t}} \rVert_{2},
 \end{equation}
 
-where $\hat{\mathbf{z}_{t}}$ is the estimate at a fixed time $t$ and $\mathbf{z}_{t}$ is assumed to be a point from observation. The goal of the optimization is to minimize the error between them.
+where $\hat{\mathbf{z}_{t}}$ is the estimate at a fixed time $t$ ($\hat{\mathbf{z}_{t}}$ is a point in the estimate of the coordinates trajectories $\{ \hat{z_{t}} \}_{t=1}^{T}$) and $\mathbf{z}_{t}$ is assumed to be a point from observation (${\mathbf{z}_{t}}$ is a point in the training set $\{ {z_{t}} \}_{t=1}^{T}$). The goal of the optimization is to minimize the error between them.
 
-However, in code, instead of real observations we use the system of ODEs to generate training set and add some Gaussian noise to it. For instance, the ODE data of an undamped harmonic oscillator can be generated according to the system of ODEs \ref{eq:ODE_undamped_harmonic_oscillator}:
+However, in code, instead of real observations we use the system of ODEs to generate the training set $\{ {z_{t}} \}_{t=1}^{T}$. For instance, the ODE data of an undamped harmonic oscillator can be generated according to the system of ODEs \ref{eq:ODE_undamped_harmonic_oscillator}:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     function ODEfunc_udho(dz, z, params, t)
@@ -1187,7 +1198,7 @@ However, in code, instead of real observations we use the system of ODEs to gene
     end
     # params = [m, c]
     params = [2, 1] 
-    prob = ODEProblem(ODEfunc_udho, u0, time_span, params)
+    prob = ODEProblem(ODEFunction(ODEfunc_udho), initial_state, time_span, params)
     ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = time_steps))
 \end{minted}
 
@@ -1196,8 +1207,9 @@ The "ode\_data" can be expressed by $\{ z_{t} \}_{t=1}^{T}$. The loss function \
 Now we can construct the loss function in code:
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 function solve_IVP(θ, batch_timesteps)
-    pred_data, st = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = batch_timesteps, sensealg=sensitivity_analysis)
-    return Array(pred_data), st
+    IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, (batch_timesteps[1], batch_timesteps[end]), θ)
+    pred_data = Array(CommonSolve.solve(IVP, Midpoint(), p=θ, saveat = batch_timesteps, sensealg=sensitivity_analysis))
+    return pred_data
 end
 
 function loss_function(θ, batch_data, batch_timesteps)
@@ -1214,43 +1226,125 @@ There are different optimization algorithm can be implemented to train the model
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 # The dataloader generates a batch of data according to the given batchsize from the "ode_data".
-dataloader = Flux.Data.DataLoader((ode_data, time_steps), batchsize = 100)
+dataloader = Flux.Data.DataLoader((ode_data, time_steps), batchsize = 50)
 \end{minted}
 
-Recall that the code in algorithm \ref{alg:Adam_alg} performed only one training epoch. In order to obtain a satisfying result, we train the model multiple times. And we use a Julia package "Optimization.jl", which is a unified interface for different optimization algorithms and automatic differentiation tools.
+Recall that the code in algorithm \ref{alg:Adam_alg} performed only one training epoch. In order to obtain a satisfying result, we train the model multiple times. And we use a Julia package "Optimization.jl", which is an unified interface for different optimization algorithms and automatic differentiation tools.
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
-# Train the model multiple times
-epochs = 100
+
 # Select an automatic differentiation tool
+using Optimization
 adtype = Optimization.AutoZygote()
 # Construct an optimization problem with the given automatic differentiation and the initial parameters θ
 optf = Optimization.OptimizationFunction((θ, ps, batch_data, batch_timesteps) -> loss_function(θ, batch_data, batch_timesteps), adtype)
 optprob = Optimization.OptimizationProblem(optf, θ)
-# Start training
+# Train the model multiple times. The "ncycle" is a function in the package IterTools.jl, it cycles through the dataloader "epochs" times.
+using OptimizationOptimisers
+using IterTools
+epochs = 100
 result = Optimization.solve(optprob, Optimisers.ADAM(0.01), ncycle(dataloader, epochs))
-# Access the parameters
+# Access the trained parameters
 result.u
 \end{minted}
 
-At the end, evaluate the model by the loss over the whole training set "ode\_data":
+The trained parameters can be used for further training and for evaluating the model by the loss over the whole training set "ode\_data":
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 # The "loss_function" returns a tuple, where the first element of the tuple is the loss
-loss_function(result.u, ode_data, time_steps)[1]
+loss = loss_function(result.u, ode_data, time_steps)[1]
 \end{minted}
 
+If the loss is already small, we can choose to stop training early. Naturally, we can also continue the training, but if the loss has tended to converge with training, then it does not make much sense to continue.
+
+At the end, test the trained neural network model with training set or test set.
+
+In Flux:
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    # Recall that "re" is a method to reconstruct the neural network.
+    re()(initial_state)
+\end{minted}
+
+In Lux:
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    # Recall that "st" stores some necessary information for reconstructing the neural network.
+    O_NET(initial_state, result.u, st)
+\end{minted}
+
+
 \subsection{N-NET}
-N-NET is a neural network $\mathcal{H}_{\theta}$ that learns the Hamiltonian. The idea of N-NET is to replace the O-NET $f_{\theta}$ in \ref{eq:O-NET_IVP} with the estimate of the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$. Then, the ODE can be rewritten as
+N-NET is a neural network $\mathcal{H}_{\theta}$ that learns the Hamiltonian. The idea of N-NET is to replace the O-NET $f_{\theta}$ in \ref{eq:O-NET_IVP} with the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$. Then, the ODE can be rewritten as
 
 \begin{equation}
     \label{eq:H-NET_IVP}
     \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, X_{\mathcal{H}_{\theta}}, \{ t \}_{t=1}^{T}).
 \end{equation}
 
+The major difference between N-NET and O-NET in code is step 2. The ODE of N-NET should contain the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$ rather than a neural network:
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    # FiniteDiff.jl is an automatic differentiation tool.
+    using FiniteDiff
+    function SymplecticGradient(NN, ps, st, z) 
+      # Compute the gradient of the neural network
+      ∂H = FiniteDiff.finite_difference_gradient(x -> sum(NN(x, ps, st)[1]), z)
+      # Return the estimate of symplectic gradient
+      return cat(∂H[2:2, :], -∂H[1:1, :], dims=1)
+    end
+
+    function ODE(z, θ, t)
+        # Compute the estimate of symplectic gradient
+        dz = vec(SymplecticGradient(H_NET, θ, st, z))
+    end
+\end{minted}
+
+Note that N-NET is a 2-input and 1-output model, while O-NET has 2 output:
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+H_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
+                  Lux.Dense(40, 20, tanh),
+                  Lux.Dense(20, 1))
+\end{minted}
 
 \subsection{HNNs}
-A subtle difference between N-NET and HNNs is that HNNs use the loss function $\mathcal{L}_{HNN} = \lVert \dot z_{t} - X_{\mathcal{H}_{\theta}} \rVert_{2}$. It means that N-NET learns dynamics from the coordinates rather than from the time derivative of coordinates.
+A subtle difference between N-NET and HNNs is that HNNs use the loss function $\mathcal{L}_{HNN} = \lVert \dot z_{t} - X_{\mathcal{H}_{\theta}} \rVert_{2}$, while N-NET uses $\mathcal{L} = \lVert \mathbf{z}_{t} - \hat{\mathbf{z}_{t}} \rVert_{2}$. It means that N-NET learns dynamics from the coordinates rather than from the time derivative of coordinates.
 
+The loss function in N-NET is the same as in O-NET:
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+function solve_IVP(θ, batch_timesteps)
+  IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, (batch_timesteps[1], batch_timesteps[end]), θ)
+  pred_data = Array(CommonSolve.solve(IVP, Midpoint(), p=θ, saveat = batch_timesteps, sensealg=sensitivity_analysis))
+  return pred_data
+end
+
+function loss_function(θ, batch_data, batch_timesteps)
+  pred_data = solve_IVP(θ, batch_timesteps)
+  loss = sum((batch_data .- pred_data) .^ 2)
+  return loss, pred_data
+end
+
+dataloader = Flux.Data.DataLoader((ode_data, time_steps), batchsize = 50)
+\end{minted}
+
+The loss function in HNNs omits the procedure of solving the IVP and computes the estimate of symplectic gradient directly. Hence, the "dataloader" should load the training set rather than timesteps (timesteps will be used to solve the IVP, however, the loss function in HNNs does not need to solve the IVP).
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+# Generate the time derivatives of the coordinates
+dq_data = ode_data[2,:]/params[1]
+dp_data = -ode_data[1,:]/params[2]
+dq_data = reshape(dq_data, 1, :)
+dp_data = reshape(dp_data, 1, :)
+dz_data = cat(dq_data, dp_data, dims = 1)
+
+function loss_function(θ, batch_data, batch_dz_data)
+  pred_data = SymplecticGradient(H_NET, θ, st, batch_data)
+  loss = sum((batch_dz_data .- pred_data) .^ 2)
+  return loss, pred_data
+end
+
+# (ode_data, dz_data) is the whole training set.
+dataloader = Flux.Data.DataLoader((ode_data, dz_data), batchsize = 50)
+\end{minted}
 
 \section{Structured O-NET}
 An O-NET $f_{\theta}$ is considered as a pure black box. Such a pure data-driven modeling approach provides no guarantees of convergence if only small training sets are available. How about big training sets? In the field of physics, especially for some complex systems, the acquisition of data from observations is often costly. Therefore, it is also not easy to obtain big training sets. Nevertheless, in the field of physics, there exists a large accumulation of physics laws. If these physical laws are encoded as some prior information, will it compensate for the lack of data?

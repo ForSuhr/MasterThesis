@@ -18,7 +18,7 @@ end
 
 ## give initial condition, timespan, parameters, which construct a ODE problem
 u0 = [1.0; 1.0]
-tspan = (0.0, 19.9)
+tspan = (0.0f0, 19.9f0)
 tsteps = range(tspan[1], tspan[2], length = 200)
 init_params = [2.0, 1.0]
 prob = ODEProblem(ODEfunc_udho, u0, tspan, init_params)
@@ -38,13 +38,17 @@ NN = Flux.Chain(Flux.Dense(2, 40, tanh),
            Flux.Dense(40, 40, tanh),
            Flux.Dense(40, 2))
 ### check the parameters prob_neuralode.p in prob_neuralode
-neural_params = prob_neuralode.p
+neural_params = Flux.destructure(NN)[1]
 
 ## Array of predictions from NeuralODE with parameters p starting at initial condition x0
 function predict_neuralode(p, timesteps)
   prob_neuralode = DiffEqFlux.NeuralODE(NN, tspan, Midpoint(), saveat = timesteps)
   Array(prob_neuralode(u0, p))
 end
+
+prob_neuralode = DiffEqFlux.NeuralODE(NN, tspan, ImplicitMidpoint(), tstops = ttt)
+Array(prob_neuralode(u0, neural_params))
+
 
 ## L2 loss function
 function loss_neuralode(p, batch_data, timesteps)
