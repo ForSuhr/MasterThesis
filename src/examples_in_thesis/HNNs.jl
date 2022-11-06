@@ -120,7 +120,7 @@ end
 # The dataloader generates a batch of data according to the given batchsize from the "ode_data".
 using Flux: DataLoader
 # (ode_data, dz_data) is the whole training set.
-dataloader = Flux.Data.DataLoader((ode_data, dz_data), batchsize = 50)
+dataloader = DataLoader((ode_data, dz_data), batchsize = 50)
 
 # Select an automatic differentiation tool
 using Optimization
@@ -137,24 +137,20 @@ result = Optimization.solve(optprob, Optimisers.ADAM(0.01), ncycle(dataloader, e
 θ = result.u
 
 # The "loss_function" returns a tuple, where the first element of the tuple is the loss
-loss = loss_function(result.u, ode_data, dz_data)[1]
+loss = loss_function(θ, ode_data, dz_data)[1]
+
+
+
+
+##########################
+# Step 6: test the model #
+##########################
 
 # Recall that "re" is a method to reconstruct the neural network.
-H_NET(initial_state, result.u, st)
+H_NET(initial_state, θ, st)
 
 # Plot phase portrait
-trained_solution = CommonSolve.solve(IVP, numerical_method, p=result.u, tstops = time_steps, sensealg=sensitivity_analysis)
+trained_solution = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
 using Plots
 plot(ode_data[1,:], ode_data[2,:])
 plot!(trained_solution[1,:], trained_solution[2,:])
-
-# Plot phase portrait
-trained_solution = CommonSolve.solve(IVP, numerical_method, p=result.u, tstops = time_steps, sensealg=sensitivity_analysis)
-using Plots
-plot(ode_data[1,:], ode_data[2,:])
-plot!(trained_solution[1,:], trained_solution[2,:])
-
-# Save the parameters
-using JLD
-save(joinpath(@__DIR__, "results", "params_HNNs.jld"), "params_HNNs", θ)
-θ = load(joinpath(@__DIR__, "results", "params_HNNs.jld"), "params_HNNs")

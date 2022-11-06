@@ -9,9 +9,9 @@ using Flux
 # O_NET: a feedforward neural network with 2 neurons in the input layer, 
 # 40 neurons in the first hidden layer, 40 neurons in the second hidden layer 
 # and 2 neurons in the output layer.
-O_NET = Flux.Chain(Flux.Dense(2, 40, tanh),
-                    Flux.Dense(40, 40, tanh),
-                    Flux.Dense(40, 2))
+O_NET = Flux.Chain(Flux.Dense(2, 20, tanh),
+                    Flux.Dense(20, 10, tanh),
+                    Flux.Dense(10, 2))
 # ps: the initial parameters of the neural network. 
 # re: a method to reconstruct the neural network with the given 
 # parameters ps and input x, e.g., re(ps)(x) is the output of the 
@@ -25,8 +25,13 @@ ps, re = Flux.destructure(O_NET)
 # Step 2: construct an IVP #
 ############################
 
-# dz is the time derivative of z at a fixed time t
+# dz is the time derivative of z at a fixed time.
+# Note: the "t" in the argument is designed for nonautonomous case. 
+# This "t" is not the same concept as timesteps. 
+# In the case of Hamiltonian (autonomous), this "t" will not be used.
 function ODE(dz, z, θ, t)
+    # In Flux.jl, re(θ)(z) is the output of O-NET with the given parameters θ and input z. 
+    # In Lux.jl, this term should be rewritten as O_NET(z, θ, st).
     dz[1] = re(θ)(z)[1]
     dz[2] = re(θ)(z)[2]
 end
@@ -41,7 +46,7 @@ time_steps = range(0.0, 19.9, 200)
 # parameters of the neural network
 θ = ps
 
-# ODEProblem is a IVP constructor in the Julia package SciMLBase.jl
+# ODEProblem is an IVP constructor in the Julia package SciMLBase.jl
 using SciMLBase
 IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, time_span, θ)
 
@@ -127,25 +132,37 @@ optprob = Optimization.OptimizationProblem(optf, θ)
 # Train the model multiple times. The "ncycle" is a function in the package IterTools.jl, it cycles through the dataloader "epochs" times.
 using OptimizationOptimisers
 using IterTools
-epochs = 100
-result = Optimization.solve(optprob, Optimisers.ADAM(0.00001), ncycle(dataloader, epochs), callback=callback)
+epochs = 10;
+result = Optimization.solve(optprob, Optimisers.ADAM(0.001), ncycle(dataloader, epochs), callback=callback)
 # Access the trained parameters
 θ = result.u
 
 # The "loss_function" returns a tuple, where the first element of the tuple is the loss
 loss = loss_function(result.u, ode_data, time_steps)[1]
 
+# Option: continue the training
+include("helpers/train_helper.jl")
+using Main.TrainInterface: FluxTrain
+θ = FluxTrain(optf, θ, 0.0001, 100, dataloader, callback)
+
+
+
+
+##########################
+# Step 6: test the model #
+##########################
 
 # Recall that "re" is a method to reconstruct the neural network.
-re(result.u)(initial_state)
+re(θ)(initial_state)
 
 # Plot phase portrait
-trained_solution = CommonSolve.solve(IVP, numerical_method, p=result.u, tstops = time_steps, sensealg=sensitivity_analysis)
+trained_solution = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
 using Plots
-plot(ode_data[1,:], ode_data[2,:])
+plot(ode_data[1,:], ode_data[2,:], xlabel="q", ylabel="p")
 plot!(trained_solution[1,:], trained_solution[2,:])
 
 # Save the parameters
 using JLD
-save(joinpath(@__DIR__, "results", "params_O_NET.jld"), "params_O_NET", θ)
-θ = load(joinpath(@__DIR__, "results", "params_O_NET.jld"), "params_O_NET")
+path = joinpath(@__DIR__, "results", "params_O_NET.jld")
+JLD.save(path, "params_O_NET", θ)
+θ = JLD.load(path, "params_O_NET")
