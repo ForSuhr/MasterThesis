@@ -82,7 +82,7 @@ ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = time_steps
 
 function solve_IVP(θ, batch_timesteps)
     IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, (batch_timesteps[1], batch_timesteps[end]), θ)
-    pred_data = Array(CommonSolve.solve(IVP, Midpoint(), p=θ, saveat = batch_timesteps, sensealg=sensitivity_analysis))
+    pred_data = Array(CommonSolve.solve(IVP, numerical_method, p=θ, tstops = batch_timesteps, sensealg=sensitivity_analysis))
     return pred_data
 end
 
@@ -132,7 +132,7 @@ using Main.TrainInterface: LuxTrain
 # Adjust the learning rate and epochs, then repeat this code block
 begin
     α = 0.0001
-    epochs = 100
+    epochs = 10
     θ = LuxTrain(optf, θ, α, epochs, dataloader, callback)
 end
 
@@ -143,7 +143,6 @@ end
 # Step 6: test the model #
 ##########################
 
-# Recall that "re" is a method to reconstruct the neural network.
 Structured_O_NET([initial_state[1]], θ, st)[1][1]
 
 # Plot phase portrait

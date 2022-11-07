@@ -2,42 +2,37 @@
 # Step 1: construct a neural network #
 ######################################
 
-using Flux
-# Dense: construct a layer. For instance, Dense(2, 40, tanh) constructs a 
-# 2-input and 40-output layer with the activation function tanh.
-# Chain: connect layers.
-# O_NET: a feedforward neural network with 2 neurons in the input layer, 
-# 40 neurons in the first hidden layer, 40 neurons in the second hidden layer 
-# and 2 neurons in the output layer.
-O_NET = Flux.Chain(Flux.Dense(2, 20, tanh),
-                    Flux.Dense(20, 10, tanh),
-                    Flux.Dense(10, 2))
-# ps: the initial parameters of the neural network. 
-# re: a method to reconstruct the neural network with the given 
-# parameters ps and input x, e.g., re(ps)(x) is the output of the 
-# neural network with the given parameters ps and input x.
-ps, re = Flux.destructure(O_NET)
+using Lux
+Structured_O_NET = Lux.Chain(Lux.Dense(1, 20, tanh),
+                             Lux.Dense(20, 10, tanh),
+                             Lux.Dense(10, 2))
 
-
+using Random
+rng = Random.default_rng()
+ps, st = Lux.setup(rng, Structured_O_NET)
 
 
 ############################
 # Step 2: construct an IVP #
 ############################
-
-# dz is the time derivative of z at a fixed time.
-# Note: the "t" in the argument is designed for nonautonomous case. 
-# This "t" is not the same concept as timesteps. 
-# In the case of Hamiltonian (autonomous), this "t" will not be used.
+begin
+m = 1
+c = 1
+θ_o = 20
+θ_d = 30
+α = 1.5
 function ODE(dz, z, θ, t)
-    # In Flux.jl, re(θ)(z) is the output of O-NET with the given parameters θ and input z. 
-    # In Lux.jl, this term should be rewritten as O_NET(z, θ, st).
-    dz[1] = re(θ)(z)[1]
-    dz[2] = re(θ)(z)[2]
+    q, p, sd, sₑ = z
+    v = p/m
+    dz[1] = v
+    dz[2] = -q/c + Structured_O_NET([v], θ, st)[1][1]
+    dz[3] = Structured_O_NET([v^2], θ, st)[1][2] / θ_o - α*(θ_d-θ_o)/θ_d
+    dz[4] = α*(θ_d-θ_o)/θ_o
+end
 end
 
 # initial state
-initial_state = [1.0, 1.0]
+initial_state = [1.0, 1.0, 5.0, 10.0]
     
 # Starting at 0.0 and ending at 19.9, the length of each step is 0.1. Thus, we have 200 time steps in total.
 time_span = (0.0, 19.9)
@@ -71,7 +66,6 @@ sensitivity_analysis = InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))
 # Use the ODE Solver CommonSolve.solve to yield solution. And the solution is the estimate of the coordinates trajectories.
 using CommonSolve
 solution = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
-
 # Convert the solution into a 2D-array
 pred_data = Array(solution)
 
@@ -82,35 +76,50 @@ pred_data = Array(solution)
 # Step 4: construct a loss function #
 #####################################
 
-function ODEfunc_udho(dz, z, params, t)
-    q, p = z
-    m, c = params
-    dz[1] = p/m
-    dz[2] = -q/c
-end
+function ODEfunc_ndho(du,u,params,t) ### du=[̇q,̇p,̇sd,̇sₑ], u=[q,p,sd,sₑ], p=[m,d,c,θₒ,θd,α]
+    q, p, sd, sₑ = u
+    m, c, d, θₒ, θd, α = params
+    v = p/m
+    ## ODEs
+    du[1] = v
+    du[2] = -q/c-d*v
+    du[3] = d*((v)^2)/θd-α*(θd-θₒ)/θd
+    du[4] = α*(θd-θₒ)/θₒ
+  end
 
 # params = [m, c]
-params = [2, 1] 
-prob = ODEProblem(ODEFunction(ODEfunc_udho), initial_state, time_span, params)
+params = [1.0, 1.0, 0.5, 20, 30, 1.5] 
+prob = ODEProblem(ODEFunction(ODEfunc_ndho), initial_state, time_span, params)
 ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = time_steps))
+using Plots
+plot(ode_data[1,:], ode_data[2,:], xlabel="q", ylabel="p")
+plot!(pred_data[1,:], pred_data[2,:], xlabel="q", ylabel="p")
+
 
 function solve_IVP(θ, batch_timesteps)
     IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, (batch_timesteps[1], batch_timesteps[end]), θ)
-    pred_data = Array(CommonSolve.solve(IVP, Midpoint(), p=θ, saveat = batch_timesteps, sensealg=sensitivity_analysis))
+    #pred_data = Array(CommonSolve.solve(IVP, Midpoint(), p=θ, saveat = batch_timesteps, sensealg=sensitivity_analysis))
+    pred_data = Array(CommonSolve.solve(IVP, ImplicitMidpoint(), p=θ, tstops = batch_timesteps, sensealg=sensitivity_analysis))
     return pred_data
 end
 
 function loss_function(θ, batch_data, batch_timesteps)
     pred_data = solve_IVP(θ, batch_timesteps)
-    # "batch_data" is a batch of ode data
+    #loss = sum((batch_data[:,1:length(pred_data[1,:])] .- pred_data) .^ 2)
     loss = sum((batch_data .- pred_data) .^ 2)
     return loss, pred_data
 end
 
 callback = function(θ, loss, pred_data)
-    println(loss_function(θ, ode_data, time_steps)[1])
+    plt = plot(ode_data[1,:], ode_data[2,:], label="Ground truth")
+    plot!(plt, pred_data[1,:], pred_data[2,:], label = "Prediction")
+    display(plot(plt))
+    println("loss: ", loss_function(θ, ode_data, time_steps)[1])
     return false
 end
+
+solve_IVP(θ, time_steps)
+loss_function(θ, ode_data, time_steps)[1]
 
 
 
@@ -120,33 +129,37 @@ end
 ####################################
 
 # The dataloader generates a batch of data according to the given batchsize from the "ode_data".
-
-dataloader = Flux.Data.DataLoader((ode_data, time_steps), batchsize = 200)
+using Flux: DataLoader
+#dataloader = DataLoader((ode_data, dz_data), batchsize = 200)
+dataloader = DataLoader((ode_data, time_steps), batchsize = 200)
 
 # Select an automatic differentiation tool
 using Optimization
+#adtype = Optimization.AutoFiniteDiff()
 adtype = Optimization.AutoZygote()
+
 # Construct an optimization problem with the given automatic differentiation and the initial parameters θ
 optf = Optimization.OptimizationFunction((θ, ps, batch_data, batch_timesteps) -> loss_function(θ, batch_data, batch_timesteps), adtype)
-optprob = Optimization.OptimizationProblem(optf, θ)
+optprob = Optimization.OptimizationProblem(optf, Lux.ComponentArray(θ))
 # Train the model multiple times. The "ncycle" is a function in the package IterTools.jl, it cycles through the dataloader "epochs" times.
 using OptimizationOptimisers
-using IterTools
+using IterTools: ncycle
 epochs = 10;
-result = Optimization.solve(optprob, Optimisers.ADAM(0.001), ncycle(dataloader, epochs), callback=callback)
+result = Optimization.solve(optprob, Optimisers.ADAM(0.01), ncycle(dataloader, epochs), callback=callback)
 # Access the trained parameters
 θ = result.u
 
 # The "loss_function" returns a tuple, where the first element of the tuple is the loss
-loss = loss_function(result.u, ode_data, time_steps)[1]
+loss = loss_function(θ, ode_data, time_steps)[1]
 
 # Option: continue the training
 include("helpers/train_helper.jl")
-using Main.TrainInterface: FluxTrain
+using Main.TrainInterface: LuxTrain
+# Adjust the learning rate and epochs, then repeat this code block
 begin
-    α = 0.0001
+    learning_rate = 0.001
     epochs = 10
-    θ = LuxTrain(optf, θ, α, epochs, dataloader, callback)
+    θ = LuxTrain(optf, θ, learning_rate, epochs, dataloader, callback)
 end
 
 
@@ -156,17 +169,23 @@ end
 # Step 6: test the model #
 ##########################
 
-# Recall that "re" is a method to reconstruct the neural network.
-re(θ)(initial_state)
+Structured_O_NET([initial_state[2]/m], θ, st)[1][1]
 
 # Plot phase portrait
-trained_solution = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
-using Plots
-plot(ode_data[1,:], ode_data[2,:], xlabel="q", ylabel="p")
+begin
+IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, time_span, θ)
+trained_solution = CommonSolve.solve(IVP, ImplicitMidpoint(), p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
+plot(ode_data[1,:], ode_data[2,:], xlabel="q", ylabel="p", xlims=(-2,2), ylims=(-2,2))
 plot!(trained_solution[1,:], trained_solution[2,:])
+end
 
-# Save the parameters
-using JLD
-path = joinpath(@__DIR__, "results", "params_O_NET.jld")
-JLD.save(path, "params_O_NET", θ)
-θ = JLD.load(path, "params_O_NET")
+
+#################
+# miscellaneous #
+#################
+
+# Save and load parameters
+using JLD2
+JLD2.@save joinpath(@__DIR__, "results", "params.jld") θ
+JLD2.@load joinpath(@__DIR__, "results", "params.jld") θ
+θ

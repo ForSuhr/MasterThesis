@@ -146,7 +146,6 @@ loss = loss_function(θ, ode_data, dz_data)[1]
 # Step 6: test the model #
 ##########################
 
-# Recall that "re" is a method to reconstruct the neural network.
 H_NET(initial_state, θ, st)
 
 # Plot phase portrait
