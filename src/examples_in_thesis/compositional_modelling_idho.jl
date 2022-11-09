@@ -5,7 +5,7 @@
 using Lux
 Structured_O_NET = Lux.Chain(Lux.Dense(1, 20, tanh),
                              Lux.Dense(20, 10, tanh),
-                             Lux.Dense(10, 1))
+                             Lux.Dense(10, 2))
 
 using Random
 rng = Random.default_rng()
@@ -17,16 +17,18 @@ ps, st = Lux.setup(rng, Structured_O_NET)
 ############################
 m = 2
 c = 1
+θ_0 = 20
 function ODE(dz, z, θ, t)
     q = z[1]
     p = z[2]
     v = p/m
     dz[1] = v
     dz[2] = -q/c + Structured_O_NET([v], θ, st)[1][1]
+    dz[3] = Structured_O_NET([v^2], θ, st)[1][2] / θ_0
 end
 
 # initial state
-initial_state = [1.0, 1.0]
+initial_state = [1.0, 1.0, 0.5]
     
 # Starting at 0.0 and ending at 19.9, the length of each step is 0.1. Thus, we have 200 time steps in total.
 time_span = (0.0, 19.9)
@@ -72,16 +74,16 @@ pred_data = Array(solution)
 
 function ODEfunc_idho(dz, z, params, t)
     q, p = z
-    m, c, d = params
+    m, c, d, θ_0 = params
     v = p/m
     dz[1] = v
     dz[2] = -q/c -d*v
+    dz[3] = d*v^2/θ_0
 end
 
-# params = [m, c]
-params = [2, 1, 0.5] 
+params = [2, 1, 0.5, 20] 
 prob = ODEProblem(ODEFunction(ODEfunc_idho), initial_state, time_span, params)
-ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = time_steps))
+ode_data = Array(CommonSolve.solve(prob, numerical_method, tstops = time_steps))
 using Plots
 plot(ode_data[1,:], ode_data[2,:])
 plot!(pred_data[1,:], ode_data[2,:])
@@ -94,8 +96,10 @@ end
 
 function loss_function(θ, batch_data, batch_timesteps)
     pred_data = solve_IVP(θ, batch_timesteps)
-    # "batch_data" is a batch of ode data
-    loss = sum((batch_data .- pred_data) .^ 2)
+    # the entroy needs a larger weight for better training
+    loss = sum((batch_data[1,:] .- pred_data[1,:]) .^ 2 +
+               (batch_data[2,:] .- pred_data[2,:]) .^ 2 +
+            100(batch_data[3,:] .- pred_data[3,:]) .^ 2)
     return loss, pred_data
 end
 
@@ -137,7 +141,7 @@ include("helpers/train_helper.jl")
 using Main.TrainInterface: LuxTrain
 # Adjust the learning rate and epochs, then repeat this code block
 begin
-    α = 0.001
+    α = 0.0001
     epochs = 10
     θ = LuxTrain(optf, θ, α, epochs, dataloader, callback)
 end
@@ -149,12 +153,10 @@ end
 # Step 6: test the model #
 ##########################
 
-Structured_O_NET([initial_state[1]], θ, st)[1][1]
-
 # Plot phase portrait
 trained_solution = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
-plot(ode_data[1,:], ode_data[2,:], xlabel="q", ylabel="p")
-plot!(trained_solution[1,:], trained_solution[2,:])
+plot(ode_data[1,:], ode_data[2,:], ode_data[3,:], label="Ground truth", lw=2, xlabel="q", ylabel="p", zlabel="s")
+plot!(trained_solution[1,:], trained_solution[2,:],label="Structured O-NET", lw=2, trained_solution[3,:])
 
 
 
@@ -162,3 +164,51 @@ plot!(trained_solution[1,:], trained_solution[2,:])
 #################
 # miscellaneous #
 #################
+
+# Prove that the model can substitute the resistive structure
+input = (ode_data[2,:]./params[1]) .^2
+dissipative_rate = Vector{Float64}()
+for i in input
+    dissipative_rate = push!(dissipative_rate, Structured_O_NET([i], θ, st)[1][2])
+end
+dissipative_energy = Vector{Float64}()
+for i in input
+    if dissipative_energy == Vector{Float64}()
+        dissipative_energy  = push!(dissipative_energy, Structured_O_NET([i], θ, st)[1][2])
+    else
+        dissipative_energy  = push!(dissipative_energy, dissipative_energy[end]+Structured_O_NET([i], θ, st)[1][2])
+    end
+end
+
+real_dissipative_rate = params[3]input
+real_dissipative_energy = Vector{Float64}()
+for i in real_dissipative_rate
+    if real_dissipative_energy == Vector{Float64}()
+        real_dissipative_energy  = push!(real_dissipative_energy, i)
+    else
+        real_dissipative_energy  = push!(real_dissipative_energy, real_dissipative_energy[end]+i)
+    end
+end
+
+dissipative_rate
+real_dissipative_rate
+mechanical_energy = ode_data[1,:].^2/2params[2] + ode_data[2,:].^2/2params[1]
+dissipative_energy
+real_dissipative_energy
+plot(time_steps, mechanical_energy, lw=2, label="Ground truth of mechanical energy", ylims=(0.0, 1.1), xlabel="Time step", ylabel="Energy/Exergy")
+# dissipative_energy needs to be multiplied by 0.1, because the timesteps is 0.1
+plot!(time_steps, real_dissipative_energy*0.1, lw=2, label="Ground truth of dissipative energy")
+plot!(time_steps, dissipative_energy*0.1, lw=2, label="Prediction of dissipative energy")
+
+plot(time_steps, real_dissipative_rate, lw=2, label="Ground truth of dissipative power", ylims=(0.0, 0.3), xlabel="Time step", ylabel="Power")
+plot!(time_steps, dissipative_rate, lw=2, label="Prediction of dissipative power")
+
+
+
+
+
+# Save and load parameters
+using JLD2
+JLD2.@save joinpath(@__DIR__, "results", "compositional_modelling_idho_params.jld") θ
+JLD2.@load joinpath(@__DIR__, "results", "compositional_modelling_idho_params.jld") θ
+θ

@@ -18,7 +18,7 @@ ps, st = Lux.setup(rng, Structured_O_NET)
 begin
 m = 1
 c = 1
-θ_o = 20
+θ_0 = 20
 θ_d = 30
 α = 1.5
 function ODE(dz, z, θ, t)
@@ -26,8 +26,8 @@ function ODE(dz, z, θ, t)
     v = p/m
     dz[1] = v
     dz[2] = -q/c + Structured_O_NET([v], θ, st)[1][1]
-    dz[3] = Structured_O_NET([v^2], θ, st)[1][2] / θ_o - α*(θ_d-θ_o)/θ_d
-    dz[4] = α*(θ_d-θ_o)/θ_o
+    dz[3] = Structured_O_NET([v^2], θ, st)[1][2] / θ_0 - α*(θ_d-θ_0)/θ_d
+    dz[4] = α*(θ_d-θ_0)/θ_0
 end
 end
 
@@ -77,14 +77,14 @@ pred_data = Array(solution)
 #####################################
 
 function ODEfunc_ndho(du,u,params,t) ### du=[̇q,̇p,̇sd,̇sₑ], u=[q,p,sd,sₑ], p=[m,d,c,θₒ,θd,α]
-    q, p, sd, sₑ = u
-    m, c, d, θₒ, θd, α = params
+    q, p, s_d, s_e = u
+    m, c, d, θ_0, θ_d, α = params
     v = p/m
     ## ODEs
     du[1] = v
     du[2] = -q/c-d*v
-    du[3] = d*((v)^2)/θd-α*(θd-θₒ)/θd
-    du[4] = α*(θd-θₒ)/θₒ
+    du[3] = d*((v)^2)/θ_d-α*(θ_d-θ_0)/θ_d
+    du[4] = α*(θ_d-θ_0)/θ_0
   end
 
 # params = [m, c]
