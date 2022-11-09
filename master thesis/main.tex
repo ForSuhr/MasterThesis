@@ -126,7 +126,7 @@ An outline for the following chapters:
 
 \textbf{Chapter} \ref{ch:chapter5} reviews the idea of Neural ODE. The kernel of Neural ODE is the adjoint method, which is essential to data-driven system identification.
 
-\textbf{Chapter} \ref{ch:chapter6} first explores the implementations of priors in the field of physics. Then, it overviews two neural network models of Hamiltonian systems: N-NET and O-NET, where only O-NET can be used for port-Hamiltonian systems. A structured O-NET, which is an O-NET endowed with physics priors, is proposed and tested in experiments.
+\textbf{Chapter} \ref{ch:chapter6} first explores the implementations of priors in the field of physics. Then, it overviews two neural network models of Hamiltonian systems: H-NET and O-NET, where only O-NET can be used for port-Hamiltonian systems. A structured O-NET, which is an O-NET endowed with physics priors, is proposed and tested in experiments.
 
 \textbf{Chapter} \ref{ch:chapter7} gives an overview of traditional approaches to parameter estimation. Then, an approach with structured O-NET is proposed and compared with other approaches in experiments.
 
@@ -347,7 +347,10 @@ Referring to equations \ref{eq:ODE_system}, the system of ODE of undamped harmon
 \end{equation}
 
 \section{Port-Hamiltonian Systems}
-The point of port-Hamiltonian systems is a Dirac structure defined by
+The port-Hamiltonian systems formulation provides a port-based modelling approach, where a complex system can be expressed by an interconnection of several components. In this thesis, we use a bond-graph expression, which is based on the bond-graph syntax \cite{paynter1961analysis}, to provide graphical representation of port-Hamiltonian systems.
+
+\subsection{Dirac Structure}
+The kernel of port-Hamiltonian systems is a Dirac structure defined by
 
 \begin{equation}
     \label{eq:Dirac_structure}
@@ -359,7 +362,7 @@ where energy-storing port $(f_S, e_S) \in T_{x}\mathcal{X} \times T_{x}^{*}\math
 As can be seen in \ref{eq:Dirac_structure}, a Dirac structure is a subspace $\mathcal{D} \subset \mathcal{F} \times \mathcal{E}$, where $\mathcal{F}$ and $\mathcal{E}$ are the spaces of the port variables (i.e. flows $f$ and efforts $e$). Such a pair $(f,e)$ of vectors of flow and effort variables is known as a port. The concept of "port" comes from the port-based physical system modeling approach \cite{duindam2009modeling}. In port-Hamiltonian systems, the subsystems interact with each other via ports. Such interactions are assumed to be exchanges of energy.
 
 \subsection{Example: Isothermal Damped Harmonic Oscillator}
-An isothermal damped harmonic oscillator is a port-Hamiltonian system. Unlike the previous example, the mechanical energy of this system dissipates with the vibration of the oscillator.
+In a port-Hamiltonian system, unlike the previous example, the mechanical energy of this system dissipates with the vibration of the oscillator.
 
 \clearpage
 \begin{figure}[h!]
@@ -369,11 +372,11 @@ An isothermal damped harmonic oscillator is a port-Hamiltonian system. Unlike th
     \label{fig:idho}
 \end{figure}
 
-A bond-graph expression can be used to define an isothermal damped harmonic oscillator. Considering different types of subsystems, storage components are shown in blue, Dirac structures in green and resistive structures in red:
+An isothermal damped harmonic oscillator can be depicted by a bond-graph expression. To distinguish different types of subsystems more visually, storage components are shown in blue, Dirac structures in green and resistive structures in red:
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=1]{figures/bondgraph_idho.pdf}
+    \includegraphics[scale=0.8]{figures/bondgraph_idho.pdf}
     \caption{Bond-graph expression for isothermal damped harmonic oscillator}
     \label{fig:bondgraph_idho}
 \end{figure}
@@ -381,7 +384,7 @@ A bond-graph expression can be used to define an isothermal damped harmonic osci
 \textbf{The storage components} spring and mass are connected to the Dirac structure $D_m$ via ports 
 $(f^1, e_1) = (\dot{q}, \partial_q H)$ and $(f^2, e_2) = (\dot{p}, \partial_p H)$.
 
-\textbf{The resistive structure} damping is also connected to the Dirac structure $D_m$ via port $(f^3, e_3) = (dv, v)$. Note that the velocity $v$ is defined by $p/m$. According to the prerequisite "isothermal", the damping will not exchange energy with the environment. Hence, the net power at the damping $e_3 f^3 = dv^2$ represents the total dissipated energy of the system.
+\textbf{The resistive structure} damping is connected to the Dirac structure $D_m$ via port $(f^3, e_3) = (dv, v)$. Note that the velocity $v$ is defined by $p/m$. According to the prerequisite "isothermal", the damping will not exchange energy with the environment. Hence, the net power at the damping $e_3 f^3 = dv^2$ represents the dissipated energy of the system.
 
 \textbf{The Dirac structure $D_m$} can be defined by a skew-symmetric matrix and the subsystems interact with each other via the interconnection
 
@@ -531,7 +534,7 @@ Take one of the simplest neural network models as an example: a feedforward neur
     \label{fig:feedforward}
 \end{figure}
 
-To clarify the principle of feedforward neural network, there are some notations to declare first. The uppercase $L$ stands for the number of total layers (input layer not included) in the feedforward neural network, the lowercase $l$ for the $l$th layer and $M_{l}$ for the number of neurons in $l$th layer. The same as the equation \ref{eq:activation_function}, $g_{l}(z^{(l)})$ denotes the activation function in $l$th layer, where $z^{l} \in \mathbb{R}^{M_{l}}$. The parameters weight and bias are represented by the weight matrix $\mathbf{W}^{(l)} \in \mathbb{R}^{M_{l} \times M_{l-1}}$ and the bias vector $\mathbf{b}^{(l)} \in \mathbb{R}^{M_{l}}$. Thus, the input $\mathbf{z}^{(l)}$ and output $\mathbf{a}^{(l)}$ of a neuron in $l$th layer could be written as:
+To clarify the principle of feedforward neural network, there are some notations to declare first. The uppercase $L$ stands for the number of total layers (input layer not included) in the feedforward neural network, the lowercase $l$ for the $l$th layer and $M_{l}$ for the number of neurons in $l$th layer. Corresponding to equation \ref{eq:activation_function}, $g_{l}(z^{(l)})$ denotes the activation function in $l$th layer, where $z^{l} \in \mathbb{R}^{M_{l}}$. The parameters weight and bias are represented by the weight matrix $\mathbf{W}^{(l)} \in \mathbb{R}^{M_{l} \times M_{l-1}}$ and the bias vector $\mathbf{b}^{(l)} \in \mathbb{R}^{M_{l}}$. Thus, the input $\mathbf{z}^{(l)}$ and output $\mathbf{a}^{(l)}$ of a neuron in $l$th layer could be written as:
 
 \begin{equation}
     \label{eq:input_output_neuron}
@@ -1067,13 +1070,13 @@ The experiments in \cite{gupta2019general} introduced a framework to model the L
 In the field of Hamiltonian systems, \cite{greydanus2019hamiltonian} proposed an approach to learn a parametric Hamiltonian function $H_{\theta}$ from the time derivatives of coordinates in the way that $\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}} - \frac{d\mathbf{q}}{dt} = 0, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}} - \frac{d\mathbf{p}}{dt} = 0 $. Such an approach allows HNNs (Hamiltonian Neural Networks) to learn a conserved quantity that is analogous to the total energy.
 
 \section{Neural Networks of Hamiltonian Systems}
-In \cite{chen2019symplectic}, they compared two neural network models of Hamiltonian systems: O-NET (ODE Neural Networks) and N-NET (Hamiltonian Neural Networks), where N-NET follows the idea of HNNs. 
-Before introducing O-NET and H-NET, recall that a Neural ODE \ref{eq:Neural_ODE} contains a neural network $f$. An ODE solver provides a solution to the ODE such that $\mathbf{z}(t+\varepsilon) = ODESolver(\mathbf{z}(t), f, t, t+\varepsilon , \theta)$. Note that in \cite{chen2019symplectic}, $f$ is considered as a neural network (e.g. in the case of O-NET). However, $f$ can also be a function that contains a neural network (e.g. in the case of HNNs or N-NET). 
+In \cite{chen2019symplectic}, they compared two neural network models of Hamiltonian systems: O-NET (ODE Neural Networks) and H-NET (Hamiltonian Neural Networks), where H-NET follows the idea of HNNs. 
+Before introducing O-NET and H-NET, recall that a Neural ODE \ref{eq:Neural_ODE} contains a neural network $f$. An ODE solver provides a solution to the ODE such that $\mathbf{z}(t+\varepsilon) = ODESolver(\mathbf{z}(t), f, t, t+\varepsilon , \theta)$. Note that in \cite{chen2019symplectic}, $f$ is considered as a neural network (e.g. in the case of O-NET). However, $f$ can also be a function that contains a neural network (e.g. in the case of HNNs or H-NET). 
 
-For better understanding, We will use Julia code to explain the central ideas of O-NET and N-NET.
+For better understanding, We will use Julia code to explain the central ideas of O-NET and H-NET in the following.
 
 \subsection{O-NET}
-O-NET is a neural network in a Neural ODE, which can be denoted by $f_{\theta}$. The training of an O-NET can be split into five steps.
+O-NET is a neural network in a Neural ODE, which can be denoted by $f_{\theta}$. The training of an O-NET can be conceptually divided into five steps.
 
 \textbf{Step 1}: construct a neural network
 
@@ -1115,20 +1118,24 @@ In Lux:
 
 \textbf{Step 2}: construct an IVP
 
-Suppose that $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{z}_{t}$ are some discrete points from a trajectory observation. Given an initial state $\mathbf{z}_{0}$ and time steps $\{ t \}_{t=0}^{T}$, we can define an IVP
+Suppose that $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{z}_{t}$ are some discrete points from a trajectory observation. Given an initial state $\mathbf{z}_{0}$ and time steps $\{ t \}_{t=0}^{T}$, we define an IVP
 
 \begin{equation}
     \label{eq:O-NET_IVP}
-    \dot{\mathbf{z}}_t = f_{\theta}(\mathbf{z_t}) = \text{O\_NET}(\mathbf{z_t}, \theta), \quad \mathbf{z}(t_{0}) = \mathbf{z}_{0}.
+    \dot{\mathbf{z}}_t = f_{\theta}(\mathbf{z_t}) = NN(\mathbf{z_t}, \theta), \quad \mathbf{z}(t_{0}) = \mathbf{z}_{0},
 \end{equation}
 
-The output of $f_{\theta}$ at a fixed time $t$ estimates the time derivative of coordinates $\dot{\mathbf{z}}_{t}$ such that $\dot{ \mathbf{z}}_{t} = f_{\theta}(\mathbf{z}_t)$. In the case of Hamiltonian systems, let $\mathbf{z}_{t} = [q_{t}, p_{t}]$, we can rewrite the ODE as $[\dot q_{t}, \dot p_{t}] = f_{\theta}(q_t, p_t) = \text{O\_NET}(\mathbf{z_t}, \theta)$, $\mathbf{z}_{0}= [q_{0}, p_{0}]$.
+where $NN$ is an O-NET.
+
+$f_{\theta}(\mathbf{z_t})$ at the fixed time $t$ estimates the time derivative of coordinates $\dot{\mathbf{z}}_{t}$ such that $\dot{ \mathbf{z}}_{t} = f_{\theta}(\mathbf{z}_t)$. In the case of Hamiltonian systems, let $\mathbf{z}_{t} = [q_{t}, p_{t}]$, we can rewrite the IVP \ref{eq:O-NET_IVP} as $[\dot q_{t}, \dot p_{t}] = f_{\theta}(q_t, p_t) = \text{NN}(\mathbf{z_t}, \theta)$, $\mathbf{z}_{0}= [q_{0}, p_{0}]$.
 
 Let $\mathbf{z}_{0}=[1.0, 1.0]$ and $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, we construct this IVP in code:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
-    # dz is the time derivative of z at a fixed time t
+    # dz is the time derivative of z at a fixed time.
+    # Note: the "t" in the argument is designed for nonautonomous case. This "t" is not the same concept as timesteps. In the case of Hamiltonian (autonomous), this "t" will not be used.
     function ODE(dz, z, θ, t)
+    # In Flux.jl, re(θ)(z) is the output of O-NET with the given parameters θ and input z. In Lux.jl, this term should be rewritten as O_NET(z, θ, st).
     dz[1] = re(θ)(z)[1]
     dz[2] = re(θ)(z)[2]
     end
@@ -1141,7 +1148,7 @@ Let $\mathbf{z}_{0}=[1.0, 1.0]$ and $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, w
     
     θ = ps
     
-    # ODEProblem is a IVP constructor in the Julia package SciMLBase.jl
+    # ODEProblem is an IVP constructor in the Julia package SciMLBase.jl
     using SciMLBase
     IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, time_span, θ)
 \end{minted}
@@ -1151,11 +1158,11 @@ Let $\mathbf{z}_{0}=[1.0, 1.0]$ and $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, w
 To obtain the estimate of the coordinates trajectories $q_t$ and $p_t$, we can use an ODE solver to yield the solution of the IVP \ref{eq:O-NET_IVP}
 
 \begin{equation}
-    \label{eq:O-NET_solver}
+    \label{eq:O-NET_ODESolver}
     \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, f_{\theta}, \{ t \}_{t=1}^{T}).
 \end{equation}
 
-To solve the IVP \ref{eq:O-NET_IVP} in Julia code, we use the package CommonSolve.jl, which provides a common interface for a lot of ODE solvers:
+To solve the IVP \ref{eq:O-NET_IVP} in Julia code, we use the package CommonSolve.jl, which provides a common interface for distinct ODE solvers:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # Select a numerical method to solve the IVP
@@ -1174,7 +1181,7 @@ To solve the IVP \ref{eq:O-NET_IVP} in Julia code, we use the package CommonSolv
     pred_data = Array(solution)
 \end{minted}
 
-The final variable "pred\_data" is a 2D-array, which stands for the estimate of the coordinates trajectories $\{ \hat{z_{t}} \}_{t=1}^{T}$. In our case, we have 2 coordinates (q, p) in the Hamiltonian system and 200 time steps. Thus, the "pred\_data" should be a $2 \times 200$ array.
+The final variable "pred\_data" is a 2D-array, which stands for the estimate of the coordinates trajectories $\{ \hat{z_{t}} \}_{t=1}^{T}$. In our case, we have 2 coordinates (q, p) in the Hamiltonian system and 200 time steps. Thus, the "pred\_data" is a $2 \times 200$ array.
 
 \textbf{Step 4}: construct a loss function
 
@@ -1187,9 +1194,10 @@ To train the neural network model, we define a loss function
 
 where $\hat{\mathbf{z}_{t}}$ is the estimate at a fixed time $t$ ($\hat{\mathbf{z}_{t}}$ is a point in the estimate of the coordinates trajectories $\{ \hat{z_{t}} \}_{t=1}^{T}$) and $\mathbf{z}_{t}$ is assumed to be a point from observation (${\mathbf{z}_{t}}$ is a point in the training set $\{ {z_{t}} \}_{t=1}^{T}$). The goal of the optimization is to minimize the error between them.
 
-However, in code, instead of real observations we use the system of ODEs to generate the training set $\{ {z_{t}} \}_{t=1}^{T}$. For instance, the ODE data of an undamped harmonic oscillator can be generated according to the system of ODEs \ref{eq:ODE_undamped_harmonic_oscillator}:
+However, in code, we adopt the training set $\{ {z_{t}} \}_{t=1}^{T}$ generated by the system of ODEs instead of real observations. For instance, the training set for an undamped harmonic oscillator can be generated by the system of ODEs \ref{eq:ODE_undamped_harmonic_oscillator}:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    # The system of ODEs of an undamped harmonic oscillator
     function ODEfunc_udho(dz, z, params, t)
       q, p = z
       m, c = params
@@ -1222,11 +1230,12 @@ end
 
 \textbf{Step 5}: train the neural network
 
-There are different optimization algorithm can be implemented to train the model. We will use one of the most popular algorithms, the Adam Algorithm, in the following. Note that the Adam algorithm uses mini-batch gradient descent. Hence, first create an iterable object "dataloader" to load mini-batches.
+There are different optimization algorithm can be implemented to train the model. We will use one of the most popular algorithms, the Adam Algorithm, in the following. As stated before, the Adam algorithm uses mini-batch gradient descent. Hence, first create an iterable object "dataloader" to load mini-batches.
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 # The dataloader generates a batch of data according to the given batchsize from the "ode_data".
-dataloader = Flux.Data.DataLoader((ode_data, time_steps), batchsize = 50)
+using Flux: DataLoader
+dataloader = DataLoader((ode_data, time_steps), batchsize = 50)
 \end{minted}
 
 Recall that the code in algorithm \ref{alg:Adam_alg} performed only one training epoch. In order to obtain a satisfying result, we train the model multiple times. And we use a Julia package "Optimization.jl", which is an unified interface for different optimization algorithms and automatic differentiation tools.
@@ -1271,15 +1280,22 @@ In Lux:
 \end{minted}
 
 
-\subsection{N-NET}
-N-NET is a neural network $\mathcal{H}_{\theta}$ that learns the Hamiltonian. The idea of N-NET is to replace the O-NET $f_{\theta}$ in \ref{eq:O-NET_IVP} with the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$. Then, the ODE can be rewritten as
+\subsection{H-NET}
+H-NET is a neural network $\mathcal{H}_{\theta}$ that learns the Hamiltonian. The idea of H-NET is to replace the O-NET $f_{\theta}$ in \ref{eq:O-NET_IVP} with the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$. Then, the IVP \ref{eq:O-NET_IVP} can be rewritten as
 
 \begin{equation}
     \label{eq:H-NET_IVP}
+    \dot{\mathbf{z}}_t = X_{\mathcal{H}_{\theta}}(\mathbf{z_t}), \quad \mathbf{z}(t_{0}) = \mathbf{z}_{0}.
+\end{equation}
+
+The corresponding solution can be computed by
+
+\begin{equation}
+    \label{eq:H-NET_ODESolver}
     \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, X_{\mathcal{H}_{\theta}}, \{ t \}_{t=1}^{T}).
 \end{equation}
 
-The major difference between N-NET and O-NET in code is step 2. The ODE of N-NET should contain the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$ rather than a neural network:
+In code, the major difference between H-NET and O-NET appears in step 2. The ODE of H-NET contains the estimate of symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$ from a neural network rather than the neural network itself:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # FiniteDiff.jl is an automatic differentiation tool.
@@ -1297,7 +1313,7 @@ The major difference between N-NET and O-NET in code is step 2. The ODE of N-NET
     end
 \end{minted}
 
-Note that N-NET is a 2-input and 1-output model, while O-NET has 2 output:
+Note that H-NET is a 2-input and 1-output model, while O-NET has 2 output:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 H_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
@@ -1306,9 +1322,9 @@ H_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
 \end{minted}
 
 \subsection{HNNs}
-A subtle difference between N-NET and HNNs is that HNNs use the loss function $\mathcal{L}_{HNN} = \lVert \dot z_{t} - X_{\mathcal{H}_{\theta}} \rVert_{2}$, while N-NET uses $\mathcal{L} = \lVert \mathbf{z}_{t} - \hat{\mathbf{z}_{t}} \rVert_{2}$. It means that N-NET learns dynamics from the coordinates rather than from the time derivative of coordinates.
+However, a subtle difference between H-NET and HNNs is that HNNs use the loss function $\mathcal{L}_{HNN} = \lVert \dot z_{t} - X_{\mathcal{H}_{\theta}} \rVert_{2}$, while H-NET uses $\mathcal{L} = \lVert \mathbf{z}_{t} - \hat{\mathbf{z}_{t}} \rVert_{2}$. It means that H-NET learns dynamics from the coordinates rather than from the time derivative of coordinates.
 
-The loss function in N-NET is the same as in O-NET:
+The loss function in H-NET corresponds to the one in O-NET:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 function solve_IVP(θ, batch_timesteps)
@@ -1326,7 +1342,7 @@ end
 dataloader = Flux.Data.DataLoader((ode_data, time_steps), batchsize = 50)
 \end{minted}
 
-The loss function in HNNs omits the procedure of solving the IVP and computes the estimate of symplectic gradient directly. Hence, the "dataloader" should load the training set rather than timesteps (timesteps will be used to solve the IVP, however, the loss function in HNNs does not need to solve the IVP).
+The loss function in HNNs omits the procedure of solving the IVP and computes the estimate of symplectic gradient directly. Hence, the "dataloader" loads the training set rather than timesteps (timesteps will be used to solve the IVP, however, the loss function in HNNs does not need to solve the IVP).
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 # Generate the time derivatives of the coordinates
@@ -1347,29 +1363,103 @@ dataloader = Flux.Data.DataLoader((ode_data, dz_data), batchsize = 50)
 \end{minted}
 
 \section{Structured O-NET}
-An O-NET $f_{\theta}$ is considered as a pure black box. Such a pure data-driven modeling approach provides no guarantees of convergence if only small training sets are available. How about big training sets? In the field of physics, especially for some complex systems, the acquisition of data from observations is often costly. Therefore, it is also not easy to obtain big training sets. Nevertheless, in the field of physics, there exists a large accumulation of physics laws. If these physical laws are encoded as some prior information, will it compensate for the lack of data?
+An O-NET $f_{\theta}$ is considered as a pure black box. Such a pure data-driven modeling approach provides no guarantees of convergence if only small training sets are available. How about big training sets? In the field of physics, especially for some complex systems, the acquisition of data from observations is often costly. Therefore, it is also not easy to obtain big training sets. Nevertheless, in the field of physics, there exists a large accumulation of physics laws. If these physical laws are encoded as some prior information, will they compensate for the lack of data?
 
-The idea of structured O-NET is to replace the neural network $f_{\theta}$ in \ref{eq:O-NET_IVP} with a new function $h_{\theta}$. 
+\subsection{Physics Informed Function}
 
-\begin{equation}
-    \label{eq:structured_O-NET_IVP}
-    \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, h_{\theta}, \{ t \}_{t=1}^{T}).
-\end{equation}
+The centerpiece of structured O-NET is to replace the neural network $f_{\theta}$ in \ref{eq:O-NET_IVP} with a new function $h_{\theta}$. This new function $h_{\theta}$ is endowed with some prior information, which can help the training towards the correct direction and thus converges faster.
 
-The codomain of the new function $h_{\theta}$ is composed of two parts, the known part and the unknown part. The known part could be a part of a system of ODEs $f(t, x)$, while the unknown part is represented by the output of a neural network $g(\mathbf{z}(t), t; \theta)$. Such a function can be be referred to as a physics informed function and defined as
+$h_{\theta}$ takes two parts as its variable, the known part and the unknown part. Consider a Hamiltonian system (autonomous case) and its state variables $\mathbf{z}=(q, p)$. The known part is a part of a system of ODEs, e.g. $\dot{q} = f(p)$, while the unknown part is replaced by the output of a neural network $\dot{p} = NN(q; \theta)$. 
+
+Since we endowed the function $h_{\theta}$ with some physics prior information (the known part), $h_{\theta}$ can be referred to as a physics informed function. And in the above case, $h_{\theta}$ is defined as
 
 \begin{equation}
     \label{eq:physics_informed_function}
-    h_{\theta} : \left( f(t, x) \times g(\mathbf{z}(t), t; \theta) \right) \longmapsto h(f, x, g, \mathbf{z}(t), t; \theta),
+    h_{\theta} : \big( f(p) \times NN(q; \theta) \big) \longmapsto h_{\theta} \big(f(p), NN(q; \theta) \big),
 \end{equation}
 
-where $\times$ is a binary operator and $g$ is referred to as structured O-NET. The output of $h_{\theta}$ at a fixed time $t$ estimates the time derivative of coordinates $\dot z_{t}$ such that $\dot z_{t} = h_{\theta}(f, x, g, \mathbf{z}(t), t)$.
+where $\times$ is a binary operator and $NN$ is referred to as structured O-NET.
 
+\subsection{ODE Construction}
+
+$h_{\theta} \big(f(p), NN(q; \theta) \big)$ at a fixed time $t$ estimates the time derivative of coordinates $\dot z_{t}$ such that $\dot z_{t} = [q_{t}, p_{t}] = h_{\theta} \big(f(p), NN(q; \theta) \big)$.
+
+Hence, the IVP of structured O-NET can be defined by
+
+\begin{equation}
+    \label{eq:structured_O-NET_IVP}
+    \dot{\mathbf{z}}_t = h_{\theta} \big(f(p), NN(q; \theta) \big), \quad \mathbf{z}(t_{0}) = \mathbf{z}_{0}.
+\end{equation}
+
+In comparison to the ODE of O-NET $\dot{\mathbf{z}}_t = f_{\theta}(\mathbf{z_t}) = NN(\mathbf{z_t}; \theta)$ and the ODE of H-NET $\dot{\mathbf{z}}_t = X_{\mathcal{H}_{\theta}}(\mathbf{z_t}) = X_{NN}(\mathbf{z_t}; \theta)$, we can clearly see that both O-NET and H-NET take the entire state variable $\mathbf{z}=(q, p)$ as input, while structured O-NET only takes $q$. This is based on the assumption that we know the physics law of the variable $p$ and encode it as prior knowledge.
+
+The corresponding solution of the IVP \ref{eq:structured_O-NET_IVP} can be computed via an ODE solver:
+
+\begin{equation}
+    \label{eq:structured_O-NET_ODESolver}
+    \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, h_{\theta}, \{ t \}_{t=1}^{T}).
+\end{equation}
+
+We continue using an undamped harmonic oscillator as example. Recall that in the O-NET section, we consider the whole RHS as unknown part and define the ODE:
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+function ODE(dz, z, θ, t)
+    # There are two indexes behind the function O_NET().
+    # In Lux.jl, the output of a neural network is a tuple, where the first element is the output.
+    # Hence, the first index [1] takes the output of the neural network.
+    # And the second index [1] or [2] picks a single element from the output (the output is a vector).
+    dz[1] = O_NET(z, θ, st)[1][1]
+    dz[2] = O_NET(z, θ, st)[1][2]
+end
+\end{minted}
+
+However, in structured O-NET, we endow the ODE with a known part $\dot{q} = f(p) = p/m$. And the unknown part $\dot{p} = -q/c$ is replaced by the output of a neural network $\dot{p} = NN(q; \theta)$, which takes $q$ as its input.
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+m = 2
+function ODE(dz, z, θ, t)
+    q = z[1]
+    p = z[2]
+    # the time derivative of q is a known part
+    dz[1] = p/m
+    # the time derivative of p is an unknown part
+    dz[2] = Structured_O_NET([q], θ, st)[1][1]
+end
+\end{minted}
+
+In the above case, we hypothesize that the time derivative of $p$ only affected by $q$ (in fact, the real equation is $\dot{p} = -q/c$). Thus, the structured O-NET is a 1-input and 1-output model. If we are unsure of what the input is, we can also simply use the entire state variable $\mathbf{z} = (q, p)$ as input and construct a 2-input and 1-output model for it. Nevertheless, in any case, the input must contain $q$, e.g. $q^2$, $(q-1)$, $(q, p)$, etc. A good guess can greatly improve the efficiency of training (in this case, $q$ is a good guess and $-q/c$ is the best). 
+
+A very good guess (assume that we already know the spring compliance is around 4, 4 is probably imprecise but close enough):
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+m = 2
+c = 4
+function ODE(dz, z, θ, t)
+    q = z[1]
+    p = z[2]
+    dz[1] = p/m
+    dz[2] = Structured_O_NET([-q/c], θ, st)[1][1]
+end
+\end{minted}
+
+In the opposite, if $q$ does not appear in the input, e.g. only $p$ as the input, the model training will not converge in all probability.
+
+A bad guess:
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+m = 2
+function ODE(dz, z, θ, t)
+    q = z[1]
+    p = z[2]
+    dz[1] = p/m
+    dz[2] = Structured_O_NET([p], θ, st)[1][1]
+end
+\end{minted}
 
 \section{Experiments}
 
 \subsection{Experiment 1: Undamped Harmonic Oscillator}
-For simplicity, take a Hamiltonian system such as harmonic oscillator as an example. The system of ODE of an undamped harmonic oscillator is of the form
+For simplicity, take an undamped harmonic oscillator as example. Its system of ODE is of the form
 
 \begin{equation}
     \label{eq:ODE_udho}
@@ -1397,12 +1487,12 @@ Suppose that the RHS of $\dot{q}$ only has known part (without unknown part as w
     =
     \begin{bmatrix}
     {f(q)}\\
-    {g(p;\theta)}
+    {NN(p;\theta)}
     \end{bmatrix}
     =
     \begin{bmatrix}
     \frac{p}{m}\\
-    g(p;\theta)
+    NN(p;\theta)
     \end{bmatrix}.
 \end{equation}
 
@@ -1482,18 +1572,18 @@ In the case of port-Hamiltonian systems, the total energy is not conserved. One 
     =
     \begin{bmatrix}
     {f(q)}\\
-    -\frac{q}{c} + {g(p;\theta)}
+    -\frac{q}{c} + {NN(p;\theta)}
     \end{bmatrix}
     =
     \begin{bmatrix}
     \frac{p}{m}\\
-    -\frac{q}{c} + {g(p;\theta)}\\
+    -\frac{q}{c} + {NN(p;\theta)}\\
     \end{bmatrix}.
 \end{equation}
 
-In comparison to experiment 1, the RHS of $\dot{p}$ has both known part $-\frac{q}{c}$ and unknown part $g(p;\theta)$. And the binary operator is $+$.
+In comparison to experiment 1, the RHS of $\dot{p}$ has both known part $-\frac{q}{c}$ and unknown part $NN(p;\theta)$. And the binary operator is $+$.
 
-\textbf{Remark}. A special case of binary operation is division. If the known part is used as the numerator and the unknown part as the denominator, e.g., $\frac{f(t, x)}{g(\mathbf{z}(t), t; \theta)}$, then one needs to add a constant $\varepsilon$ to the denominator to avoid instability, i.e., $\frac{f(t, x)}{g(\mathbf{z}(t), t; \theta) + \varepsilon}$. This constant should be very small and not affect the learning result, e.g. $\varepsilon = 1 \times 10^{-8}$.
+\textbf{Remark}. A special case of binary operation is division. If the known part is used as the numerator and the unknown part as the denominator, e.g., $\frac{f(t, x)}{NN(\mathbf{z}(t), t; \theta)}$, then one needs to add a constant $\varepsilon$ to the denominator to avoid instability, i.e., $\frac{f(t, x)}{NN(\mathbf{z}(t), t; \theta) + \varepsilon}$. This constant should be very small and not affect the learning result, e.g. $\varepsilon = 1 \times 10^{-8}$.
 
 \textbf{Experiment Setup}.\\
 Initial parameters: $m = 2.0, c = 1.0, d = 1.0$\\
@@ -1540,8 +1630,193 @@ Optimization algorithm: ADAM
 \end{table}
 
 \clearpage
-\chapter{Parameter Estimation}
+\chapter{Compositional Modelling}
 \label{ch:chapter7}
+
+As stated in the Port-Hamiltonian Systems chapter, a classical port-Hamiltonian system, e.g. an isothermal damped harmonic oscillator, can be depicted by a bond-graph expression \ref{fig:bondgraph_idho}. In \cite{lohmayer2021exergetic}, a thermodynamic modelling framework is proposed to extend a classical port-Hamiltonian system to an exergetic port-Hamiltonian system (EPHS). This modelling framework combines the classical port-Hamiltonian structure and the GENERIC framework, such that the EPHS is coherent with both the first and the second law of thermodynamics.
+
+For an isothermal damped harmonic oscillator, its EPHS model can by expressed by the following bond-graph:
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.6]{figures/bondgraph_idho_exergetic.pdf}
+    \caption{Bond-graph expression for defining an EPHS model of an isothermal damped harmonic oscillator}
+    \label{fig:bondgraph_idho_exergetic}
+\end{figure}
+
+However, following the assumption in the preceding chapter, there may be an unknown part in the system, which could be an obstacle to modeling. In this chapter, we propose a port-based modelling approach with structured O-NET. It combines with machine learning techniques and provides a new direction for compositional modelling.
+
+For example, suppose that the resistive structure in red is the unknow part, the estimate of a neural network can be substituted for it:
+
+\clearpage
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.6]{figures/bondgraph_idho_exergetic_NN.pdf}
+    \caption{Bond-graph expression for defining an EPHS model of an isothermal damped harmonic oscillator with neural network}
+    \label{fig:bondgraph_idho_exergetic_NN}
+\end{figure}
+
+The above model is a gray-box model, which is composed by the known part (storage components and Dirac structure) and the unknown part (resistive structure).
+
+
+\section{Compositional Interconnection}
+
+The subsystems in an isothermal damped harmonic oscillator interact with each other via interconnections:
+
+\begin{equation}
+    \label{eq:idho_interconnection1}
+    \left[\begin{array}{c}
+    f^1 \\
+    f^2 \\
+    \hline e_3
+    \end{array}\right]=\left[\begin{array}{rr|r}
+    0 & 1 & 0 \\
+    -1 & 0 & -1 \\
+    \hline 0 & 1 & 0
+    \end{array}\right]\left[\begin{array}{c}
+    e_1 \\
+    e_2 \\
+    \hline f^3
+    \end{array}\right]
+\end{equation}
+
+\begin{equation}
+    \label{eq:idho_interconnection2}
+    \left[\begin{array}{c}
+    f^5 \\
+    \hline e_4
+    \end{array}\right]=\left[\begin{array}{r|r}
+    0 & -1 \\
+    \hline 1 & 0
+    \end{array}\right]\left[\begin{array}{c}
+    e_5 \\
+    \hline f^4
+    \end{array}\right]
+\end{equation}
+
+\begin{equation}
+    \label{eq:idho_interconnection3}
+    \left[\begin{array}{l}
+    f^3 \\
+    f^4
+    \end{array}\right]=\frac{1}{\theta_0} d\left[\begin{array}{rr}
+    \theta_0 & -v \\
+    -v & \frac{v^2}{\theta_0}
+    \end{array}\right]\left[\begin{array}{l}
+    e_3 \\
+    e_4
+    \end{array}\right],
+\end{equation}
+
+where $\theta_0$ is the environment temperature. And the system of ODEs can be expressed by
+
+\begin{equation}
+    \label{eq:ODE_idho_EPHS}
+    \begin{bmatrix}
+    \dot{q}\\\\
+    \dot{p}\\\\
+    \dot{s_e}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+    \frac{p}{m}\\\\
+    -\frac{q}{c}-d\frac{p}{m}\\\\
+    \frac{1}{\theta_0} d v^2
+    \end{bmatrix},
+\end{equation}
+
+where $s_e$ represents the environment entropy.
+
+From the interconnections we can derive 
+
+\begin{equation}
+    \label{eq:flow}
+    \begin{aligned}
+    f^2 &= -e_1 - f^3\\
+    f^5 &= \frac{e_3 f^3}{\theta_0}
+    \end{aligned}
+\end{equation}
+
+In figure \ref{fig:bondgraph_idho_exergetic_NN}, we replaced the resistive structure with the estimate of a neural network $ NN(v^2; \theta ) = e_3 f^3$, where the neural network takes the squared velocity $v^2$ as its input. Note that $v^2$ is a guess here, theoretically, $v$, $p$ or $(q, p)$ etc. can also be used as input. 
+
+We construct a 1-input and 2-input neural network model, where the first output replaces $f^3$ and the second output replaces $e_3 f^3$. Plug the neural network into \ref{eq:flow}:
+
+\begin{equation}
+    \label{eq:flow_with_NN}
+    \begin{aligned}
+    f^2 &= -e_1 - NN(v;\theta)[1]\\
+    f^5 &= \frac{NN(v^2;\theta)[2]}{\theta_0}
+    \end{aligned}
+\end{equation}
+
+\section{Modelling with Structured O-NET}
+
+The neural network in \ref{eq:flow_with_NN} can be considered as a structured O-NET. Following \ref{eq:structured_O-NET_IVP}, the IVP of the above system can be defined by
+
+\begin{equation}
+    \label{eq:structured_O-NET_compositional_IVP}
+    \dot{\mathbf{z}}_t = h_{\theta} \big(g(q, p), NN(v; \theta)[1], NN(v^2; \theta)[2] \big), \quad \mathbf{z}(t_{0}) = \mathbf{z}_{0} = [q, p, s],
+\end{equation}
+
+where $g(q, p)$ represents the known part (storage components and Dirac structure) and $NN(v^2; \theta)$ represents the unknown part (resistive structure).
+
+In Julia code, we use the system of ODEs \ref{eq:ODE_idho_EPHS} to generate training set:
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+function ODEfunc_idho(dz, z, params, t)
+    q, p = z
+    m, c, d, θ_0 = params
+    v = p/m
+    dz[1] = v
+    dz[2] = -q/c -d*v
+    dz[3] = d*v^2/θ_0
+end
+\end{minted}
+
+And the unknown part can be replaced by the estimate of a neural network:
+
+\begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+m = 2
+c = 1
+θ_0 = 20
+function ODE(df, z, θ, t)
+    q = z[1]
+    p = z[2]
+    v = p/m
+    dz[1] = v
+    dz[2] = -q/c + Structured_O_NET([v], θ, st)[1][1]
+    dz[3] = Structured_O_NET([v^2], θ, st)[1][2] / θ_0
+end
+\end{minted}
+
+For the implementation in modelling, only the second output of the structured O-NET is needed, i.e., Structured\_O\_NET([$v^2$], θ, st)[1][2] $=$ $e_3 f^3 = dv^2$.
+
+\section{Experiments}
+\subsection{Experiment 3: Isothermal Damped Harmonic Oscillator Modelling}
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=1]{figures/idho_phase_portrait.pdf}
+    \caption{Phase portrait}
+    \label{fig:idho_phase_portrait}
+\end{figure}
+
+\clearpage
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=1]{figures/idho_dissipative_power.pdf}
+    \caption{The time evolution of the dissipative power}
+    \label{fig:idho_dissipative_power}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=1]{figures/idho_energy_evolution.pdf}
+    \caption{The time evolution of the energy/exergy}
+    \label{fig:idho_energy_evolution}
+\end{figure}
+
 
 \clearpage
 \chapter{Conclusion}
