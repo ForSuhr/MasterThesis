@@ -131,7 +131,7 @@ include("helpers/train_helper.jl")
 using Main.TrainInterface: LuxTrain
 # Adjust the learning rate and epochs, then repeat this code block
 begin
-    α = 0.0001
+    α = 0.001
     epochs = 10
     θ = LuxTrain(optf, θ, α, epochs, dataloader, callback)
 end
