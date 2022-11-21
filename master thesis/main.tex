@@ -181,18 +181,18 @@ By integrating both sides of the explicit ODE, we obtain an integral equation of
     x(t) = x_{0} + \int_{t_{0}}^{t} f(s, x(s))\:ds.
 \end{equation}
 
-Take a small step from $t_{0}$ to $t_{0}+\Delta t$, then $x_{1}$ can be computed by:
+Take a small step from $t_{0}$ to $t_{1}$, then $x_{1}$ can be computed by:
 
 \begin{equation}
     \label{eq:solution_IVP_first_step}
-    x_{1} = x_{0} + \int_{t_{0}}^{t_{0}+\Delta t} f(s, x(s))\:ds.
+    x_{1} = x_{0} + \int_{t_{0}}^{t_{1}} f(s, x(s))\:ds.
 \end{equation}
 
-In the same way, $x_{2}$ can be computed by:
+In the same way, from $t_{1}$ to $t_{2}$, $x_{2}$ can be computed by:
 
 \begin{equation}
     \label{eq:solution_IVP_second_step}
-    x_{2} = x_{1} + \int_{t_{1}}^{t_{1}+\Delta t} f(s, x(s))\:ds.
+    x_{2} = x_{1} + \int_{t_{1}}^{t_{2}} f(s, x(s))\:ds.
 \end{equation}
 
 Suppose that the time evolution ends with $T$, by repeating the above procedure, we obtain a sequence of approximating solutions $ \{ x_t \}_{0}^{T}$. In dynamical systems, $\{ x_t \}_{0}^{T}$ is a  set of points in state space, which is also known as state trajectory.
@@ -200,17 +200,17 @@ Suppose that the time evolution ends with $T$, by repeating the above procedure,
 
 \clearpage
 \section{Numerical Methods}
-In this section, we discuss some numerical methods for solving IVPs. We refer to the solutions provided by numerical methods as numerical solutions. Although numerical methods provide approximations rather than exact solutions, they are widely implemented because they can be used in computer programs. In addition, the algorithmic descriptions regarding numerical methods are known as numerical schemes.
+In this section, we discuss some numerical methods for solving IVPs. We refer to the solutions provided by numerical methods as numerical solutions. In addition, the algorithmic descriptions regarding numerical methods are known as numerical schemes. Although numerical methods provide approximations rather than exact solutions, they are widely implemented since they are efficient in computer programs. 
 
 \subsection{Explicit Euler Method}
-The Euler method is the simplest and probably the first numerical method formulated by Leonhard Euler in 1768. Consider an IVP problem such as \ref{eq:IVP}. The explicit Euler method is of the form
+The Euler method is the simplest and probably the first numerical method formulated by Leonhard Euler in 1768. Consider an IVP problem $\dot{y} = f(y, t), \quad y(t_{0})=y_{0}$. The explicit Euler method is of the form
 
 \begin{equation}
     \label{eq:Eulers_method_explicit}
     y_{n+1} = y_{n} + h \cdot f_{n},
 \end{equation}
 
-where h is the step step $h = t_{n+1} - t_{n}$ and $f_{n}$ is the time derivative of $y$ at time $t_{n}$, i.e. $f_{n} = f(y_n, t_n) = \left. \frac{dy}{dt} \right|_{t=t_n}$.
+where h is the time step size $h = t_{n+1} - t_{n}$ and $f_{n}$ is the time derivative of $y$ at time $t_{n}$, i.e. $f_{n} = f(y_n, t_n) = \left. \frac{dy}{dt} \right|_{t=t_n}$.
 
 \subsection{Implicit Euler Method}
 The implicit Euler method is of the form
@@ -220,7 +220,7 @@ The implicit Euler method is of the form
     y_{n+1} = y_{n} + h \cdot f_{n+1},
 \end{equation}
 
-where $f_{n+1} = f(y_{n+1}, t_{n+1}) = \left. \frac{dy}{dt} \right|_{t=t_{n+1}}$. Comparing to the explicit form \ref{eq:Eulers_method_explicit}, the solution $y_{n+1}$ is defined implicitly. Hence, to obtain the solution of an IVP by using such an implicit method, we need to solve a system of nonlinear equations.
+where $f_{n+1} = f(y_{n+1}, t_{n+1}) = \left. \frac{dy}{dt} \right|_{t=t_{n+1}}$. Comparing to the explicit form \ref{eq:Eulers_method_explicit}, the solution $y_{n+1}$ is defined implicitly. Hence, to obtain the solution of an IVP by using such an implicit method, we need to solve a system of nonlinear equations \cite{hairer2006geometric}.
 
 \subsection{Implicit Midpoint Rule}
 The implicit midpoint is of the form
@@ -232,7 +232,7 @@ The implicit midpoint is of the form
 
 where $f$ evaluates the slope of the solution at time $t_{n}+\frac{h}{2}$.
 
-The implicit midpoint rule is a symplectic integrator. In contrast to \ref{eq:Eulers_method_explicit} and \ref{eq:Eulers_method_implicit}, this symplectic integrator allows the solution trajectory to remain unchanged after inverting the direction. In more detail, after exchanging $y_{n+1}$ and $y_{n}$, the form \ref{eq:Midpoint_rule_implicit} can be rewritten as
+The implicit midpoint rule is a symplectic integrator. In contrast to \ref{eq:Eulers_method_explicit} and \ref{eq:Eulers_method_implicit}, this symplectic integrator allows the solution trajectory to remain unchanged after inverting the direction. This property is known as symmetry \cite{hairer2006geometric}. In more detail, after exchanging $y_{n+1}$ and $y_{n}$, Equation \ref{eq:Midpoint_rule_implicit} can be rewritten as
 
 \begin{equation}
     \label{eq:Midpoint_rule_implicit_inverted}
@@ -248,7 +248,7 @@ Such an inversion only changes the direction of the solution trajectory but does
 \section{Hamiltonian Systems}
 
 \subsection{Formulation}
-In general, a Hamiltonian system is a triple $(\mathcal{X},\omega,H)$, where $(\mathcal{X},\omega)$ is a symplectic manifold which consists of a manifold $\mathcal{X}$ and a symplectic structure or a symplectic form $\omega$. The Hamiltonian or Hamiltonian function $H: \mathcal{X} \mapsto \mathbb{R} $ is a smooth function on the manifold $\mathcal{X}$, i.e., $H \in C^{\infty}(\mathcal{X})$ \cite{rudolph2017differential}. And the unique Hamiltonian vector field corresponding to the Hamiltonian function $H$ is denoted by $X_H = \{H, \cdot \}$, where $\{\cdot, \cdot\}$ is a possion bracket. Suppose that the possion bracket is on the symplectic manifold $(\mathcal{X},\omega)$ and a smooth function is on the manifold $\mathcal{X}$, i.e., $f \in C^{\infty}(\mathcal{X}) $. Thus, the evolution of $f$ can be given by $\dot{f} = \{H, f\} = X_H(f)$. For more details, we refer to \cite{rudolph2012differential}.
+In general, a Hamiltonian system is a triple $(\mathcal{X},\omega,H)$, where $(\mathcal{X},\omega)$ is a symplectic manifold which consists of a manifold $\mathcal{X}$ and a symplectic structure (or symplectic form) $\omega$. The Hamiltonian or Hamiltonian function $H: \mathcal{X} \mapsto \mathbb{R} $ is a smooth function on the manifold $\mathcal{X}$, i.e., $H \in C^{\infty}(\mathcal{X})$ \cite{rudolph2017differential}. And the Hamiltonian vector field corresponding to the Hamiltonian function $H$ is denoted by $X_H = \{H, \cdot \}$, where $\{\cdot, \cdot\}$ is a possion bracket. Suppose that the possion bracket is on the symplectic manifold $(\mathcal{X},\omega)$ and a smooth function $f$ is on the manifold $\mathcal{X}$, i.e., $f \in C^{\infty}(\mathcal{X}) $. Thus, the evolution of $f$ can be given by $\dot{f} = \{H, f\} = X_H(f)$. For more details, we refer to \cite{rudolph2012differential}.
 
 In this thesis, we restrict our study to autonomous systems. In mechanical systems, the Hamiltonian can be formulated by $H(\mathbf{q},\mathbf{p})=T(\mathbf{q},\mathbf{p})+V(\mathbf{q})$, where $T(\mathbf{q},\mathbf{p})$ is the kinetic energy and $V(\mathbf{q})$ is the potential energy of the system. With the generalized coordinate $\mathbf{q} = (q^1, q^2, ..., q^n)$ and generalized momentum $\mathbf{p} = (p_1, p_2, ..., p_n)$, the Hamiltonian is of the form
 
@@ -299,7 +299,7 @@ where the time derivatives of the state variables can be written in the form:
             0 & -I \\
             I & 0
         \end{array} \right]
-    \end{aligned}.
+    \end{aligned}
 \end{equation}
 
 A matrix $J$ that holds $-J = J^T$ is called skew-symmetric matrix.
@@ -316,7 +316,7 @@ Plugging \ref{eq:Hamiltonian_symplectic} into \ref{eq:Hamiltonian_invariant}, we
 \end{equation}
 
 
-In addition to using skew-symmetric matrix in general systems, in a mechanical system such as \ref{eq:Hamiltonian}, the conservation law is of the form:
+For a mechanical system such as \ref{eq:Hamiltonian}, the conservation law can be written as:
 
 \begin{equation}
     \label{eq:Hamiltonian_invariant_in_mechaniacal_system}
@@ -338,14 +338,14 @@ The differentiation of $y_{n+1}$ with respect to $y_{n}$ yields
     (I - \frac{1}{2} h \cdot J \nabla^2 H) \frac{y_{n+1}}{y_{n}} = (I + \frac{1}{2} h \cdot J \nabla^2 H).
 \end{equation}
 
-We can prove that
+Then, we can prove the relation
 
 \begin{equation}
     \label{eq:Midpoint_rule_implicit_symplecticity}
-    (\frac{y_{n+1}}{y_{n}})^T J (\frac{y_{n+1}}{y_{n}}) = J.
+    (\frac{y_{n+1}}{y_{n}})^T J (\frac{y_{n+1}}{y_{n}}) = J
 \end{equation}
 
-The relation \ref{eq:Midpoint_rule_implicit_symplecticity} satisfy for all $t$. A linear mapping $A: \mathbb{R}^2n \mapsto \mathbb{R}^2n$ is called symplectic if $A^T J A = J$. Hence, we say $y_{n+1}$ is a symplectic transformation and \ref{eq:Midpoint_rule_implicit_Hamiltonian} is a symplectic integrator.
+satisfy for all $t$. By definition of symplectic, a linear mapping $A: \mathbb{R}^{2n} \mapsto \mathbb{R}^{2n}$ is called symplectic if $A^T J A = J$ \cite{hairer2006geometric}. Hence, we say $y_{n+1}$ is a symplectic transformation and \ref{eq:Midpoint_rule_implicit_Hamiltonian} is a symplectic integrator.
 
 
 \subsection{Example: Undamped Harmonic Oscillator}
@@ -359,9 +359,9 @@ An undamped harmonic oscillator is a classical Hamiltonian system. A mass $m$ is
     \label{fig:physical_model_undamped_harmonic_oscillator}
 \end{figure}
 
-In Newtonian mechanics, according to Newton's second law $F=ma=m\ddot{x}$ and Hooke's law $F_s=kx$ ($F_s$ is the restoring force of a spring, which is always in the opposite direction to the displacement), it holds $m\ddot{x}+kx=0$, which is an implicit ODE in the form of equation \ref{eq:implicit_ODE}. As the highest order in the ODE is second order, it is called second order differential equation.
+In Newtonian mechanics, according to Newton's second law $F=ma=m\ddot{x}$ and Hooke's law $F_s=kx$ ($F_s$ is the restoring force of a spring, which is always in the opposite direction to the displacement), it holds $m\ddot{x}+kx=0$, which is an implicit ODE. As the highest order in the ODE is second order, it is called second order differential equation.
 
-In Hamiltonian mechanics, referring to equation \ref{eq:Hamiltonian}, the Hamiltonian is the sum of the kinetic energy $\frac{1}{2}\mathbf{p}^T\mathbf{M}^{-1}(\mathbf{q})\mathbf{p}$ and the potential energy $\mathbf{V}(\mathbf{q})$. In the case of undamped harmonic oscillator, this can be rewritten as
+In Hamiltonian mechanics, referring to equation \ref{eq:Hamiltonian}, the Hamiltonian is the sum of the kinetic energy $\frac{1}{2}\mathbf{p}^T\mathbf{M}^{-1}(\mathbf{q})\mathbf{p}$ and the potential energy $\mathbf{V}(\mathbf{q})$. In the case of undamped harmonic oscillator, the Hamiltonian function can be written as
 
 \begin{equation}
     \label{eq:Hamiltonian_udho}
@@ -378,7 +378,7 @@ where p is the momentum of the mass. The state of the system (in canonical coord
     \end{aligned}
 \end{equation}
 
-Moving along the Hamiltonian vector field keeps the total energy of a Hamiltonian system constant. In this way, the time derivative of Hamiltonian stays at zero:
+Moving along the Hamiltonian vector field keeps the total energy of the system constant. In this way, the time derivative of Hamiltonian stays at zero:
 
 \begin{equation}
     \label{eq:derivative_Hamiltonian}
@@ -387,10 +387,10 @@ Moving along the Hamiltonian vector field keeps the total energy of a Hamiltonia
 
 
 \section{Port-Hamiltonian Systems}
-The port-Hamiltonian systems formulation provides a port-based modelling approach, where a complex system can be expressed by an interconnection of several components. In this thesis, we use a bond-graph expression, which is based on the bond-graph theory \cite{paynter1961analysis}, to provide graphical representation of port-Hamiltonian systems.
+The port-Hamiltonian systems formulation provides a port-based modelling approach, where a complex system can be expressed by an interconnection of several components. For more details, we refer to \cite{van2014port}.
 
 \subsection{Dirac Structure}
-The centre of port-Hamiltonian systems is a Dirac structure defined by
+The centre of port-Hamiltonian systems is the Dirac structure defined by
 
 \begin{equation}
     \label{eq:Dirac_structure}
@@ -399,7 +399,10 @@ The centre of port-Hamiltonian systems is a Dirac structure defined by
 
 where the pair $(f_S, e_S) \in T_{x}\mathcal{X} \times T_{x}^{*}\mathcal{X}$ is the energy-storing port, the pair $(f_R, e_R) \in \mathcal{F}_R \times \mathcal{E}_R$ is the energy-dissipating port and the pair $(f_P, e_P) \in \mathcal{F}_P \times \mathcal{E}_P$ is the external port.
 
-As can be seen in \ref{eq:Dirac_structure}, a Dirac structure is a subspace $\mathcal{D} \subset \mathcal{F} \times \mathcal{E}$, where $\mathcal{F}$ and $\mathcal{E}$ are the spaces of the port variables (i.e. flows $f$ and efforts $e$). We refer to a pair $(f,e)$ of vectors of flow and effort variables as a port. In port-Hamiltonian systems, the subsystems interact with each other via ports. Such interactions are assumed to be the exchanges of energy.
+As can be seen in \ref{eq:Dirac_structure}, a Dirac structure is a subspace $\mathcal{D} \subset \mathcal{F} \times \mathcal{E}$, where $\mathcal{F}$ and $\mathcal{E}$ are the spaces of the port variables (i.e. flows $f$ and efforts $e$). We refer to a pair $(f,e)$ of flow and effort variables as a port. In port-Hamiltonian systems, the subsystems interact with each other via ports. Such interactions are assumed to be the exchanges of energy.
+
+\subsection{EPHS framework}
+The EPHSs (exergetic port-Hamiltonian systems) framework combines the port-Hamilton systems theory with the GENERIC framework and categorical systems theory \cite{lohmayer2021exergetic}. In this thesis, we adopt a bond-graph expression proposed by \cite{lohmayer2022ephs} and \cite{lohmayer2022exergetic}, which is inspired by bond-graph syntax \cite{paynter1961analysis}, to provide graphical representation for EPHSs. Consider that the models in chapter "Compositional Modelling" we discuss are compositional, we follow the EPHSs framework in the following example.
 
 \subsection{Example: Isothermal Damped Harmonic Oscillator}
 Unlike the previous example, the mechanical energy of an isothermal damped harmonic oscillator dissipates with the vibration.
@@ -414,33 +417,38 @@ Unlike the previous example, the mechanical energy of an isothermal damped harmo
 
 Figure \ref{fig:idho} illustrates an isothermal damped harmonic oscillator, where $d$ is the damping coefficient.
 
-This system can also be depicted by a bond-graph expression. To distinguish different types of subsystems more visually, storage components are shown in blue, Dirac structures in green and resistive structures in red:
+In bond-graph expression, to distinguish different types of subsystems more visually, storage components are shown in blue, Dirac structures in green and resistive structures in red:
 
 \begin{figure}[h!]
     \centering
-    \includegraphics[scale=0.8]{figures/bondgraph_idho.pdf}
-    \caption{Bond-graph expression for isothermal damped harmonic oscillator. The strokes perpendicular to the bond and adjacent to the subsystems are called causal strokes, which mark the causality between the subsystems and the flow variables. For instance, we say that $D_m$ causes $f^1$.}
+    \includegraphics[scale=0.6]{figures/bondgraph_idho_exergetic.pdf}
+    \caption{Bond-graph expression for isothermal damped harmonic oscillator.}
     \label{fig:bondgraph_idho}
 \end{figure}
 
+\textbf{The storage components} spring and mass are connected to the Dirac structure $D_m$ via ports $(f^1, e_1) = (\dot{q}, \partial_q H)$ and $(f^2, e_2) = (\dot{p}, \partial_p H)$.
 
+\textbf{The resistive structure} damping is connected to the Dirac structure $D_m$ via port $(f^3, e_3) = (dv, v)$ and $(f^4, e_4) = (-\frac{1}{\theta_{0}}dv^2, \theta_{0}-\theta_{0})$. According to the prerequisite "isothermal", the damping will not exchange energy with the isothermal environment. And the net power at the damping $e_3 f^3 + e_4 f^4 = e_3 f^3 = dv^2$ represents the dissipated power of the system.
 
-\textbf{The storage components} spring and mass are connected to the Dirac structure $D_m$ via ports 
-$(f^1, e_1) = (\dot{q}, \partial_q H)$ and $(f^2, e_2) = (\dot{p}, \partial_p H)$.
+The following relation defines the resistive structure:
 
-\textbf{The resistive structure} damping is connected to the Dirac structure $D_m$ via port $(f^3, e_3) = (dv, v)$. Note that the velocity $v$ is $p/m$. According to the prerequisite "isothermal", the damping will not exchange energy with the environment. Hence, the net power at the damping $e_3 f^3 = dv^2$ represents the dissipated energy of the system.
+\begin{equation}
+    \label{eq:resistive_structure_idho}
+    \left[\begin{array}{l}f^3 \\ f^4\end{array}\right]=\frac{1}{\theta_0} d\left[\begin{array}{rr}\theta_0 & -v \\ -v & \frac{v^2}{\theta_0}\end{array}\right]\left[\begin{array}{l}e_3 \\ e_4\end{array}\right].
+\end{equation}
 
-\textbf{The Dirac structure $D_m$} can be defined by:
+\textbf{The Dirac structure $D_m$} is connected to three ports $(f^1, e_1)$, $(f^2, e_2)$ and $(f^3, e_3)$ and thus can be defined by
 
 \begin{equation}
     \label{eq:Dirac_structure_idho}
-    \mathcal{D}_m=\left\{ \left( \left[\begin{array}{l}f^1 \\ f^2 \\ \hline f^3 \end{array} \right], \left[\begin{array}{l} e_1 \\ e_2 \\ \hline e_3 \end{array}\right] \right) \in \mathcal{F} \times \mathcal{E}    \,\middle\vert\,    \left[\begin{array}{l}f^1 \\ f^2 \\ \hline e_3\end{array}\right]=J\left[\begin{array}{l}e_1 \\ e_2 \\ \hline f^3 \end{array}\right]\right\},
+    \mathcal{D}_m=\left\{ \left( \left[\begin{array}{l}f^1 \\ f^2 \\ \hline f^3 \end{array} \right], \left[\begin{array}{l} e_1 \\ e_2 \\ \hline e_3 \end{array}\right] \right) \in T_{x}\mathcal{X} \times T_{x}^{*}\mathcal{X}    \,\middle\vert\,    \left[\begin{array}{l}f^1 \\ f^2 \\ \hline e_3\end{array}\right]=J\left[\begin{array}{l}e_1 \\ e_2 \\ \hline f^3 \end{array}\right]\right\},
 \end{equation}
 
-where $J$ is a skew-symmetric matrix
+where $J$ is a skew-symmetric matrix:
 
 \begin{equation}
     \label{eq:skew-symmetric_matrix_idho}
+    J = 
     \left[\begin{array}{rr|r}
     0 & 1 & 0 \\
     -1 & 0 & -1 \\
@@ -448,18 +456,43 @@ where $J$ is a skew-symmetric matrix
     \end{array}\right].
 \end{equation}
 
-We can also reformulate the interconnection from \ref{eq:Dirac_structure_idho} and obtain the dynamics by canonical coordinates:
+\textbf{The Dirac structure $D_t$} is connected to two ports $(f^5, e_5) = (\dot{s}_e, \theta_{0}-\theta_{0})$ and $(f^4, e_4) = (-\frac{1}{\theta_{0}}dv^2, \theta_{0}-\theta_{0})$ and thus can be defined by
+
+\begin{equation}
+    \label{eq:Dirac_structure_Dt_idho}
+    \mathcal{D}_t=\left\{ \left( \left[\begin{array}{l}f^5 \\ \hline f^4 \end{array} \right], \left[\begin{array}{l} e_5 \\ \hline e_4 \end{array}\right] \right) \in \mathcal{F}_R \times \mathcal{E}_R   \,\middle\vert\,    \left[\begin{array}{l}f^5 \\ \hline e_4\end{array}\right]=J\left[\begin{array}{l}e_5 \\ \hline f^4 \end{array}\right]\right\},
+\end{equation}
+
+where $J$ is a skew-symmetric matrix:
+
+\begin{equation}
+    \label{eq:skew-symmetric_matrix_Dt_idho}
+    J = 
+    \left[\begin{array}{r|r}
+    0 & -1 \\
+    \hline 1 & 0
+    \end{array}\right].
+\end{equation}
+
+
+We can also reformulate the interconnection from \ref{eq:resistive_structure_idho}, \ref{eq:Dirac_structure_idho} and \ref{eq:Dirac_structure_Dt_idho} and obtain the dynamics by canonical coordinates:
 
 \begin{equation}
     \label{eq:ODE_isothermal_damped_harmonic_oscillator}
     \begin{bmatrix}
     \dot{q}\\
+    \\
     \dot{p}\\
+    \\
+    \dot{s}\\
     \end{bmatrix}
     =
     \begin{bmatrix}
     \frac{p}{m}\\
+    \\
     -\frac{q}{c}-d\frac{p}{m}\\
+    \\
+    \frac{1}{\theta_{0}} d v^2\\
     \end{bmatrix}.
 \end{equation}
 
@@ -467,7 +500,7 @@ We can also reformulate the interconnection from \ref{eq:Dirac_structure_idho} a
 \clearpage
 \chapter{Neural Networks}
 \label{ch:chapter4}
-Artificial neural networks (ANNs), also referred to simply as neural networks (NNs), are algorithmic models that mimic the behavioral characteristics of animal neural networks for distributed parallel information processing, even though this mimicry is superficial \cite{russell2010artificial}. Such networks rely on the complexity of the system to process information by adjusting the relationship between a large number of internal nodes connected to each other.
+Artificial neural networks (ANNs), also referred to simply as neural networks (NNs), are mathematical models that mimic the behavioral characteristics of animal neural networks for distributed parallel information processing, even though this mimicry is superficial \cite{russell2010artificial}. Such networks rely on the complexity of the system to process information by adjusting the relationship between a large number of internal nodes connected to each other.
 
 \section{Perceptron}
 Neural network technology originated in the 1950s as perceptron by McCulloch and Pitts \cite{mcculloch1943logical}. The characteristics of perceptrons are strongly contemporary: their inputs and outputs are in binary form. Each of these perceptrons is characterized as either "on" or "off", with an "on" response occurring when stimulated by a sufficient number of neighboring perceptrons.
@@ -556,7 +589,7 @@ One characteristic of tanh function is that it is zero-centered, while the sigmo
     ReLU(x) = max(0,x).
 \end{equation}
 
-The main advantage of using ReLU is that we only need to perform additions, multiplications and comparison operations, which are more efficient in computation than performing exponentials and divisions \cite{nwankpa2018activation}. However, the ReLU function is still non-zero-centered, which may affect the efficiency of gradient descent. 
+The main advantage of using ReLU is that we only need to perform additions, multiplications and comparison operations, which are more efficient in computation than performing exponentials and divisions \cite{nwankpa2018activation}. However, the ReLU function is still non-zero-centered, which may affect the efficiency of convergence. 
 
 \begin{figure}[h!]
     \centering
@@ -566,28 +599,28 @@ The main advantage of using ReLU is that we only need to perform additions, mult
 \end{figure}
 
 
-\section{Neural Networks Architectures}
-So far, neural networks have evolved a variety of architectures. The following three types of neural network architectures are commonly used: feedforward neural network, feedback neural network and graph neural network.
-Take one of the simplest neural network models as an example: a feedforward neural network could be seen as a directed acyclic graph (DAG) with specified input and output nodes, which are fully connected to each other, i.e., the nodes in the later layer are all connected to each node in the former layer. Each node computes its input from the former layer with the parameters and activation function and passes the result to the nodes in the latter layer as their inputs. By definition of a directed acyclic graph, these nodes will never form a closed loop. Figure \ref{fig:feedforward} is an example of feedforward neural network.
+\section{Feedforward Neural Network Architecture}
+So far, there is a variety of neural network architectures designed. Take one of the simplest neural network models as example: a feedforward neural network can be seen as a directed acyclic graph (DAG) with designated input and output nodes, which are fully connected to each other, i.e., all nodes in the next layer are connected to each node in the previous layer \cite{russell2010artificial}. Each node computes its input from the previous layer with the parameters and activation function and passes the result to the nodes in the next layer as their inputs. By definition of a directed acyclic graph, these nodes will never form a closed loop. The following is an example of feedforward neural network architecture.
 
+\clearpage
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=1]{figures/feedforward_neural_network.pdf}
-    \caption{Architecture of a feedforward neural network.}
+    \caption{An example of feedforward neural network architecture.}
     \label{fig:feedforward}
 \end{figure}
 
-To clarify the principle of feedforward neural network, there are some notations to declare first. The uppercase $L$ stands for the number of total layers (input layer not included) in the feedforward neural network, the lowercase $l$ for the $l$th layer and $M_{l}$ for the number of neurons in $l$th layer. Corresponding to equation \ref{eq:activation_function}, $g_{l}(z^{(l)})$ denotes the activation function in $l$th layer, where $z^{l} \in \mathbb{R}^{M_{l}}$. The parameters weight and bias are represented by the weight matrix $\mathbf{W}^{(l)} \in \mathbb{R}^{M_{l} \times M_{l-1}}$ and the bias vector $\mathbf{b}^{(l)} \in \mathbb{R}^{M_{l}}$. Thus, the input $\mathbf{z}^{(l)}$ and output $\mathbf{a}^{(l)}$ of a neuron in $l$th layer could be written as:
+To clarify the principle of feedforward neural network, there are some notations to declare first. The uppercase $L$ stands for the number of layers (input layer not included) in the feedforward neural network, the lowercase $l$ stands for the $l$th layer and $M_{l}$ stands for the number of neurons in $l$th layer. $g_{l}(z^{(l)})$ denotes the activation function in $l$th layer, where $z^{l} \in \mathbb{R}^{M_{l}}$. The parameters are denoted by the weight matrix $\mathbf{W}^{(l)} \in \mathbb{R}^{M_{l} \times M_{l-1}}$ and the bias vector $\mathbf{b}^{(l)} \in \mathbb{R}^{M_{l}}$. Thus, the input $\mathbf{z}^{(l)} \in \mathbb{R}^{M_{l}}$ and the output $\mathbf{a}^{(l)} \in \mathbb{R}^{M_{l}}$ of $l$th layer can be written as:
 
 \begin{equation}
     \label{eq:input_output_neuron}
     \begin{aligned}
-    \mathbf{z}^{(l)} &= \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}, \quad \mathbf{z}^{(l)} \in \mathbb{R}^{M_{l}}\\
-    \mathbf{a}^{(l)} &= g_{l}(\mathbf{z}^{(l)}), \quad \mathbf{a}^{(l)} \in \mathbb{R}^{M_{l}}.
+    \mathbf{z}^{(l)} &= \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}\\
+    \mathbf{a}^{(l)} &= g_{l}(\mathbf{z}^{(l)}).
     \end{aligned}
 \end{equation}
 
-In fact, the whole feedforward neural network can be seen as a function $f(\mathbf{x};\mathbf{\theta})$, where $\mathbf{x}$ is the input of the neural network and $\mathbf{\theta}$ is the set of the parameters (including weight and bias). Note that the input $\mathbf{x}$ here is the output of the neurons in the input layer, i.e., $\mathbf{x}=[x_1, ..., x_n]=\mathbf{a}^{(0)}$ and the function itself is the output of the neurons in the ouput layer, i.e., $f(\mathbf{x};\mathbf{\theta})=\mathbf{a}^{(L)}$. In general, one can use the feedforward propagation algorithm as the first step to yield initial output to compute the loss function for further optimization. The following is the algorithmic procedure for feedforward propagation:
+The feedforward neural network can be seen as a function $f$ according to the relation $\hat{\mathbf{y}} = f(\mathbf{x};\mathbf{\theta})$, where $\mathbf{x}$ is the input to the neural network and $\mathbf{\theta}$ is the set of the parameters $\theta=((\mathbf{W}^{(1)}, \mathbf{b}^{(1)}), ..., (\mathbf{W}^{(l)}, \mathbf{b}^{(l)}))$. Note that $\mathbf{z}^{(l)}$ represents the input to a hidden layer or an output layer (input layer not included), while $\mathbf{x}$ here represents the input to the neural network. From another perspective, $\mathbf{x}$ is the output of the input layer, i.e., $\mathbf{x}=[x_1, ..., x_n]=\mathbf{a}^{(0)}$ and $\hat{\mathbf{y}}$ is the output of the ouput layer, i.e., $\hat{\mathbf{y}}=f(\mathbf{x};\mathbf{\theta})=\mathbf{a}^{(L)}$. In conclusion, the feedforward propagation algorithm computes the output of the neural network $\hat{\mathbf{y}}$ for further optimization. The following is the algorithmic procedure for feedforward propagation:
 
 \clearpage
 \begin{algorithm}[h!]
