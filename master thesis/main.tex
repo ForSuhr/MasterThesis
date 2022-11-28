@@ -610,7 +610,7 @@ So far, there is a variety of neural network architectures designed. Take one of
     \label{fig:feedforward}
 \end{figure}
 
-To clarify the principle of feedforward neural network, there are some notations to declare first. The uppercase $L$ stands for the number of layers (input layer not included) in the feedforward neural network, the lowercase $l$ stands for the $l$th layer and $M_{l}$ stands for the number of neurons in $l$th layer. $g_{l}(z^{(l)})$ denotes the activation function in $l$th layer, where $z^{l} \in \mathbb{R}^{M_{l}}$. The parameters are denoted by the weight matrix $\mathbf{W}^{(l)} \in \mathbb{R}^{M_{l} \times M_{l-1}}$ and the bias vector $\mathbf{b}^{(l)} \in \mathbb{R}^{M_{l}}$. Thus, the input $\mathbf{z}^{(l)} \in \mathbb{R}^{M_{l}}$ and the output $\mathbf{a}^{(l)} \in \mathbb{R}^{M_{l}}$ of $l$th layer can be written as:
+To clarify the principle of feedforward neural network, we first declare some notations. The uppercase $L$ stands for the number of layers (input layer not included) in the feedforward neural network, the lowercase $l$ stands for the $l$th layer and $M_{l}$ stands for the number of neurons in $l$th layer. $g_{l}(z^{(l)})$ denotes the activation function in $l$th layer, where $z^{l} \in \mathbb{R}^{M_{l}}$. The parameters are denoted by the weight matrix $\mathbf{W}^{(l)} \in \mathbb{R}^{M_{l} \times M_{l-1}}$ and the bias vector $\mathbf{b}^{(l)} \in \mathbb{R}^{M_{l}}$. Thus, the input $\mathbf{z}^{(l)} \in \mathbb{R}^{M_{l}}$ and the output $\mathbf{a}^{(l)} \in \mathbb{R}^{M_{l}}$ of $l$th layer can be written as:
 
 \begin{equation}
     \label{eq:input_output_neuron}
@@ -620,28 +620,9 @@ To clarify the principle of feedforward neural network, there are some notations
     \end{aligned}
 \end{equation}
 
-The feedforward neural network can be seen as a function $f$ according to the relation $\hat{\mathbf{y}} = f(\mathbf{x};\mathbf{\theta})$, where $\mathbf{x}$ is the input to the neural network and $\mathbf{\theta}$ is the set of the parameters $\theta=((\mathbf{W}^{(1)}, \mathbf{b}^{(1)}), ..., (\mathbf{W}^{(l)}, \mathbf{b}^{(l)}))$. Note that $\mathbf{z}^{(l)}$ represents the input to a hidden layer or an output layer (input layer not included), while $\mathbf{x}$ here represents the input to the neural network. From another perspective, $\mathbf{x}$ is the output of the input layer, i.e., $\mathbf{x}=[x_1, ..., x_n]=\mathbf{a}^{(0)}$ and $\hat{\mathbf{y}}$ is the output of the ouput layer, i.e., $\hat{\mathbf{y}}=f(\mathbf{x};\mathbf{\theta})=\mathbf{a}^{(L)}$. In conclusion, the feedforward propagation algorithm computes the output of the neural network $\hat{\mathbf{y}}$ for further optimization. The following is the algorithmic procedure for feedforward propagation:
+The feedforward neural network can be seen as a function $f$ according to the relation $\hat{\mathbf{y}} = f(\mathbf{x};\mathbf{\theta})$, where $\mathbf{x}$ is the input to the neural network and $\mathbf{\theta}$ is the set of the parameters $\theta=((\mathbf{W}^{(1)}, \mathbf{b}^{(1)}), ..., (\mathbf{W}^{(l)}, \mathbf{b}^{(l)}))$. Note that $\mathbf{z}^{(l)}$ represents the input to a hidden layer or an output layer (input layer not included), while $\mathbf{x}$ here represents the input to the neural network. From another perspective, $\mathbf{x}$ is the output of the input layer, i.e., $\mathbf{x}=[x_1, ..., x_n]=\mathbf{a}^{(0)}$ and $\hat{\mathbf{y}}$ is the output of the ouput layer as well as the output of the neural network, i.e., $\hat{\mathbf{y}}=f(\mathbf{x};\mathbf{\theta})=\mathbf{a}^{(L)}$. 
 
-\clearpage
-\begin{algorithm}[h!]
-\caption{The feedforward propagation algorithm.}
-\label{alg:feedforward_alg}
-    \begin{algorithmic}[1]
-    \Require neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$ with $l$th layer
-    \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias vector $\mathbf{b} \in \mathbb{R}^{M_{l}}$
-    \Require activation function $g(z)$
-    \Require input $\mathbf{x}$
-    \State $\mathbf{a}^{(0)}=\mathbf{x}$ \Comment{The output of the input layer}
-    \For{$l=1...L$}
-        \State $\mathbf{z}^{(l)} \gets \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$ \Comment{Compute the input of a neuron in $l$th layer}
-        \State $\mathbf{a}^{(l)} \gets g_{l}(\mathbf{z}^{(l)})$  \Comment{Compute the output of a neuron in $l$th layer}
-        \State \Comment{See Equation \ref{eq:input_output_neuron}}
-    \EndFor
-    \State \Return $f(\mathbf{x};\mathbf{W},\mathbf{b})=\mathbf{a}^{(L)}$ \Comment{Return the initial output}
-    \end{algorithmic}
-\end{algorithm}
-
-We inplement the feedforward progagation in code:
+The following is a code example in Julia for feedforward propagation:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # 3 neurons in this layer and 2 neurons in the next layer, generate random parameters
@@ -659,93 +640,96 @@ We inplement the feedforward progagation in code:
     # The second layer
     z3 = (W2 * a2) .+ b2
     a3 = sigmoid(z3)
-
 \end{minted}
 
 \section{Optimization}
-An optimization algorithm is ordinarily an algorithm that seeks the optimum. In general, finding the global optimum on a convex objective function is the simplest problem. However, if the objective function is unfortunately a non-convex function, then one has to settle for second best, i.e., seeking the local optimum.
+Optimization theory is a branch of mathematics dedicated to solving optimization problems. An optimization problem is a mathematical function in which we want to minimize or maximize the objective function value. In general, finding the global optimum of a convex objective function is a relatively simple optimization problem. However, a lot of optimization problems in machine learning are formulated as non-convex optimization problems, in which the objective functions are non-convex \cite{sun2019survey}. It may be more complex to find the global optimum of a non-convex function. In this case, one may choose to settle for second best, i.e., seeking the local optimum.
 
 \subsection{Data Set}
-A set of samples (or data) is called a data set. In machine learning, there are two types of data set: training set and test set. The training set is used to train the model, while the test set is used to evaluate the model. Such a data set (whether for training or for testing) can be denoted by $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{n=1}^{N} = \{ (\mathbf{x}_{1}, \mathbf{y}_{1}),  (\mathbf{x}_{2}, \mathbf{y}_{2}), ..., (\mathbf{x}_{N}, \mathbf{y}_{N}) \}$.
+A data set is a set of samples (or data). In machine learning, the data is commonly divided into two data set: training set and test set. The training set is used to train the model, while the test set is used to evaluate the model. Such a data set (whether for training or for testing) can be denoted by $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{n=1}^{N} = \{ (\mathbf{x}_{1}, \mathbf{y}_{1}),  (\mathbf{x}_{2}, \mathbf{y}_{2}), ..., (\mathbf{x}_{N}, \mathbf{y}_{N}) \}$.
 
 \subsection{Loss Functions}
-The loss function $\mathcal{L}\left( y,f(\mathbf{x};\mathbf{\theta}) \right)$ is a non-negative real-valued function that quantifies the error between the target function $y$ and the model prediction $f(\mathbf{x};\mathbf{\theta})$. The following are three common loss functions: zero-one loss function, absolute error loss function and squared error loss function.
+A loss function $L$ is a non-negative real-valued function that quantifies the error between the target value $\mathbf{y}$ and the estimated value $\hat{\mathbf{y}}$. 
 
-Zero-one loss function:
+In supervised learning, the goal of the optimization is to find the minimum. This minimum can be formulated as MSE (mean squared error):
+
+\begin{equation}
+    \label{eq:minimum}
+    \min _\theta \frac{1}{N} \sum_{i=1}^N L\left(y^i, \hat{y}^i\right),
+\end{equation}
+
+where $L$ is the loss function.
+
+In the following, we introduce three common loss functions: zero-one loss function, absolute error loss function and squared error loss function.
+
+\textbf{Zero-one loss function} is pretty intuitive for judging whether the result is good or bad, as its output is binary:
 
 \begin{equation}
     \label{eq:zero_one_loss}
-    \mathcal{L}_{0/1}\left( y,f \left(\mathbf{x};\mathbf{\theta} \right) \right) = \begin{cases} 0 & \text{if } y=f(\mathbf{x};\mathbf{\theta}) \\ 1 & \text{if } y \neq f(\mathbf{x};\mathbf{\theta})
-    \end{cases}
+    L_{0/1} (\mathbf{y}, \hat{\mathbf{y}}) = \begin{cases} 0 & \text{if } \mathbf{y}=\hat{\mathbf{y}} \\ 1 & \text{if } \mathbf{y} \neq \hat{\mathbf{y}}
+    \end{cases}.
 \end{equation}
 
-The zero-one loss function is pretty intuitive for judging whether the result is good or bad. However, the binary output does not provide some room for further optimization.
-
-Absolute error loss function, also called $\mathcal{L}_{1}$ loss:
+\textbf{Absolute error loss function} is also known as $L_{1}$ loss function. It minimizes the sum of the absolute differences between the target value $\mathbf{y}$ and the estimated values $\hat{\mathbf{y}}$:
 
 \begin{equation}
     \label{eq:AE_loss}
-    \mathcal{L}_{1}\left( y,f(\mathbf{x};\mathbf{\theta}) \right) = |y-f(\mathbf{x};\mathbf{\theta})|
+    L_{1}( \mathbf{y}, \hat{\mathbf{y}} ) = ||\mathbf{y}-\hat{\mathbf{y}}||_{1},
 \end{equation}
 
-Squared error loss function, also called $\mathcal{L}_{2}$ loss:
+where $|| \cdot ||_{1}$ is $\ell_1$ norm $\sqrt[1]{\sum_{i=1}^N | \cdot |^1}$.
+
+\textbf{Squared error loss function} is also known as $L_{2}$ loss function. It minimizes the sum of the square of the differences between the target value $\mathbf{y}$ and the estimated values $\hat{\mathbf{y}}$:
 
 \begin{equation}
     \label{eq:SE_loss}
-    \mathcal{L}_{2}\left( y,f(\mathbf{x};\mathbf{\theta}) \right) = (y-f(\mathbf{x};\mathbf{\theta}))^2
+    L_{2} ( \mathbf{y}, \hat{\mathbf{y}} ) = ||\mathbf{y}-\hat{\mathbf{y}}||^{2}_{2},
 \end{equation}
 
-The $\mathcal{L}_{1}$ and $\mathcal{L}_{2}$ loss are widely used in linear regression models to evaluate the error. In general, the $\mathcal{L}_{2}$ loss is preferred since it is more sensitive. Yet the $\mathcal{L}_{1}$ loss performs better than the $\mathcal{L}_{2}$ loss in terms of robustness, especially when there are some outliers in the data.
-
-In addition to the mentioned loss function, it is worth noting one concept in statistics: the mean squared error (MSE). In machine learning, MSE is commonly used as the target function for the optimization:
-
-\begin{equation}
-    \label{eq:MSE}
-    MSE = \frac{1}{N} \sum\nolimits_{n=1}^N \mathcal{L}_{2}\left( y_n,f(\mathbf{x}_n;\mathbf{\theta}) \right) = \frac{1}{N} \sum\nolimits_{n=1}^N (y_n-f(\mathbf{x}_n;\mathbf{\theta}))^2.
-\end{equation}
+where $|| \cdot ||_{2}$ is $\ell_2$ norm $\sqrt[2]{\sum_{i=1}^N | \cdot |^2}$.
 
 
-\subsection{Gradient Descent}
-Gradient Descent (GD) is the most usual optimization algorithm in machine learning. The idea is to iterate the following procedure:
+\subsection{Batch Gradient Descent}
+Gradient Descent (GD) is one of the most popular algorithms for performing optimization \cite{ruder2016overview}. In machine learning, Batch Gradient Descent (BGD) is an optimization algorithm designed to find the minimum of the objective function, but the points it find are not guaranteed to be global optimal. Occasionally, BGD may get stuck in local optima.
+
+BGD computes the gradient of the loss function with respect to the parameters for the entire training set and perform an update of the parameters in the opposite direction of the gradient \cite{ruder2016overview}:
 
 \begin{equation}
     \label{eq:GD}
-    \theta_{t+1} = \theta_{t} - \alpha \frac{1}{N} \sum\nolimits_{n=1}^N \nabla \mathcal{L}\left( y_{n},f(\mathbf{x_{n}};\mathbf{\theta}) \right)
+    \theta_{t+1} = \theta_{t} - \alpha \frac{1}{N} \sum\nolimits_{i=1}^N  \frac{\partial L (y^i, \hat{y}^i)}{\partial \theta_{t}},
 \end{equation}
 
-where $\theta_{t}$ is the parameters at the time step $t$, $\alpha$ is the learning rate and $\nabla \mathcal{L}\left( y^{(n)},f(\mathbf{x^{(n)}};\mathbf{\theta}) \right)$ is the gradient of the loss function:
-
-\begin{equation}
-    \label{eq:Gradient_loss}
-    \nabla \mathcal{L}\left( y_{n},f(\mathbf{x_{n}};\mathbf{\theta}) \right) = \frac{\partial \mathcal{L}\left( y_{n},f(\mathbf{x_{n}};\mathbf{\theta}) \right)}{\partial \theta}
-\end{equation}
-
-The parameters $\theta_{t}$ in each iteration are implemented to the neural network model, and the error (e.g. the mean squared error in Equation \ref{eq:MSE}) is also updated simultaneously with the update of the neural network model. Once the error is small enough to be a desirable value, then the model is considered to be well trained.
+where $\theta_{t}$ is the parameters at time $t$ and $\alpha$ is the learning rate. BGD is guaranteed to converge to the global minimum for convex functions and to a local minimum for non-convex functions \cite{ruder2016overview}.
 
 \subsection{Stochastic Gradient Descent}
-In the gradient descent \ref{eq:GD} above, the target function is the MSE \ref{eq:MSE} over the whole training set, and this approach is called Batch Gradient Descent (BGD).  The Batch Gradient Descent algorithm requires computing the gradient of the loss function for each samples in each iteration. When the size of the training set is large, the space complexity is high and the computational overhead of each iteration is also large.
+In the process of BGD above, the objective function is the MSE over the whole training set. However, for large data sets, performing BGD leads to high computational complexity in each iteration \cite{sun2019survey}.
 
-In order to reduce the computational complexity, it is also possible to pick only one sample in each iteration, compute the gradient of the loss function for this sample and update the parameters. This approach is known as Stochastic Gradient Descent (SGD). For the optimization problems involving non-convex objective function, due to adding the stochastic feature, the SGD algorithm may escape from local optima easier and converge faster than BGD.
+In order to reduce the computational complexity, it is also possible to pick only one sample in each iteration, compute the gradient of the loss function with respect to the parameters for this sample and update the parameters immediately. This approach is known as Stochastic Gradient Descent (SGD). For optimization problems involving non-convex objective function, the SGD algorithm may be able to escape from local optima (or saddle points) easier \cite{sun2019survey}.
+
+\subsection{Automatic Differentiation}
+Automatic differentiation (AD) is a set of techniques that allow a computer program to yield the derivative of a function. Automatic differentiation uses the fact that a vector-valued function can be decomposed into a finite set of elementary operations where the derivatives are known. Then we can obtain the overall composition by combining the derivatives of the elementary operations through the chain rule. For details, we refer to \cite{baydin2018automatic} and \cite{margossian2019review}.
 
 \subsection{Backpropagation}
-Backpropagation is an algorithm for efficient computation of gradients. The kernel of this algorithm lies in the computation of the partial derivatives of the loss function with respect to parameters, i.e., the gradient in Equation \ref{eq:Gradient_loss}. Since this computation requires the help of automatic differentiation techniques to improve computational efficiency, backpropagation is also known as reverse mode automatic differentiation \cite{baydin2018automatic}.
+Backpropagation is an algorithm for efficient computation of gradients. Since it requires the help of automatic differentiation techniques to improve computational efficiency, backpropagation is also referred to as reverse mode automatic differentiation \cite{baydin2018automatic}.
 
-Consider a neural network $f(\mathbf{x};\mathbf{\theta})=f(\mathbf{x};\mathbf{W},\mathbf{b})$. Based on the chain rule, the partial derivatives of the loss function could be written as the form:
+Consider a neural network $f$. According to the chain rule, the gradient of the loss function with respect to the parameters $\mathbf{W}$ and $\mathbf{b}$ can be written as
 
 \begin{equation}
     \label{eq:Chain_rule_partial}
     \begin{aligned}
-        \frac{\partial \mathcal{L}\left( y,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{W}^{(l)}} &= \frac{\partial \mathcal{L}\left( y,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{z}^{(l)}} 
-        \frac{\partial \mathbf{z}^{(l)}}{\partial \mathbf{W}^{(l)}}
+        \frac{\partial L\left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{W}^{(l)}} &= \frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l)}} 
+        \frac{\partial \mathbf{z}^{(l)}}{\partial \mathbf{W}^{(l)}},
         \\
-        \frac{\partial \mathcal{L}\left( y,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{b}^{(l)}} &= \frac{\partial \mathcal{L}\left( y,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{z}^{(l)}}
-        \frac{\partial \mathbf{z}^{(l)}}{\partial \mathbf{b}^{(l)}}
+        \frac{\partial L\left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{b}^{(l)}} &= \frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l)}} 
+        \frac{\partial \mathbf{z}^{(l)}}{\partial \mathbf{b}^{(l)}},
     \end{aligned}
 \end{equation}
 
-where $\mathbf{z}^{(l)}$ is the input of a neuron in $l$th layer, which is already mentioned above in Equation \ref{eq:input_output_neuron}, i.e., $\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$. Notice that in Equation \ref{eq:Chain_rule_partial} only three terms to be computed: $\frac{\partial \mathbf{z}^{(l)}}{\partial \mathbf{W}^{(l)}}$, $\frac{\partial \mathbf{z}^{(l)}}{\partial \mathbf{b}^{(l)}}$ and $\frac{\partial \mathcal{L}\left( y,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{z}^{(l)}}$.
+where $\mathbf{z}^{(l)}$ is the input to the $l$th layer, i.e., $\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$. 
 
-The first two terms are relatively simple to deduce:
+In the following, we compute three terms: $\frac{\partial \mathbf{z}^{(l)}}{\partial \mathbf{W}^{(l)}}$, $\frac{\partial \mathbf{z}^{(l)}}{\partial \mathbf{b}^{(l)}}$ and $\frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l)}}$.
+
+We compute the first two terms according to \ref{eq:input_output_neuron}:
 
 \begin{equation}
     \label{eq:two_terms}
@@ -756,66 +740,65 @@ The first two terms are relatively simple to deduce:
     \end{aligned}
 \end{equation}
 
-where $\mathbf{I}$ is an identity matrix. The third term is called the error, which reflects the sensitivity of the loss to neurons in $l$th layer. It is denoted by $\delta^{(l)}$. Applying the chain rule, the error $\delta^{(l)}$ in terms of the error in the
-later layer $\delta^{(l+1)}$ can be written as:
+where $\mathbf{I} \in \mathbb{R}^{M_{l}}$ is an identity matrix. 
+
+The third term $\frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l)}}$ is called error, which reflects the sensitivity of the loss to neurons in $l$th layer. The error is denoted by $\delta^{(l)}$. Applying the chain rule, the error from the previous layer $\delta^{(l)}$ in terms of the error in the next layer $\delta^{(l+1)}$ is given by
 
 \begin{equation}
     \label{eq:error_in_one_layer}
     \begin{aligned}
-        \delta^{(l)} &= \frac{\partial \mathcal{L}\left( y,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{z}^{(l)}}
+        \delta^{(l)} &= \frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l)}}
         \\
-        &= \frac{\partial \mathcal{L}\left( y,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{z}^{(l+1)}} \cdot \frac{\partial \mathbf{z}^{(l+1)}}{\partial \mathbf{a}^{(l)}} \cdot \frac{\partial \mathbf{a}^{(l)}}{\partial \mathbf{z}^{(l)}}
-        \\
-        &= (\mathbf{W}^{(l+1)})^T \delta^{(l+1)} \odot g_{l}'(\mathbf{z}^{(l)}),
+        &= \frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l+1)}} \cdot \frac{\partial \mathbf{z}^{(l+1)}}{\partial \mathbf{a}^{(l)}} \cdot \frac{\partial \mathbf{a}^{(l)}}{\partial \mathbf{z}^{(l)}},
     \end{aligned}
 \end{equation}
 
-where $\mathbf{z}^{(l+1)} = \mathbf{W}^{(l+1)} \mathbf{a}^{(l)} + \mathbf{b}^{(l+1)}$, $\mathbf{a}^{(l)} = g_{l}(\mathbf{z}^{(l)})$ from Equation \ref{eq:input_output_neuron} are plugged into the second line in \ref{eq:error_in_one_layer} and the operation $\odot$ stands for Hadamard product.
+where $\mathbf{z}^{(l+1)} = \mathbf{W}^{(l+1)} \mathbf{a}^{(l)} + \mathbf{b}^{(l+1)}$ and $\mathbf{a}^{(l)} = g_{l}(\mathbf{z}^{(l)})$. And we obtain $\delta^{(l+1)}=\frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l+1)}}$, $\frac{\partial \mathbf{z}^{(l+1)}}{\partial \mathbf{a}^{(l)}} = \mathbf{W}^{(l+1)}$ and $\frac{\partial \mathbf{a}^{(l)}}{\partial \mathbf{z}^{(l)}} = g_{l}'(\mathbf{z}^{(l)})$.
 
-After the above deduction, Equation \ref{eq:Chain_rule_partial} together with \ref{eq:two_terms} and \ref{eq:error_in_one_layer} are rewritten in the following form:
+Hence, the error can be written as
+
+\begin{equation}
+    \label{eq:error_in_one_line}
+        \delta^{(l)} = (\mathbf{W}^{(l+1)})^T \delta^{(l+1)} \odot g_{l}'(\mathbf{z}^{(l)}),
+\end{equation}
+
+where $\odot$ stands for Hadamard product (also known as element-wise product), which is the product of two matrices with the same dimensions. The elements in each position of the output matrix are equal to the product of the elements in the same position of the two input matrices. 
+
+The following is an example of Hadamard product:
+
+\begin{equation}
+    \label{eq:Hadamard_product}
+\left[\begin{array}{ll}
+a_{11} & a_{12}  \\
+a_{21} & a_{22} \\
+a_{31} & a_{32} 
+\end{array}\right] \circ\left[\begin{array}{ll}
+b_{11} & b_{12}  \\
+b_{21} & b_{22}\\
+b_{31} & b_{32} 
+\end{array}\right]=\left[\begin{array}{ll}
+a_{11} b_{11} & a_{12} b_{12} \\
+a_{21} b_{21} & a_{22} b_{22}  \\
+a_{31} b_{31} & a_{32} b_{32} 
+\end{array}\right].
+\end{equation}
+
+Note that $(\mathbf{W}^{(l+1)})^T$ in \ref{eq:error_in_one_line} is transposed, as the direction is backward (from $l+1$ to $l$).
+
+Lastly, after we have the three terms, Equation \ref{eq:Chain_rule_partial} together with \ref{eq:two_terms} and \ref{eq:error_in_one_line} can be rewritten as
 
 \begin{equation}
     \label{eq:Chain_rule_partial_deducted}
     \begin{aligned}
-        \frac{\partial \mathcal{L}\left( y,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{W}^{(l)}} &= \delta^{(l)} (\mathbf{a}^{(l-1)})^T \quad \in \mathbb{R}^{M_{l} \times M_{l-1}}
+        \frac{\partial L\left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{W}^{(l)}} &= \delta^{(l)} (\mathbf{a}^{(l-1)})^T \quad \in \mathbb{R}^{M_{l} \times M_{l-1}}
         \\
-        \frac{\partial \mathcal{L}\left( y,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{b}^{(l)}} &= \delta^{(l)} \quad \in \mathbb{R}^{M_{l}}.
+        \frac{\partial L\left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{b}^{(l)}} &= \delta^{(l)} \quad \in \mathbb{R}^{M_{l}}.
     \end{aligned}
 \end{equation}
 
-The algorithm \ref{alg:BP_alg} presents the gradient descent training procedure through backpropagation.
+Thereafter, the gradient of the loss function w.r.t the paramters above can be used to update the parameters in BGD or SGD. For more details about backpropragation, we refer to \cite{nielsen2015neural}.
 
-\clearpage
-\begin{algorithm}[h!]
-\caption{Backpropagation in Stochastic Gradient Descent.}
-The backpropagation algorithm requires initial parameters $\theta_{0}$, which is computed by the feedforward propagation algorithm \ref{alg:feedforward_alg}.
-\label{alg:BP_alg}
-    \begin{algorithmic}[1]
-    \Require neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$ with $l$th layer
-    \Require training set $\mathcal{D}=\{(\mathbf{x}_{n}, \mathbf{y}_{n})\}_{N}^{n=1}$
-    \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias vector $\mathbf{b} \in \mathbb{R}^{M_{l}}$, initial parameters $\theta_{0}$
-    \Require activation function $g(z)$
-    \Require regularization parameter $\lambda$
-    \Require learning rate $\alpha$
-
-    \For{$l=1...L$}
-        \State $\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$ \Comment{Compute the input of neurons in the $l$th layer}
-        \State $\mathbf{a}^{(l)} = g_{l}(\mathbf{z}^{(l)})$ \Comment{Compute the output of neurons in the $l$th layer}
-        \State \Comment{See Equation \ref{eq:input_output_neuron}}
-        \State $\delta^{(l)} = (\mathbf{W}^{(l+1)})^T \delta^{(l+1)} \odot g_{l}'(\mathbf{z}^{(l)})$ \Comment{Compute the error in the $l$th layer}
-        \State \Comment{See Equation \ref{eq:error_in_one_layer}}
-        \State $\frac{\partial \mathcal{L}\left( y_n,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{W}^{(l)}} = \delta^{(l)} (\mathbf{a}^{(l-1)})^T$ \Comment{Compute the gradient on the weight matrix}
-        \State $\frac{\partial \mathcal{L}\left( y_n,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{b}^{(l)}} = \delta^{(l)}$ \Comment{Compute the gradient on the bias vector}
-        \State \Comment{See Equation \ref{eq:Chain_rule_partial_deducted}}
-        \State $\mathbf{W}^{(l+1)} \gets  \mathbf{W}^{(l)}-\alpha (\delta^{(l)} (\mathbf{a}^{(l-1)})^T + \lambda \mathbf{W}^{(l)})$ \Comment{Update the weight matrix}
-        \State $\mathbf{b}^{(l+1)} \gets  \mathbf{b}^{(l)}-\alpha \delta^{(l)}$ \Comment{Update the bias vector}
-        \State \Comment{See Equation \ref{eq:GD}}
-    \EndFor
-    \State \Return $\mathbf{W}, \mathbf{b}$ \Comment{Return the parameters}
-    \end{algorithmic}
-\end{algorithm}
-
-We can also inplement this algorithm in Julia code. Firstly, we generate random parameters and perform the feedforward propagation with reference to the code of algorithm \ref{alg:feedforward_alg}(the same functionality as the code line 2 and 3 in \ref{alg:BP_alg}):
+In Julia code, we can use some automatic differentiation tools to computer the gradient of the loss function w.r.t the paramters. Firstly, we generate random parameters and perform the feedforward propagation:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     W = rand(2, 3)
@@ -841,7 +824,7 @@ The loss function to be optimized can be defined by:
     loss(rand(3), rand(2))
 \end{minted}
 
-To optimize the loss function, it is necessary to compute the gradient of the loss with respect to the parameters $\frac{\partial \mathcal{L}\left( y_{n},f(\mathbf{x_{n}};\mathbf{\theta}) \right)}{\partial \theta}$(the same functionality as the code line 5, 7 and 8 in \ref{alg:BP_alg}):
+In Julia, there are some automatic differentiation tools such as "Zygote.jl", "FiniteDiff.jl", "ReverseDiff.jl", etc. In the following code block, we use "Zygote.jl" \cite{Zygote.jl-2018} to compute the gradient of the loss function with respect to the parameters:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # "Flux" is a deep learning framework in Julia language. The function "params" creates a trainable parameters object.
@@ -852,7 +835,7 @@ To optimize the loss function, it is necessary to compute the gradient of the lo
     gs[θ]
 \end{minted}
 
-The last step is to update the parameters(the same functionality as the code line 10 and 11 in \ref{alg:BP_alg}):
+The last step is to update the parameters. The following is an example of BGD:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # The learning Rate
@@ -863,7 +846,7 @@ The last step is to update the parameters(the same functionality as the code lin
     end
 \end{minted}
 
-Another alternative is to use the function "Flux.Optimise.update!":
+An alternative for optimization is to use the function "Flux.Optimise.update!" from the deep learning framework "Flux.jl" \cite{Flux.jl-2018} \cite{innes:2018}. It provides a common interface for selecting various optimization algorithms. In the following, we simply select BGD with learning rate 0.1:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # The optimization algorithm
@@ -874,93 +857,52 @@ Another alternative is to use the function "Flux.Optimise.update!":
     end
 \end{minted}
 
-As can be seen, backpropagation involves the calculation of gradients in computer programs, and automatic differentiation is a powerful tool in this regard.
-
-\subsection{Automatic Differentiation}
-Automatic differentiation (AD) is a set of techniques that allow a computer program to yield the derivative of a function. Automatic differentiation uses the fact that any computer program that implements a vector-valued function could be decomposed into a sequence of basic specified operations, each of which can be easily differentiated by looking up a table. These basic partial derivatives that compute a particular term are combined into a differential form, such as gradient, Jacobian, etc.
-
 \subsection{Adam Algorithm}
-As can be seen from the process of backpropagation above, the gradient descent algorithm is actually applied in the step of updating the parameters. So are there any other algorithms to update the parameters besides the gradient descent algorithm? The answer is yes. For example, one can use the momentum method to replace the gradient $\nabla \mathcal{L}(\cdot)$ with momenta and the RMSProp algorithm (Root Mean Squared Propagation algorithm) \cite{tieleman2012divide} to update the learning rate $\alpha$. An algorithms that combines the ideas of the momentum method and the RMSProp algorithm is the Adam algorithms (Adaptive Moment Estimation Algorithm) \cite{kingma2014adam}. In practice, the Adam algorithm shows better performance, i.e., fewer parameters to tune and resulting in higher computational efficiency.
+Adam algorithms (Adaptive Moment Estimation Algorithm) \cite{kingma2014adam} is an algorithms that combines the the momentum method \cite{qian1999momentum} and the RMSProp algorithm (Root Mean Squared Propagation algorithm) \cite{tieleman2012divide}. In practice, the Adam algorithm is relatively stable in the process of gradient descent. Hence, it can be applied for most non-convex optimization problems with large data sets and high dimensional space \cite{sun2019survey}. For more details about the above mentioned or other optimization algorithms, we refer to \cite{ruder2016overview}.
 
-The Adam algorithm uses mini-batch gradient descent \cite{bottou2010large}. Consider a neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$, a training set $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{n=1}^{N}$. Mini-batch gradient descent algorithm splits the training set $\mathcal{D}$ into a sequence of subsets (or mini batches) $\mathcal{S}_t=\{(\mathbf{x}_{m}, \mathbf{y}_{m}) \}_{m=1}^{M}$ for each iteration $t$, where $M$ is the batch size of one of the mini batches.
+The Adam algorithm uses mini-batch gradient descent (MBGD) \cite{bottou2010large}. Consider a neural network $f$ and a training set $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{n=1}^{N}$. MBGD algorithm splits the training set $\mathcal{D}$ into a sequence of subsets (or mini batches) $\mathcal{S}_i=\{(\mathbf{x}_{m}, \mathbf{y}_{m}) \}_{m=1}^{M}$, where $M$ is the batch size of the mini batch $\mathcal{S}_i$.
 
-Similar to the idea of gradient descent (see \ref{eq:GD}), the point of the Adam algorithm is to iterate the following procedure:
-
-\begin{equation}
-    \label{eq:Adam_GD}
-    \begin{aligned}
-        \theta_{t+1} = \theta_{t} - \alpha \frac{\hat{s}}{\sqrt{\hat{r}} + \epsilon},
-    \end{aligned}
-\end{equation}
-
-where $\epsilon$ is a very small constant for stabilization (avoiding a denominator of zero). And the two terms $\hat{s}$ and $\hat{r}$ are known as correct moment estimate. It corrected the bias of the original moment estimate $s$ and $r$ at the beginning of the iteration:
-
-\begin{equation}
-    \label{eq:correct_moment_estimate}
-    \begin{aligned}
-        \hat{s_t} &= \frac{s_t}{1-\beta_1^t}
-        \\
-        \hat{r_t} &= \frac{r_t}{1-\beta_2^t},
-    \end{aligned}
-\end{equation}
-
-where $\beta_1^t$ and $\beta_2^t$ are learning rate decay. The moment estimate $s_t$ and $r_t$ are defined as following:
+Similar to the momentum method, Adam stores the exponentially decaying average of past gradients $m_t$. Moreover, similar to the Adadelta algorithm (please refer to \cite{zeiler2012adadelta}) and the RMSprop algorithm, Adam also stores the exponentially decaying average of past squared gradients $v_t$:
 
 \begin{equation}
     \label{eq:moment_estimate}
     \begin{aligned}
-        s_t &= \beta_1 s_{t-1} + (1-\beta_1) \mathbf{g_t}
+        m_t &= \beta_1 m_{t-1} + (1-\beta_1) g_{t},
         \\
-        r_t &= \beta_2 r_{t-1} + (1-\beta_2) \mathbf{g_t} \odot \mathbf{g_t}
+        v_t &= \beta_2 v_{t-1} + (1-\beta_2) g_{t} \odot g_{t},
     \end{aligned}
 \end{equation}
 
-where $\mathbf{g_t}$ stands for the gradient of the loss function with respect to the parameter at $t$th iteration over the mini-batch:
+where $v_t$ and $m_t$ can also be referred to as estimates of the first moment and the second moment of the gradients. And $g_{t}$ stands for the gradient of the loss function with respect to the parameter at the time step $t$:
 
 \begin{equation}
     \label{eq:mean_gradient}
-    \mathbf{g_t} = \frac{1}{M} \sum\nolimits_{m=1}^M \nabla \mathcal{L}\left( y_{m},f(\mathbf{x};\mathbf{\theta}) \right).
+    g_{t} = \frac{1}{M} \sum\nolimits_{j=1}^M \frac{\partial L (y^j, \hat{y}^j)}{\partial \theta_{t}}.
 \end{equation}
- 
 
-\clearpage
-\begin{algorithm}[h!]
-\caption{The training procedure of the Adam algorithm.}
-The decay rates $\beta_1$ and $\beta_2$ should be within the range of $[0,1)$, f.e., $\beta_1=0.9$ and $\beta_2=0.99$ and the learning rate $\alpha$ is recommended to be 0.001. And the very small constant $\epsilon$ is set to $10^{-8}$.
-\label{alg:Adam_alg}
-    \begin{algorithmic}[1]
-    \Require neural network $f(\mathbf{x};\mathbf{W},\mathbf{b})$ with $l$th layer
-    \Require weight matrix $\mathbf{W} \in \mathbb{R}^{M_{l} \times M_{l-1}}$, bias vector $\mathbf{b} \in \mathbb{R}^{M_{l}}$, initial parameters $\theta_{0}$
-    \Require activation function $g(z)$
-    \Require decay rate $\beta_1$ and $\beta_2$
-    \Require learning rate $\alpha$
-    \Require constant $\epsilon$
-    \For{$m=1...M$} \Comment{Iterate all elements in the current mini-batch}
-        \For{$l=1...L$}
-            \State $\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$ \Comment{Compute the input of neurons in the $l$th layer}
-            \State $\mathbf{a}^{(l)} = g_{l}(\mathbf{z}^{(l)})$ \Comment{Compute the output of neurons in the $l$th layer}
-            \State \Comment{See Equation \ref{eq:input_output_neuron}}
-            \State $\delta^{(l)} = (\mathbf{W}^{(l+1)})^T \delta^{(l+1)} \odot g_{l}'(\mathbf{z}^{(l)})$ \Comment{Compute the error in the $l$th layer}
-            \State \Comment{See Equation \ref{eq:error_in_one_layer}}
-            \State $\frac{\partial \mathcal{L}\left( y_m,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{W}^{(l)}} = \delta^{(l)} (\mathbf{a}^{(l-1)})^T$ \Comment{Compute the gradient on the weight matrix}
-            \State $\frac{\partial \mathcal{L}\left( y_m,f(\mathbf{x};\mathbf{\mathbf{W},\mathbf{b}}) \right)}{\partial \mathbf{b}^{(l)}} = \delta^{(l)}$ \Comment{Compute the gradient on the bias vector}
-            \State \Comment{See Equation \ref{eq:Chain_rule_partial_deducted}}
-        \EndFor
-    \EndFor
-    \State $\mathbf{g_t} \gets \frac{1}{M} \sum\nolimits_{m=1}^M \nabla \mathcal{L}\left( y_{m},f(\mathbf{x};\mathbf{\theta}) \right)$ \Comment{Compute the mean gradient, see Equation \ref{eq:mean_gradient}}
-    \State $s_t \gets \beta_1 s_{t-1} + (1-\beta_1) \mathbf{g_t}$ \Comment{Compute the fist moment estimate}
-    \State $r_t \gets \beta_2 r_{t-1} + (1-\beta_2) \mathbf{g_t} \odot \mathbf{g_t}$ \Comment{Compute the second moment estimate}
-    \State \Comment{See Equation \ref{eq:moment_estimate}}
-    \State $\hat{s_t} \gets \frac{s_t}{1-\beta_1^t}$ \Comment{Correct the bias}
-    \State $\hat{r_t} \gets \frac{r_t}{1-\beta_2^t}$ \Comment{Correct the bias}
-    \State \Comment{See Equation \ref{eq:correct_moment_estimate}}
-    \State $\theta_{t+1} \gets \theta_{t} - \alpha \frac{\hat{s}}{\sqrt{\hat{r}} + \epsilon}$ \Comment{Update the parameters}
-    \State \Comment{See Equation \ref{eq:Adam_GD}}
-    \State \Return $\mathbf{W}, \mathbf{b}$ \Comment{Return the parameters}
-    \end{algorithmic}
-\end{algorithm}
+$\beta_1$ and $\beta_2$ are decay rates. The Adam's authors proposed default values of 0.9 for $\beta_1$ and 0.999 for $\beta_2$. However, as $m_t$ and $v_t$ are initially set to vector of zeros, Adam's authors observed that they are biased towards zero during the initial time steps when $\beta_1$ and $\beta_2$ are close to 1. Hence, instead of using the original $m_t$ and $v_t$, they use bias-corrected first and second moment estimates $\hat{m_t}$ and $\hat{v_t}$:
 
-The inplementation of Adam algorithm is similar to the algorithm \ref{alg:BP_alg}. However, the Adam algorithm uses mini-batch gradient descent:
+\begin{equation}
+    \label{eq:corrected_moment_estimate}
+    \begin{aligned}
+        \hat{m_t} &= \frac{m_t}{1-\beta_1^t}
+        \\
+        \hat{v_t} &= \frac{v_t}{1-\beta_2^t}.
+    \end{aligned}
+\end{equation}
+
+Following the idea of BGD or SGD, they perform an update of the parameters according to
+
+\begin{equation}
+    \label{eq:Adam_GD}
+    \begin{aligned}
+        \theta_{t+1} = \theta_{t} - \alpha \frac{\hat{m}}{\sqrt{\hat{v}} + \epsilon},
+    \end{aligned}
+\end{equation}
+
+where $\epsilon$ is a very small constant (the Adam's authors proposed default value of $10^{-8}$ for it) for stabilization (avoiding zero as the denominator). 
+
+The following is an example of using the Adam algorithm in Julia code:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # The ADAM algorithm with the learning rate α=0.01 and decay rates β1=0.9, β2=0.99.
@@ -978,6 +920,7 @@ The inplementation of Adam algorithm is similar to the algorithm \ref{alg:BP_alg
         end
     end
 \end{minted}
+
 
 \clearpage
 \chapter{Neural ODEs}
