@@ -145,7 +145,7 @@ Consider a real-valued function $x$ with $k$ continuous derivatives: $x \in C^{k
     F\left(t, x, x^{(1)}, \ldots, x^{(k)}\right)=0.
 \end{equation}
 
-We assume that the highest order derivative $x^{(k)}$ is solvable, and placing it on the left hand side alone, it becomes the explicit ordinary differential equation of the form:
+We assume that the highest order derivative $x^{(k)}$ is solvable, and placing it on the LHS alone, it becomes the explicit ordinary differential equation of the form:
 
 \begin{equation}
     \label{eq:explicit_ODE}
@@ -600,7 +600,7 @@ The main advantage of using ReLU is that we only need to perform additions, mult
 
 
 \section{Feedforward Neural Network Architecture}
-So far, there is a variety of neural network architectures designed. Take one of the simplest neural network models as example: a feedforward neural network can be seen as a directed acyclic graph (DAG) with designated input and output nodes, which are fully connected to each other, i.e., all nodes in the next layer are connected to each node in the previous layer \cite{russell2010artificial}. Each node computes its input from the previous layer with the parameters and activation function and passes the result to the nodes in the next layer as their inputs. By definition of a directed acyclic graph, these nodes will never form a closed loop. The following is an example of feedforward neural network architecture.
+So far, there is a variety of neural network architectures designed. Take one of the simplest neural network models as example: a feedforward neural network can be seen as a directed acyclic graph (DAG) with designated input and output nodes, which are fully connected to each other, i.e., all nodes in the next layer are connected to each node in the previous layer \cite{russell2010artificial}. Each node computes its input from the previous layer with the parameters and activation function and passes the result to the nodes in the next layer as their inputs. By definition of DAG, these nodes will never form a closed loop. The following is an example of feedforward neural network architecture.
 
 \clearpage
 \begin{figure}[h!]
@@ -772,7 +772,7 @@ The following is an example of Hadamard product:
 a_{11} & a_{12}  \\
 a_{21} & a_{22} \\
 a_{31} & a_{32} 
-\end{array}\right] \circ\left[\begin{array}{ll}
+\end{array}\right] \odot \left[\begin{array}{ll}
 b_{11} & b_{12}  \\
 b_{21} & b_{22}\\
 b_{31} & b_{32} 
@@ -925,17 +925,17 @@ The following is an example of using the Adam algorithm in Julia code:
 \clearpage
 \chapter{Neural ODEs}
 \label{ch:chapter5}
-In order to obtain more accurate results from a neural network model, one may tend to think of stacking more hidden layers. However, when some data scientists try to build complex models using neural networks with hundreds of hidden layers, they found that the vanishing or exploding gradient problem often occurs in backpropagation, which seriously affects the learning efficiency of the upstream hidden layers \cite{glorot2010understanding}. Due to the vanishing or exploding gradient problem, a deeper neural network could even yield worse results than a shallower one. And ResNet (Residual Neural Network) was exactly designed to tackle these problems \cite{he2016deep}. The proposers of ResNet argue that the results of deeper neural networks can be better or at least equal to the results of shallower neural networks, but should not be worse.
+To obtain more accurate results from a neural network model, we may tend to think of stacking more hidden layers. However, when some data scientists try to build complex models using neural networks with hundreds of hidden layers, they found that the vanishing or exploding gradient problem often occurs during backpropagation, which seriously affects the learning efficiency of the upstream hidden layers \cite{glorot2010understanding}. Due to the vanishing or exploding gradient problem, a deeper neural network could even yield worse results than a shallower one. And ResNet (Residual Neural Network) was exactly designed to tackle these problems \cite{he2016deep}. The proposers of ResNet argue that the results of deeper neural networks should be better or at least equal to the results of shallower neural networks, but should not be worse.
 
 \section{Residual Neural Networks}
-In the traditional convention, the output of a layer of a neural network can only be given as input to the next neighboring layer of the neural network. The ResNet breaks this traditional convention, i.e., it allows the output of a layer $\mathbf{x}$ to skip several weight layers $F(\mathbf{x};\theta)$ directly. Then, the output $\mathbf{x}$ can be used as the input to a latter layer:
+In traditional practice, the output of a layer of a neural network can only be given as input to the next neighboring layer of the neural network. However, ResNet breaks this convention. ResNet allows the output of a layer $\mathbf{x}$ to skip several weight layers $F(\mathbf{x};\theta)$ directly. $H$ is a target function given by
 
 \begin{equation}
     \label{eq:ResNet}
-    H(\mathbf{x})=\mathbf{x}+F(\mathbf{x};\theta),
+    H(\mathbf{x})=\mathbf{x}+F(\mathbf{x};\theta).
 \end{equation}
 
-where $H$ is the output or target function. The residual building block illustrates what equation \ref{eq:ResNet} does:
+The following residual building block illustrates the idea of ResNet:
 
 \clearpage
 \begin{figure}[htbp!]
@@ -945,35 +945,35 @@ where $H$ is the output or target function. The residual building block illustra
     \label{fig:ResNet}
 \end{figure}
 
-The weight layers could be thought of as two or more hidden layers that are skipped over by a shortcut connection. This shortcut connection changes the learning target from learning the complete output $H(\mathbf{x})$ to the residual $H(\mathbf{x})-\mathbf{x}$. And the goal of the optimization is to minimize the residual $H(\mathbf{x})-\mathbf{x}$ and make it close to zero. In this case, if $F(\mathbf{x};\theta)=H(\mathbf{x})-\mathbf{x}=0$, then $H(\mathbf{x})=\mathbf{x}$. Since the output $H(\mathbf{x})$ and the input $\mathbf{x}$ are identical, $\mathbf{x}$ can be called identity. The proposers of ResNet hypothesized that the residual is easier to optimize than the complete output and then verified this hypothesis in their experiments. 
+The weight layers can be thought of as serveral hidden layers that are skipped over by a shortcut connection. This shortcut connection changes the learning target from learning the complete target $H(\mathbf{x})$ to the residual $H(\mathbf{x})-\mathbf{x}$. And the goal of the optimization is to minimize the residual $H(\mathbf{x})-\mathbf{x}$ and make it close to zero. In this case, let the output of weight layers be zero, i.e., $F(\mathbf{x};\theta)=H(\mathbf{x})-\mathbf{x}=0$. Then we obtain $H(\mathbf{x})=\mathbf{x}$. Since $H(\mathbf{x})$ and $\mathbf{x}$ are identical, $\mathbf{x}$ is also referred to as identity. The proposers of ResNet hypothesized that the residual is easier to optimize than the complete output and then verified this hypothesis in their experiments. 
 
  The significance of ResNet is that it provides a new direction to address the challenges of stacking more and more hidden layers to the neural networks. Benefiting from the ResNet, the vanishing or exploding gradient problem can be solved to some extent.
 
 \section{Neural ODEs}
-The hidden layers in a ResNet are built by a sequence of transformations in Equation \ref{eq:ResNet}. This sequence of transformations was found to be remarkably similar to the Euler method \ref{eq:Eulers_method_explicit} \cite{ruthotto2020deep}. In view of this, equation \ref{eq:ResNet} can also be rewritten as
+The hidden layers in a ResNet are built by a sequence of transformations like $H(\mathbf{x})=\mathbf{x}+F(\mathbf{x};\theta)$. This sequence of transformations was found to be remarkably similar to the Euler method like $y_{n+1} = y_{n} + h \cdot f_{n}$ \cite{ruthotto2020deep}. In view of this, the transformation \ref{eq:ResNet} can also be rewritten as
 
 \begin{equation}
     \label{eq:Euler_discretization}
     \mathbf{z}_{t+1} = \mathbf{z}_{t} + f(\mathbf{z}_{t}; \theta),
 \end{equation}
 
-where $t \in {0 ... T}$. Such a sequence of iterations is an Euler discretization of a continuous transformation.
+where $t \in \{t\}_{t=0}^T$.
 
-Equation \ref{eq:Euler_discretization} can be rewritten in the form:
+Then, we rewrite this transformation as 
 
 \begin{equation}
     \label{eq:Euler_discretization_rewritten}
     \frac{\mathbf{z}_{t+1}-\mathbf{z}_{t}}{\Delta t} = f(\mathbf{z}_{t}; \theta),
 \end{equation}
 
-where $\Delta t = (t+1)-t = 1$. If $\Delta t$ is a very small step, rewrite \ref{eq:Euler_discretization_rewritten} as
+where $\Delta t = (t+1)-t = 1$. If $\Delta t$ is a very small step, we rewrite \ref{eq:Euler_discretization_rewritten} as
 
 \begin{equation}
     \label{eq:Euler_discretization_small_step}
     \lim_{\Delta t \to 0} \frac{\mathbf{z}_{t+1}-\mathbf{z}_{t}}{\Delta t} = f(\mathbf{z}_{t}; \theta).
 \end{equation}
 
-The LHS of \ref{eq:Euler_discretization_small_step} can be considered as the gradient of $z(t)$ by the definition of differentiation, i.e.,
+The LHS of \ref{eq:Euler_discretization_small_step} can be considered as the gradient of $\mathbf{z}(t)$ by definition of differentiation, i.e.,
 
 \begin{equation}
     \label{eq:Euler_discretization_differentiation}
@@ -987,36 +987,39 @@ Plug \ref{eq:Euler_discretization_differentiation} into \ref{eq:Euler_discretiza
     \mathbf{z}(t+\varepsilon ) = \mathbf{z}(t) + \int_{t}^{t+\varepsilon } f(\mathbf{z}(t), t, \theta)dt
 \end{equation}
 
-is called Neural ODE (Neural Ordinary Differential Equation) \cite{chen2018neural}, where $\varepsilon $ is a small time step and the RHS $f(\mathbf{z}(t), t; \theta)$ can be considered as a neural network $NN(\mathbf{z}(t), t; \theta)$. An ODE solver is treated as a black box that provides a solution to the ODE. Thus, the loss function to be optimized is of the form
+is called Neural ODE (Neural Ordinary Differential Equation) \cite{chen2018neural}, where $\varepsilon $ is a small time step and $f$ can be considered as a neural network. An ODE solver is treated as a black box that provides a solution to an IVP, which consists of a neural ODE and its initial state. Thus, the loss function to be optimized can be defined by
 
 \begin{equation}
     \label{eq:Neural_ODE_Gradient_loss}
     \begin{aligned}
-    \mathcal{L}(\mathbf{z}(t+\varepsilon )) &= \mathcal{L}(\mathbf{z}(t) + \int_{t}^{t+\varepsilon } f(\mathbf{z}(t), t, \theta)dt \:)\\
-    &= \mathcal{L}(ODESolver(\mathbf{z}(t), f, t, t+\varepsilon , \theta)).
+    L(\mathbf{z}(t+\varepsilon )) &= L(\mathbf{z}(t) + \int_{t}^{t+\varepsilon } f(\mathbf{z}(t), t, \theta)dt \:)\\
+    &= L(ODESolver(\mathbf{z}(t), f, t, t+\varepsilon , \theta)).
     \end{aligned}
 \end{equation}
 
-To optimize the loss function \ref{eq:Neural_ODE_Gradient_loss} through backpropagation, one needs to compute the gradient of the loss function \ref{eq:Gradient_loss}. The next step, to calculate the error, is to mimic the procedure in Equation \ref{eq:error_in_one_layer}:
+As stated before, to optimize a loss function through backpropagation, we compute the gradient of the loss function w.r.t the parameters. Before that, we need to compute the error like we did in \ref{eq:error_in_one_layer}:
 
 \begin{equation}
     \label{eq:Neural_ODE_error}
-    \frac{d\mathcal{L}}{d\mathbf{z}(t)} = \frac{d\mathcal{L}}{d\mathbf{z}(t+\varepsilon )} \cdot \frac{d\mathbf{z}(t+\varepsilon )}{d\mathbf{z}(t)}.
+    \frac{d L}{d\mathbf{z}(t)} = \frac{d L}{d\mathbf{z}(t+\varepsilon )} \cdot \frac{d\mathbf{z}(t+\varepsilon )}{d\mathbf{z}(t)}.
 \end{equation}
 
-\section{Adjoint Method}
-The adjoint method (or adjoint sensitivity method) is a method used to compute the gradients of functions efficiently, which can be dated back to the 1960s \cite{boltyanskiy1962mathematical}. Due to the continuity of Neural ODE, computing the gradient of the loss function in backpropagation leads to a huge memory cost. The significance of using the adjoint method is that the gradient of the loss function can still be computed efficiently without storing the intermediate activations which have a huge memory overhead.
+However, the main difficulty is to perform backpropagation through the ODE solver. Hence, the authors of Neural ODEs propose to use the adjoint method.
 
-Similar to the algorithm \ref{alg:BP_alg} in the preceding chapter, the goal of the adjoint method is also to compute the gradient of the loss function with respect to the state $\frac{d\mathcal{L}}{d\mathbf{z}(t)}$ and with respect to the parameters $\frac{d\mathcal{L}}{d\theta}$.
+
+\section{Adjoint Method}
+The adjoint method (or adjoint sensitivity method) is a method designed to compute the gradients of functions by solving ODEs, which can be dated back to the 1960s \cite{boltyanskiy1962mathematical}. Due to the continuity of Neural ODE, computing the gradient of the loss function through backpropagation leads to a huge memory cost. The significance of using the adjoint method is that the gradient of the loss function can still be computed efficiently without storing the intermediate activations and thus the memory cost can be reduced.
+
+For neural ODEs, the goal of using the adjoint method is to compute the gradient of the loss function with respect to the state $\frac{d L}{d\mathbf{z}(t)}$ (or the error) and the gradient of the loss function with respect to the parameters $\frac{d L}{d\theta}$.
 
 To use the adjoint method, the first step is to define an adjoint state that equal to the gradient of the loss function with respect to the state:
 
 \begin{equation}
     \label{eq:adjoint_state}
-    \mathbf{a}(t) = \frac{d\mathcal{L}}{d\mathbf{z}(t)}.
+    \mathbf{a}(t) = \frac{d L}{d\mathbf{z}(t)}.
 \end{equation}
 
-After that, expand the Taylor series for the hidden state $\mathbf{z}(t+\varepsilon )$ at the point $\mathbf{z}(t)$:
+And then, we expand the Taylor series for the hidden state $\mathbf{z}(t+\varepsilon )$ at the point $\mathbf{z}(t)$:
 
 \begin{equation}
     \label{eq:taylor_series_expansion}
@@ -1026,14 +1029,14 @@ After that, expand the Taylor series for the hidden state $\mathbf{z}(t+\varepsi
     \end{aligned}
 \end{equation}
 
-Then plug the equations \ref{eq:adjoint_state} and \ref{eq:taylor_series_expansion} into Equation \ref{eq:Neural_ODE_error}:
+Then plug the equations \ref{eq:adjoint_state} and \ref{eq:taylor_series_expansion} into Equation \ref{eq:Neural_ODE_error}, we obtain
 
 \begin{equation}
     \label{eq:Neural_ODE_adjoint_state}
     \mathbf{a}(t) = \mathbf{a}(t+\varepsilon ) \cdot \frac{\partial}{\partial \mathbf{z}(t)} (\mathbf{z}(t) + \varepsilon f(\mathbf{z}(t), t; \theta) + O (\varepsilon ^2)) .
 \end{equation}
 
-By the definition of differentiation, the gradient of the adjoint state follows:
+By definition of differentiation, the gradient of the adjoint state follows:
 
 \begin{equation}
     \label{eq:adjoint_state_gradient_hidden_state}
@@ -1046,7 +1049,7 @@ By the definition of differentiation, the gradient of the adjoint state follows:
     \end{aligned}
 \end{equation}
 
-Now perform the feedforward propagation algorithm \ref{alg:feedforward_alg}  to get the initial output and compute the initial adjoint state $\mathbf{a}(T) = \frac{d\mathcal{L}}{d\mathbf{z}(T)}$ with reference to Equation \ref{eq:adjoint_state}. This can be considered as the initial condition of an ODE problem. And the corresponding ODE is of the form:
+We compute the initial adjoint state $\mathbf{a}(T) = \frac{d L}{d\mathbf{z}(T)}$. This can be considered as the initial state of an IVP problem. And the corresponding ODE is of the form:
 
 \begin{equation}
     \label{eq:adjoint_state_ODE}
@@ -1058,31 +1061,31 @@ Now perform the feedforward propagation algorithm \ref{alg:feedforward_alg}  to 
 
 Note that the adjoint state $\mathbf{a(t)}^T$ is transposed due to the "backward" direction.
 
-Similar to Equation \ref{eq:adjoint_state} $\mathbf{a}(t) = \frac{d\mathcal{L}}{d\mathbf{z}(t)}$, the gradient of the loss function with respect to the parameters is defined by:
+Similar to \ref{eq:adjoint_state}, the gradient of the loss function with respect to the parameters is defined by
 
 \begin{equation}
     \label{eq:adjoint_state_parameters}
-    \mathbf{a_\theta}(t) = \frac{d\mathcal{L}}{d\theta}.
+    \mathbf{a_\theta}(t) = \frac{d L}{d\theta}.
 \end{equation}
 
 The corresponding gradient of the adjoint state is of the form:
 
 \begin{equation}
     \label{eq:adjoint_state_gradient_parameters}
-    \frac{d\mathcal{L}}{d\theta} = - \int_{T}^{0} \mathbf{a(t)}^T \frac{\partial f(\mathbf{z}(t), t; \theta)}{\partial \mathbf{\theta}} dt
+    \frac{d L}{d\theta} = - \int_{T}^{0} \mathbf{a(t)}^T \frac{\partial f(\mathbf{z}(t), t; \theta)}{\partial \mathbf{\theta}} dt
 \end{equation}
 
 
-More details for $\frac{d\mathcal{L}}{d\theta}$ can be found in the original paper \cite{chen2018neural}.
+More details for $\frac{d L}{d\theta}$ can be found in the original paper \cite{chen2018neural}.
 
-A short summary: From the above procedures, it can be concluded that the idea of the adjoint method in Neural ODE is to compute a sequence of adjoint states in a "backward" direction by solving ODEs, and therefore the gradients can also be computed in an indirect manner.
+A short summary: from the above procedures, it can be concluded that the idea of the adjoint method in Neural ODEs is to compute a sequence of adjoint states in a "backward" direction by solving ODEs, and therefore the gradients can also be computed in an indirect manner.
 
 
 \clearpage
-\chapter{Structured ODE Neural Networks}
+\chapter{Structured Neural ODEs}
 \label{ch:chapter6}
 \section{Physics Priors}
-In machine learning, some optimization algorithms tend to make some assumptions to improve the learning efficiency, and these assumptions are called inductive biases (also known as priors) \cite{mitchell1997machine}. Inductive biases or priors may have different names in specific fields. For example, in the field of physics, they are most frequently referred to as physics priors or physically informed inductive biases.
+In machine learning, some optimization algorithms tend to make some assumptions to improve the learning efficiency, and these assumptions are referred to as inductive biases (also known as priors) \cite{mitchell1997machine}. Inductive biases or priors may have different names in specific fields. For example, in the field of physics, they are most frequently referred to as physics priors or physically informed inductive biases.
 
 The experiments in \cite{gupta2019general} introduced a framework to model the Lagrangian and the generalized forces of mechanical systems by using neural networks. Their experiments show the advantage of a gray-box model endowed with physics priors in terms of data efficiency compared to a black-box model without prior knowledge. Another similar work related to Lagrangian is \cite{lutter2019deep}.
 
@@ -1090,7 +1093,7 @@ In the field of Hamiltonian systems, \cite{greydanus2019hamiltonian} proposed an
 
 \section{Neural Networks for Learning of Hamiltonian Systems}
 In \cite{chen2019symplectic}, they compared two neural network models of Hamiltonian systems: O-NETs (ODE Neural Networks) and H-NETs (Hamiltonian Neural Networks), where H-NETs follow the idea of HNNs. 
-Before introducing O-NETs and H-NETs, recall that a Neural ODE \ref{eq:Neural_ODE} contains a neural network $f$. An ODE solver provides a solution to the ODE such that $\mathbf{z}(t+\varepsilon) = ODESolver(\mathbf{z}(t), f, t, t+\varepsilon , \theta)$. Note that in \cite{chen2019symplectic}, $f$ is considered as a neural network (e.g. in the case of O-NETs). However, $f$ can also be a function that contains a neural network (e.g. in the case of HNNs or H-NETs). 
+Before introducing O-NETs and H-NETs, recall that a Neural ODE \ref{eq:Neural_ODE} contains a neural network $f$. An ODE solver provides a solution to the ODE such that $\mathbf{z}(t+\varepsilon) = ODESolver(\mathbf{z}(t), f, t, t+\varepsilon , \theta)$. Note that in \cite{chen2019symplectic}, $f$ is considered as a neural network (e.g. in the case of O-NETs). However, $f$ can also be a function that contains a neural network (e.g. in the case of HNNs or H-NETs). All neural network models here are based on Neural ODEs.
 
 For better understanding, We will use Julia code to explain the central ideas of O-NET and H-NET in the following.
 
@@ -1099,7 +1102,7 @@ O-NET is a neural network in a Neural ODE, which can be denoted by $f_{\theta}$.
 
 \textbf{Step 1}: construct a neural network
 
- We can construct a 2-input and 2-output O-NET via the deep learning framework Flux.jl or Lux.jl.
+ We can construct a 2-inputs and 2-outputs O-NET via the deep learning framework "Flux.jl" or "Lux.jl" \cite{Pal:2022}.
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # Dense: construct a layer. For instance, Dense(2, 40, tanh) constructs a 2-input and 40-output layer with the activation function tanh.
     # Chain: connect layers.
@@ -1110,9 +1113,9 @@ O-NET is a neural network in a Neural ODE, which can be denoted by $f_{\theta}$.
                   Dense(40, 2))
 \end{minted}
 
-If we use both Flux.jl and Lux.jl simultaneously (sometimes a mix of both may be needed), then it is advisable to specify them explicitly, as they both contain chain and dense functions under the same name. However, the ways of generating initial parameters and obtaining output are different in both.
+If we use both Flux.jl and Lux.jl simultaneously (sometimes a mix of both may be needed), then it is advisable to specify them explicitly, as they both contain chain and dense functions under same names. However, the ways of generating initial parameters and obtaining output are different in both.
 
-In Flux:
+We construct a neural network in Flux like
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     O_NET = Flux.Chain(Flux.Dense(2, 40, tanh),
                        Flux.Dense(40, 40, tanh),
@@ -1122,7 +1125,7 @@ In Flux:
     ps, re = Flux.destructure(O_NET)
 \end{minted}
 
-In Lux:
+or in Lux like
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     O_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
                       Lux.Dense(40, 40, tanh),
@@ -1141,12 +1144,12 @@ Suppose that $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{
 
 \begin{equation}
     \label{eq:O-NET_IVP}
-    \dot{\mathbf{z}}_t = f_{\theta}(\mathbf{z_t}) = NN(\mathbf{z_t}, \theta), \quad \mathbf{z}(t_{0}) = \mathbf{z}_{0},
+    \dot{\mathbf{z}}_t = f_{\theta}(\mathbf{z_t}), \quad \mathbf{z}(t_{0}) = \mathbf{z}_{0},
 \end{equation}
 
-where $NN$ is an O-NET.
+where $f_{\theta}$ is an O-NET.
 
-$f_{\theta}(\mathbf{z_t})$ at the fixed time $t$ estimates the time derivative of coordinates $\dot{\mathbf{z}}_{t}$ such that $\dot{ \mathbf{z}}_{t} = f_{\theta}(\mathbf{z}_t)$. In the case of Hamiltonian systems, let $\mathbf{z}_{t} = [q_{t}, p_{t}]$, we can rewrite the IVP \ref{eq:O-NET_IVP} as $[\dot q_{t}, \dot p_{t}] = f_{\theta}(q_t, p_t) = \text{NN}(\mathbf{z_t}, \theta)$, $\mathbf{z}_{0}= [q_{0}, p_{0}]$.
+$f_{\theta}(\mathbf{z_t})$ at time $t$ estimates the time derivative of coordinates $\dot{\mathbf{z}}_{t}$ such that $\dot{ \mathbf{z}}_{t} = f_{\theta}(\mathbf{z}_t)$. In the case of Hamiltonian systems, let $\mathbf{z}_{t} = [q_{t}, p_{t}]$, we can rewrite the IVP \ref{eq:O-NET_IVP} as $[\dot q_{t}, \dot p_{t}] = f_{\theta}(q_t, p_t)$, $\mathbf{z}_{0}= [q_{0}, p_{0}]$.
 
 Let $\mathbf{z}_{0}=[1.0, 1.0]$ and $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, we construct this IVP in code:
 
@@ -1174,14 +1177,14 @@ Let $\mathbf{z}_{0}=[1.0, 1.0]$ and $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, w
 
 \textbf{Step 3}: solve the IVP
 
-To obtain the estimate of the coordinates trajectories $q_t$ and $p_t$, we can use an ODE solver to yield the solution of the IVP \ref{eq:O-NET_IVP}
+To obtain the estimate of the coordinates trajectories $\{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}$, we use an ODE solver to yield the solution to the IVP \ref{eq:O-NET_IVP}
 
 \begin{equation}
     \label{eq:O-NET_ODESolver}
-    \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, f_{\theta}, \{ t \}_{t=1}^{T}).
+    \{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T} = ODESolver(\mathbf{z}_{0}, f_{\theta}, \{ t \}_{t=1}^{T}).
 \end{equation}
 
-To solve the IVP \ref{eq:O-NET_IVP} in Julia code, we use the package CommonSolve.jl, which provides a common interface for distinct ODE solvers:
+To solve the IVP \ref{eq:O-NET_IVP} in Julia code, we use the package "CommonSolve.jl", which provides a common interface for distinct ODE solvers:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # Select a numerical method to solve the IVP
@@ -1200,20 +1203,20 @@ To solve the IVP \ref{eq:O-NET_IVP} in Julia code, we use the package CommonSolv
     pred_data = Array(solution)
 \end{minted}
 
-The final variable "pred\_data" is a 2D-array, which stands for the estimate of the coordinates trajectories $\{ \hat{z_{t}} \}_{t=1}^{T}$. In our case, we have 2 coordinates (q, p) in the Hamiltonian system and 200 time steps. Thus, the "pred\_data" is a $2 \times 200$ array.
+The variable "pred\_data" is a 2D-array, which stands for the estimate of the coordinates trajectories $\{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}$. In our case, we have 2 coordinates (q, p) in the Hamiltonian system and 200 time steps (from 0.0 to 19.9 with the step size 0.1). Thus, the variable "pred\_data" is a $2 \times 200$ array.
 
 \textbf{Step 4}: construct a loss function
 
-To train the neural network model, we define a loss function
+To train the neural network model, we define a loss function like \ref{eq:SE_loss} according to the relation
 
 \begin{equation}
     \label{eq:loss_O-NET}
-    \mathcal{L} = \lVert \mathbf{z}_{t} - \hat{\mathbf{z}_{t}} \rVert_{2},
+     L(\{ \mathbf{z}_{t} \}_{t=1}^{T}, \{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}) = \lVert \{ \mathbf{z}_{t} \}_{t=1}^{T} - \{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T} \rVert_{2}^{2},
 \end{equation}
 
-where $\hat{\mathbf{z}_{t}}$ is the estimate at a fixed time $t$ ($\hat{\mathbf{z}_{t}}$ is a point in the estimate of the coordinates trajectories $\{ \hat{z_{t}} \}_{t=1}^{T}$) and $\mathbf{z}_{t}$ is assumed to be a point from observation (${\mathbf{z}_{t}}$ is a point in the training set $\{ {z_{t}} \}_{t=1}^{T}$). The goal of the optimization is to minimize the error between them.
+where $\hat{\mathbf{z}_{t}}$ is the estimate at a fixed time $t$ ($\hat{\mathbf{z}_{t}}$ is a point in the estimate of the coordinates trajectories $\{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}$) and $\mathbf{z}_{t}$ is assumed to be a point from observation (${\mathbf{z}_{t}}$ is a point in the training set $\{ \mathbf{z}_{t} \}_{t=1}^{T}$). The goal of the optimization is to minimize the error between the points from the estimates and the points from the training set.
 
-However, in code, we adopt the training set $\{ {z_{t}} \}_{t=1}^{T}$ generated by the system of ODEs instead of real observations. For instance, the training set for an undamped harmonic oscillator can be generated by the system of ODEs \ref{eq:ODE_undamped_harmonic_oscillator}:
+In code, we adopt the training set $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ generated by a system of ODEs instead of real observations. For instance, the training set for an undamped harmonic oscillator can be generated by the evolution of $q$ and $p$ in \ref{eq:ODE_undamped_harmonic_oscillator}:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # The system of ODEs of an undamped harmonic oscillator
@@ -1229,9 +1232,9 @@ However, in code, we adopt the training set $\{ {z_{t}} \}_{t=1}^{T}$ generated 
     ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = time_steps))
 \end{minted}
 
-The "ode\_data" can be expressed by $\{ z_{t} \}_{t=1}^{T}$. The loss function \ref{eq:loss_O-NET} is the squared difference between a point in "pred\_data" $\{ \hat{z_{t}} \}_{t=1}^{T}$ and a point in "ode\_data" $\{ z_{t} \}_{t=1}^{T}$ at a fixed time $t$.
+The "ode\_data" can be expressed by $\{ \mathbf{z}_{t} \}_{t=1}^{T}$. The loss function \ref{eq:loss_O-NET} is the sum of the square of the differences between the target value "ode\_data" $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ and the estimated values "pred\_data" $\{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}$.
 
-Now we can construct the loss function in code:
+Now we construct the loss function in code:
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 function solve_IVP(θ, batch_timesteps)
     IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, (batch_timesteps[1], batch_timesteps[end]), θ)
@@ -1257,7 +1260,7 @@ using Flux: DataLoader
 dataloader = DataLoader((ode_data, time_steps), batchsize = 50)
 \end{minted}
 
-Recall that the code in algorithm \ref{alg:Adam_alg} performed only one training epoch. In order to obtain a satisfying result, we train the model multiple times. And we use a Julia package "Optimization.jl", which is an unified interface for different optimization algorithms and automatic differentiation tools.
+In order to obtain a satisfying result, we train the model multiple times. And we use a Julia package "Optimization.jl", which is an unified interface for different optimization algorithms and automatic differentiation tools.
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 
@@ -1276,7 +1279,7 @@ result = Optimization.solve(optprob, Optimisers.ADAM(0.01), ncycle(dataloader, e
 result.u
 \end{minted}
 
-The training is stopped when the given number of consecutive epochs run out. And the "Optimization.jl" package provides a checkpoint strategy that the parameters of the optimally tuned model are restored and saved. For instance, if the epochs is 100, then only the parameters corresponding to the minimal loss within 100 consecutive epochs will be saved eventually.  The saved parameters can be used for further training and for evaluating the model by the loss over the whole training set "ode\_data":
+The training is stopped when the given number of consecutive epochs run out. And the "Optimization.jl" package provides a checkpoint strategy that the parameters of the optimally tuned model are restored and saved. For instance, if the epochs is 100, then only the parameters corresponding to the minimal loss within 100 consecutive epochs will be saved eventually.  The saved parameters can be used for further training and for evaluating the model by the loss over the whole training set "ode\_data" or a test set:
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 # The "loss_function" returns a tuple, where the first element of the tuple is the loss
 loss = loss_function(result.u, ode_data, time_steps)[1]
@@ -1284,15 +1287,15 @@ loss = loss_function(result.u, ode_data, time_steps)[1]
 
 If the loss is already small, we can choose to stop training early. Naturally, we can also continue the training, but if the loss has tended to converge with training, then it does not make much sense to continue.
 
-At the end, test the trained neural network model with training set or test set.
+At the end, use the neural network model with the optimized parameters to predict.
 
-In Flux:
+We use the neural network model in Flux like
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # Recall that "re" is a method to reconstruct the neural network.
     re()(initial_state)
 \end{minted}
 
-In Lux:
+or in Lux like
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # Recall that "st" stores some necessary information for reconstructing the neural network.
     O_NET(initial_state, result.u, st)
@@ -1300,7 +1303,7 @@ In Lux:
 
 
 \subsection{H-NETs}
-H-NET is a neural network $\mathcal{H}_{\theta}$ that learns the Hamiltonian. The idea of H-NET is to replace the O-NET $f_{\theta}$ in \ref{eq:O-NET_IVP} with the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$. Then, the IVP \ref{eq:O-NET_IVP} can be rewritten as
+H-NET is a neural network $\mathcal{H}_{\theta}$ that learns the Hamiltonian. The idea of H-NET is to replace the O-NET $f_{\theta}$ in \ref{eq:O-NET_IVP} with the estimate of the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$. Then, the IVP \ref{eq:O-NET_IVP} can be rewritten as
 
 \begin{equation}
     \label{eq:H-NET_IVP}
@@ -1311,10 +1314,12 @@ The corresponding solution can be computed by
 
 \begin{equation}
     \label{eq:H-NET_ODESolver}
-    \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, X_{\mathcal{H}_{\theta}}, \{ t \}_{t=1}^{T}).
+     \{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}  = ODESolver(\mathbf{z}_{0}, X_{\mathcal{H}_{\theta}}, \{ t \}_{t=1}^{T}),
 \end{equation}
 
-In code, the major difference between H-NET and O-NET appears in step 2. The ODE of H-NET contains the estimate of symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$ from a neural network rather than the neural network itself:
+where $\mathcal{H}_{\theta}$ is a H-NET.
+
+In code, the major difference between H-NET and O-NET appears in step 2. The ODE of H-NET contains the estimate of the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$ of a neural network rather than the neural network itself:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # FiniteDiff.jl is an automatic differentiation tool.
@@ -1341,7 +1346,14 @@ H_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
 \end{minted}
 
 \subsection{HNNs}
-However, a subtle difference between H-NET and HNNs is that HNNs use the loss function $\mathcal{L}_{HNN} = \lVert \dot z_{t} - X_{\mathcal{H}_{\theta}} \rVert_{2}$, while H-NET uses $\mathcal{L} = \lVert \mathbf{z}_{t} - \hat{\mathbf{z}_{t}} \rVert_{2}$. It means that H-NET learns dynamics from the coordinates rather than from the time derivative of coordinates.
+A subtle difference between H-NET and HNNs is that HNNs use the loss function 
+
+\begin{equation}
+    \label{eq:loss_HNNs}
+    L_{HNN}(\{ \dot{\mathbf{z}_{t}} \}_{t=1}^{T}, \{ X_{\mathcal{H}_{\theta}}(\mathbf{z}_{t}) \}_{t=1}^{T}) = \lVert \{ \dot{\mathbf{z}_{t}} \}_{t=1}^{T} - \{ X_{\mathcal{H}_{\theta}}(\mathbf{z}_{t}) \}_{t=1}^{T} \rVert_{2}^{2},
+\end{equation}
+
+while H-NET uses $ L(\{ \mathbf{z}_{t} \}_{t=1}^{T}, \{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}) = \lVert \{ \mathbf{z}_{t} \}_{t=1}^{T} - \{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T} \rVert_{2}^{2} $. It means that H-NET learns dynamics from the coordinates directly rather than from the time derivative of coordinates.
 
 The loss function in H-NET corresponds to the one in O-NET:
 
@@ -1381,46 +1393,38 @@ end
 dataloader = Flux.Data.DataLoader((ode_data, dz_data), batchsize = 50)
 \end{minted}
 
-\section{Structured O-NETs}
-An O-NET $f_{\theta}$ is considered as a pure black box. Such a pure data-driven modeling approach provides no guarantees of convergence if only small training sets are available. How about big training sets? In the field of physics, especially for some complex systems, the acquisition of data from observations is often costly. Therefore, it is also not easy to obtain big training sets. Nevertheless, in the field of physics, there exists a large accumulation of physics laws. If these physical laws are encoded as some prior information, will they compensate for the lack of data?
+\section{Structured Neural ODEs}
+An ODE neural network $f_{\theta}$ is considered as a pure black box. Such a pure data-driven modeling approach lacks robustness and provides no guarantees of convergence in small data regime (small data sets) \cite{raissi2017physics}. How about big data? In the field of physics, especially for some complex systems, the acquisition of data from observations is often costly. Therefore, it is also not easy to obtain big data sets. Nevertheless, in the field of physics, there exists a large accumulation of physics laws. In structured neural ODEs, we encode physical laws as some prior information and feed them into the model to compensate for the lack of data.
 
 \subsection{Physics Informed Function}
 
-The centerpiece of structured O-NET is to replace the neural network $f_{\theta}$ in \ref{eq:O-NET_IVP} with a new function $h_{\theta}$. This new function $h_{\theta}$ is endowed with some prior information, which can help the training towards the correct direction and thus converges faster.
+The centerpiece of structured neural ODEs is to replace the neural network $f_{\theta}$ in \ref{eq:O-NET_IVP} with a new function $h_{\theta}$ given by the relation $\dot{\mathbf{z}}_t = h_{\theta}(f_{\theta}, \mathbf{z}_t)$. This new function $h_{\theta}$ is a function that consists of a neural network and some prior information, which may lead the training into the correct direction. Moving in the correct direction may help the loss function converge faster, even in the case of small data sets.
 
-$h_{\theta}$ takes two parts as its variable, the known part and the unknown part. Consider a Hamiltonian system (autonomous case) and its state variables $\mathbf{z}=(q, p)$. The known part is a part of a system of ODEs, e.g. $\dot{q} = f(p)$, while the unknown part is replaced by the output of a neural network $\dot{p} = NN(q; \theta)$. 
+\subsection{Structured Neural ODEs}
 
-Since we endowed the function $h_{\theta}$ with some physics prior information (the known part), $h_{\theta}$ can be referred to as a physics informed function. And in the above case, $h_{\theta}$ is defined as
-
-\begin{equation}
-    \label{eq:physics_informed_function}
-    h_{\theta} : \big( f(p) \times NN(q; \theta) \big) \longmapsto h_{\theta} \big(f(p), NN(q; \theta) \big),
-\end{equation}
-
-where $\times$ is a binary operator and $NN$ is referred to as structured O-NET.
-
-\subsection{ODE Construction}
-
-$h_{\theta} \big(f(p), NN(q; \theta) \big)$ at a fixed time $t$ estimates the time derivative of coordinates $\dot z_{t}$ such that $\dot z_{t} = [q_{t}, p_{t}] = h_{\theta} \big(f(p), NN(q; \theta) \big)$.
-
-Hence, the IVP of structured O-NET can be defined by
+An neural ODE with a physics informed function $h_{\theta}$ on its RHS is a structured neural ODE. Together with the initial state, we construct the IVP
 
 \begin{equation}
-    \label{eq:structured_O-NET_IVP}
-    \dot{\mathbf{z}}_t = h_{\theta} \big(f(p), NN(q; \theta) \big), \quad \mathbf{z}(t_{0}) = \mathbf{z}_{0}.
+    \label{eq:structured_neura_IVP}
+    \dot{\mathbf{z}}_t = h_{\theta}(f_{\theta}, \mathbf{z}_t), \quad \mathbf{z}(t_{0}) = \mathbf{z}_{0},
 \end{equation}
 
-In comparison to the ODE of O-NET $\dot{\mathbf{z}}_t = f_{\theta}(\mathbf{z_t}) = NN(\mathbf{z_t}; \theta)$ and the ODE of H-NET $\dot{\mathbf{z}}_t = X_{\mathcal{H}_{\theta}}(\mathbf{z_t}) = X_{NN}(\mathbf{z_t}; \theta)$, we can clearly see that both O-NET and H-NET take the entire state variable $\mathbf{z}=(q, p)$ as input, while structured O-NET only takes $q$. This is based on the assumption that we know the physics law of the variable $p$ and encode it as prior knowledge.
+where $f_{\theta}$ can be called structured ODE neural network.
 
-The corresponding solution of the IVP \ref{eq:structured_O-NET_IVP} can be computed via an ODE solver:
+The solution to the IVP \ref{eq:structured_neura_IVP} can be computed via an ODE solver:
 
 \begin{equation}
     \label{eq:structured_O-NET_ODESolver}
-    \{ \hat{z_{t}} \}_{t=1}^{T} = ODESolver(z_{0}, h_{\theta}, \{ t \}_{t=1}^{T}).
+        \{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T} = ODESolver(\mathbf{z}_{0}, h_{\theta}, \{ t \}_{t=1}^{T}).
 \end{equation}
 
-We continue using an undamped harmonic oscillator as example. Recall that in the O-NET section, we consider the whole RHS as unknown part and define the ODE:
+\subsection{Example: Undamped Harmonic Oscillator}
 
+Consider an undamped harmonic oscillator and its state variables $\mathbf{z}_t=(q_t, p_t)$ at time $t$. The known part is a part of a system of ODEs, e.g. $\dot{q}_t = p_t/m$, while the unknown part is replaced by the output of a neural network $\dot{p}_t = f_{\theta}(q_t)$. 
+
+$h_{\theta} \big(f_{\theta}(q_t), p_t/m \big)$ at a fixed time $t$ estimates the time derivative of coordinates $\dot{\mathbf{z}_{t}}$ such that $\dot{\mathbf{z}_{t}} = [\dot{q}_{t}, \dot{p}_{t}] = h_{\theta} \big(f_{\theta}(q_t), p_t/m \big)$.
+
+In the O-NET section, we consider the whole RHS as unknown part and define the ODE like:
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 function ODE(dz, z, θ, t)
     # There are two indexes behind the function O_NET().
@@ -1432,7 +1436,7 @@ function ODE(dz, z, θ, t)
 end
 \end{minted}
 
-However, in structured O-NET, we endow the ODE with a known part $\dot{q} = f(p) = p/m$. And the unknown part $\dot{p} = -q/c$ is replaced by the output of a neural network $\dot{p} = NN(q; \theta)$, which takes $q$ as its input.
+However, in structured neural ODE, we endow the ODE with a known part $\dot{q}_t = p_t/m$. And the unknown part $\dot{p}_t = -q_t/c$ is now replaced by the output of a neural network $\dot{p}_t = f_{\theta}(q_t)$, which takes $q_t$ as its input.
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 m = 2
@@ -1446,9 +1450,9 @@ function ODE(dz, z, θ, t)
 end
 \end{minted}
 
-In the above case, we hypothesize that the time derivative of $p$ is only affected by $q$ (in fact, the real equation is $\dot{p} = -q/c$). Thus, the structured O-NET is a 1-input and 1-output model. If we are unsure of what the input is, we can also simply use the entire state variable $\mathbf{z} = (q, p)$ as input and construct a 2-input and 1-output model for it. Nevertheless, in any case, the input must contain $q$, e.g. $q^2$, $(q-1)$, $(q, p)$, etc. A good guess can greatly improve the efficiency of training (in this case, $q$ is a good guess and $-q/c$ is the best). 
+In the above case, we hypothesize that $\Dot{p}_t$ is only affected by $q_t$ (in fact, the real equation is $\dot{p}_t = -q_t/c$). Thus, the neural network $f_{\theta}$ is a 1-input and 1-output model. If we are unsure of what the input is, we can simply use the entire state variable $\mathbf{z}_t = (q_t, p_t)$ as input and construct a 2-input and 1-output model for it. Nevertheless, in any case, the input must contain $q_t$, e.g. $q_t^2$, $(q_t-1)$, $(q_t, p_t)$, etc. A good guess can greatly improve the efficiency of training (in this case, $q_t$ is a good guess and $-q_t/c$ is the best). 
 
-A very good guess (assume that we already know the spring compliance is around 4, 4 is probably imprecise but close enough):
+A very good guess (assume that we already know the spring compliance is around 4, 4 is probably imprecise but close enough) could be like:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 m = 2
@@ -1461,9 +1465,7 @@ function ODE(dz, z, θ, t)
 end
 \end{minted}
 
-In the opposite, if $q$ does not appear in the input, e.g. only $p$ as the input, the model training will not converge in all probability.
-
-A bad guess:
+In the opposite, if $q_t$ does not appear in the input, e.g. only $p_t$ as the input, the model training will not converge in all probability. Such a bad guess could be like:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, linenos, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 m = 2
