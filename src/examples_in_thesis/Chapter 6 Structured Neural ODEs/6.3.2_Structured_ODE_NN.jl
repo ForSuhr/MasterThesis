@@ -3,13 +3,15 @@
 ######################################
 
 using Lux
-Structured_O_NET = Lux.Chain(Lux.Dense(1, 20, tanh),
+Structured_ODE_NN = Lux.Chain(Lux.Dense(1, 20, tanh),
                              Lux.Dense(20, 10, tanh),
                              Lux.Dense(10, 1))
 
 using Random
 rng = Random.default_rng()
-ps, st = Lux.setup(rng, Structured_O_NET)
+ps, st = Lux.setup(rng, Structured_ODE_NN)
+
+
 
 
 ############################
@@ -20,7 +22,7 @@ function ODE(dz, z, θ, t)
     q = z[1]
     p = z[2]
     dz[1] = p/m
-    dz[2] = Structured_O_NET([q], θ, st)[1][1]
+    dz[2] = Structured_ODE_NN([q], θ, st)[1][1]
 end
 
 # initial state
@@ -75,10 +77,17 @@ function ODEfunc_udho(dz, z, params, t)
     dz[2] = -q/c
 end
 
-# params = [m, c]
-params = [2, 1] 
-prob = ODEProblem(ODEFunction(ODEfunc_udho), initial_state, time_span, params)
-ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = time_steps))
+# mass m and spring compliance c
+params = [2, 1]
+# Generate data set
+time_span_total = (0.0, 24.9)
+time_step_number_total = 250
+time_steps_total = range(0.0, 24.9, time_step_number_total)
+prob = ODEProblem(ODEFunction(ODEfunc_udho), initial_state, time_span_total, params)
+ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = time_steps_total))
+# Split data set into training and test sets, 80% and 20% respectively
+training_data = ode_data[:, 1:Int(time_step_number_total*0.8)]
+test_data = ode_data[:, 1:Int(time_step_number_total*0.2)]
 
 function solve_IVP(θ, batch_timesteps)
     IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, (batch_timesteps[1], batch_timesteps[end]), θ)
@@ -94,7 +103,7 @@ function loss_function(θ, batch_data, batch_timesteps)
 end
 
 callback = function(θ, loss, pred_data)
-    println(loss_function(θ, ode_data, time_steps)[1])
+    println(loss_function(θ, training_data, time_steps)[1])
     return false
 end
 
@@ -105,9 +114,9 @@ end
 # Step 5: train the neural network #
 ####################################
 
-# The dataloader generates a batch of data according to the given batchsize from the "ode_data".
+# The dataloader generates a batch of data according to the given batchsize from the "training_data".
 using Flux: DataLoader
-dataloader = DataLoader((ode_data, time_steps), batchsize = 200)
+dataloader = DataLoader((training_data, time_steps), batchsize = 200)
 
 # Select an automatic differentiation tool
 using Optimization
@@ -116,24 +125,40 @@ adtype = Optimization.AutoZygote()
 optf = Optimization.OptimizationFunction((θ, ps, batch_data, batch_timesteps) -> loss_function(θ, batch_data, batch_timesteps), adtype)
 optprob = Optimization.OptimizationProblem(optf, Lux.ComponentArray(θ))
 # Train the model multiple times. The "ncycle" is a function in the package IterTools.jl, it cycles through the dataloader "epochs" times.
-using OptimizationOptimisers
-using IterTools: ncycle
-epochs = 10;
-result = Optimization.solve(optprob, Optimisers.ADAM(0.001), ncycle(dataloader, epochs), callback=callback)
-# Access the trained parameters
-θ = result.u
+begin
+    using OptimizationOptimisers
+    using IterTools: ncycle
+    epochs = 10;
+    result = Optimization.solve(optprob, Optimisers.ADAM(0.001), ncycle(dataloader, epochs), callback=callback)
+    # Access the trained parameters
+    θ = result.u
+end
 
 # The "loss_function" returns a tuple, where the first element of the tuple is the loss
-loss = loss_function(result.u, ode_data, time_steps)[1]
+loss = loss_function(result.u, training_data, time_steps)[1]
 
-# Option: continue the training
+# Option: repeat the training
 include("helpers/train_helper.jl")
 using Main.TrainInterface: LuxTrain
 # Adjust the learning rate and epochs, then repeat this code block
 begin
-    α = 0.001
+    α = 0.0001
     epochs = 10
     θ = LuxTrain(optf, θ, α, epochs, dataloader, callback)
+end
+
+# Save the parameters
+begin
+    using JLD2
+    path = joinpath(@__DIR__, "parameters", "params_structured_ODE_NN.jld2")
+    JLD2.save(path, "params_structured_ODE_NN", θ)
+end
+
+# Save the model
+begin
+    using JLD2
+    path = joinpath(@__DIR__, "models", "structured_ODE_NN.jld2")
+    JLD2.save(path, "structured_ODE_NN", Structured_ODE_NN, "st", st)
 end
 
 
@@ -143,14 +168,31 @@ end
 # Step 6: test the model #
 ##########################
 
-Structured_O_NET([initial_state[1]], θ, st)[1][1]
+# Load the parameters
+begin
+    using JLD2, Lux
+    path = joinpath(@__DIR__, "parameters", "params_structured_ODE_NN.jld2")
+    θ = JLD2.load(path, "params_structured_ODE_NN")
+end
+
+# Load the model
+begin
+    using JLD2, Lux
+    path = joinpath(@__DIR__, "models", "structured_ODE_NN.jld2")
+    Structured_ODE_NN = JLD2.load(path, "structured_ODE_NN")
+    st = JLD2.load(path, "st")
+end
+
+Structured_ODE_NN([initial_state[1]], θ, st)[1][1]
 
 # Plot phase portrait
-trained_solution = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
-using Plots
-plot(ode_data[1,:], ode_data[2,:], xlabel="q", ylabel="p")
-plot!(trained_solution[1,:], trained_solution[2,:])
-
+begin
+    IVP_test = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, time_span_total, θ)
+    predict_data = CommonSolve.solve(IVP_test, numerical_method, p=θ, tstops = time_steps_total, sensealg=sensitivity_analysis)
+    using Plots
+    plot(ode_data[1,:], ode_data[2,:], lw=3, xlabel="q", ylabel="p")
+    plot!(predict_data[1,:], predict_data[2,:], lw=3)
+end
 
 
 

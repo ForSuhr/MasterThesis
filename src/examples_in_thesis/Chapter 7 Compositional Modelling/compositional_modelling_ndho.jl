@@ -85,7 +85,7 @@ function ODEfunc_ndho(du,u,params,t) ### du=[̇q,̇p,̇sd,̇sₑ], u=[q,p,sd,s�
     du[2] = -q/c-d*v
     du[3] = d*((v)^2)/θ_d-α*(θ_d-θ_0)/θ_d
     du[4] = α*(θ_d-θ_0)/θ_0
-  end
+end
 
 # params = [m, c]
 params = [1.0, 1.0, 0.5, 20, 30, 1.5] 
