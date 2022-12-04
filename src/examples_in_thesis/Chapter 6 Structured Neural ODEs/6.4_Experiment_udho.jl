@@ -115,7 +115,11 @@ begin
 end
 
 
-# Plots
+
+
+#########
+# Plots #
+#########
 
 # Phase portrait
 begin

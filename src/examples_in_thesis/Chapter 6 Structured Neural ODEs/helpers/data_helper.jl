@@ -4,13 +4,14 @@ module DataHelper
 function ODEfunc_udho(dz, z, params, t)
     q, p = z
     m, c = params
-    dz[1] = p/m
+    v = p/m
+    dz[1] = v
     dz[2] = -q/c
 end
 
 
 function ODEfunc_idho(dz, z, params, t)
-    q, p = z
+    q, p, s_e = z
     m, c, d, θ_0 = params
     v = p/m
     dz[1] = v
@@ -19,14 +20,14 @@ function ODEfunc_idho(dz, z, params, t)
 end
 
 
-function ODEfunc_ndho(du,u,params,t)
-    q, p, s_d, s_e = u
+function ODEfunc_ndho(dz,z,params,t)
+    q, p, s_e, s_d = z
     m, c, d, θ_0, θ_d, α = params
     v = p/m
-    du[1] = v
-    du[2] = -q/c-d*v
-    du[3] = d*((v)^2)/θ_d-α*(θ_d-θ_0)/θ_d
-    du[4] = α*(θ_d-θ_0)/θ_0
+    dz[1] = v
+    dz[2] = -q/c-d*v
+    dz[3] = d*((v)^2)/θ_d-α*(θ_d-θ_0)/θ_d
+    dz[4] = α*(θ_d-θ_0)/θ_0
 end
 
 

@@ -96,7 +96,7 @@ end
 
 function loss_function(θ, batch_data, batch_timesteps)
     pred_data = solve_IVP(θ, batch_timesteps)
-    # the entroy needs a larger weight for better training
+    # the entropy needs a larger weight for better training
     loss = sum((batch_data[1,:] .- pred_data[1,:]) .^ 2 +
                (batch_data[2,:] .- pred_data[2,:]) .^ 2 +
             100(batch_data[3,:] .- pred_data[3,:]) .^ 2)
