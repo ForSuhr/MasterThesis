@@ -53,7 +53,7 @@ begin
     end
     predict_data_O_NET = NeuralODESolver(NeuralODE_O_NET, θ_O_NET, initial_state, time_span, time_step)
   
-    # Generate O-NET data
+    # Generate Structured ODE Neural Network data
     m = params[1]
     c = params[2]
     function NeuralODE_Structured_ODE_NN(dz, z, θ_Structured_ODE_NN, t)
@@ -185,9 +185,9 @@ end
 begin
     include("helpers/data_helper.jl")
     using Main.DataHelper: ODEfunc_idho, ODESolver
-    # mass m and spring compliance c
+    # mass m, spring compliance c, damping coefficient d, environment temperature θ_0
     params = [2, 1, 1, 20]
-    # initial state
+    # initial state q, p, s_e
     initial_state = [1.0, 1.0, 0.2]
     # Generate data set
     time_span = (0.0, 9.9)
@@ -257,7 +257,7 @@ begin
     Hamiltonian_Ground_Truth = ode_data[2,:].^2/(2*params[1]) + ode_data[1,:].^2/(2*params[2])
     Hamiltonian_O_NET = predict_data_O_NET[2,:].^2/(2*params[1]) + predict_data_O_NET[1,:].^2/(2*params[2])
     Hamiltonian_Structured_ODE_NN = predict_data_Structured_ODE_NN[2,:].^2/(2*params[1]) + predict_data_Structured_ODE_NN[1,:].^2/(2*params[2])
-    plot(xlabel="Time Step", ylabel="Hamiltonian", xlims=(0,10), ylims=(0.0,0.90))
+    plot(xlabel="Time Step", ylabel="Mechanical Energy", xlims=(0,10), ylims=(0.0,0.90))
     plot!(time_step, round.(Hamiltonian_Ground_Truth, digits=10), label="Ground Truth")
     plot!(time_step, round.(Hamiltonian_O_NET, digits=10), label="O-NET")
     plot!(time_step, round.(Hamiltonian_Structured_ODE_NN, digits=10), label="Structured ODE NN")
