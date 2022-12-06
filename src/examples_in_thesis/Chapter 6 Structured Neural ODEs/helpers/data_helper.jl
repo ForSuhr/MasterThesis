@@ -50,8 +50,8 @@ end
 
 using FiniteDiff
 function SymplecticGradient(NN, ps, st, z)
-  H = FiniteDiff.finite_difference_gradient(x -> sum(NN(x, ps, st)[1]), z)
-  return vec(cat(H[2:2, :], -H[1:1, :], dims=1))
+  dH = FiniteDiff.finite_difference_gradient(x -> sum(NN(x, ps, st)[1]), z)
+  return vec(cat(dH[2:2, :], -dH[1:1, :], dims=1))
 end
 
 
