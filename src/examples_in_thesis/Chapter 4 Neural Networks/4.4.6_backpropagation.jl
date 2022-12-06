@@ -1,22 +1,14 @@
-# Feedforward propagation
-W1 = rand(2, 3)
-b1 = rand(2)
-
-a1 = rand(3)
-
-z2 = (W1 * a1) .+ b1
-using NNlib
-a2 = sigmoid(z2)
-
-
 # Generate random parameters
 W = rand(2, 3)
 b = rand(2)
 # Perform the feedforward propagation
+using NNlib: sigmoid
 predict(x) = sigmoid((W * x) .+ b)
 # Define the loss function
-using Statistics
+using Statistics: mean
 loss(x, y) = mean(abs2, ( predict(x) .- y))
+
+
 # Compute the loss
 input = rand(3)
 estimated_value = predict(input)
@@ -35,6 +27,7 @@ gs[W]
 gs[b]
 
 
+# Single update of the parameters accroading to gradient descent 
 # The learning Rate
 α = 0.1
 # Update the parameters using gradient descent
