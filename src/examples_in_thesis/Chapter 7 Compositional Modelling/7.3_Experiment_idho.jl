@@ -6,10 +6,10 @@ end
 
 # Construct a Structured ODE Neural Network
 begin
-    using Lux
-    Structured_ODE_NN = Lux.Chain(Lux.Dense(1, 20, tanh),
-                                  Lux.Dense(20, 10, tanh),
-                                  Lux.Dense(10, 3))
+    using Lux, NNlib
+    Structured_ODE_NN = Lux.Chain(Lux.Dense(1, 30, tanh),
+                                  Lux.Dense(30, 20, tanh),
+                                  Lux.Dense(20, 2))
 
     using Random
     rng = Random.default_rng()
@@ -20,7 +20,7 @@ end
 # Generate ODE data of an isothermal damped harmonic oscillator
 begin
     using Main.DataHelper: ODEfunc_idho, ODESolver
-    # mass m and spring compliance c
+    # mass m, spring compliance c, damping coefficient d, environment temperature θ_0
     params = [2, 1, 0.5, 20]
     # initial state
     initial_state = [1.0, 1.0, 0.2]
@@ -34,15 +34,15 @@ end
 # Generate predict data
 begin
     using Main.DataHelper: NeuralODESolver
-    # Generate data
+    m = params[1]
     c = params[2]
+    θ_0 = params[4]
     function NeuralODE_Structured_ODE_NN(dz, z, θ_Structured_ODE_NN, t)
-        q = z[1]
-        p = z[2]
-        s_e = z[3]
-        dz[1] = Structured_ODE_NN([p], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
-        dz[2] = -q/c - Structured_ODE_NN([p], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2]
-        dz[3] = - Structured_ODE_NN([p^2], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][3]
+        q, p, s_e = z
+        v = p/m
+        dz[1] = v
+        dz[2] = -q/c - Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
+        dz[3] = - Structured_ODE_NN([v^2], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2] / θ_0
     end
     predict_data_Structured_ODE_NN = NeuralODESolver(NeuralODE_Structured_ODE_NN, θ_Structured_ODE_NN, initial_state, time_span, time_step)
 end
@@ -81,8 +81,8 @@ end
 # Repeat training for the Structured ODE Neural Network
 begin
     using Main.TrainInterface: LuxTrain
-    α = 0.0001
-    epochs = 20
+    α = 0.001
+    epochs = 10
     θ_Structured_ODE_NN = LuxTrain(optf_Structured_ODE_NN, θ_Structured_ODE_NN, α, epochs, dataloader, callback_Structured_ODE_NN)
 end
 
@@ -113,14 +113,12 @@ begin
     st_Structured_ODE_NN = JLD2.load(path, "st")
 end
 
-
 # Generate ODE data of an isothermal damped harmonic oscillator
 begin
-    include("helpers/data_helper.jl")
     using Main.DataHelper: ODEfunc_idho, ODESolver
     # mass m, spring compliance c, damping coefficient d, environment temperature θ_0
     params = [2, 1, 0.5, 20]
-    # initial state q, p, s_e
+    # initial state
     initial_state = [1.0, 1.0, 0.2]
     # Generate data set
     time_span = (0.0, 99.9)
@@ -128,23 +126,21 @@ begin
     ode_data = ODESolver(ODEfunc_idho, params, initial_state, time_span, time_step)
 end
 
-
 # Generate predict data
 begin
     using Main.DataHelper: NeuralODESolver
-    # Generate data
+    m = params[1]
     c = params[2]
+    θ_0 = params[4]
     function NeuralODE_Structured_ODE_NN(dz, z, θ_Structured_ODE_NN, t)
-        q = z[1]
-        p = z[2]
-        s_e = z[3]
-        dz[1] = Structured_ODE_NN([p], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
-        dz[2] = -q/c - Structured_ODE_NN([p], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2]
-        dz[3] = - Structured_ODE_NN([p^2], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][3]
+        q, p, s_e = z
+        v = p/m
+        dz[1] = v
+        dz[2] = -q/c - Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
+        dz[3] = - Structured_ODE_NN([v^2], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2] / θ_0
     end
     predict_data_Structured_ODE_NN = NeuralODESolver(NeuralODE_Structured_ODE_NN, θ_Structured_ODE_NN, initial_state, time_span, time_step)
 end
-
 
 #########
 # Plots #
@@ -186,30 +182,19 @@ end
 # Compute effort and flow variables
 begin
     # Target values
-    R_d__p__e = ode_data[2,:] ./ params[1]
     R_d__p__f = params[3] * ode_data[2,:] ./ params[1]
     R_d__s_e__f = - params[3] * (ode_data[2,:] ./ params[1]) .^2 / params[4]
     # Estimated values
-    f_θ__p__e = Vector{Float64}(undef, length(ode_data[2,:]))
     f_θ__p__f = Vector{Float64}(undef, length(ode_data[2,:]))
     f_θ__s_e__f = Vector{Float64}(undef, length(ode_data[2,:]))
     for (idx, p) in enumerate(ode_data[2,:])
-        f_θ__p__e[idx] = Structured_ODE_NN([p], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
-        f_θ__p__f[idx] = Structured_ODE_NN([p], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2]
-        f_θ__s_e__f[idx] = Structured_ODE_NN([p^2], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][3]
+        f_θ__p__f[idx] = Structured_ODE_NN([p], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
+        f_θ__s_e__f[idx] = Structured_ODE_NN([p^2], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2] / params[4]
     end
 end
 
 
-# Plot the evolution of the effort and flow variables
-begin
-    using Plots
-    plot(xlabel="Time Step", ylabel="p.e", xlims=(0,100), ylims=(-0.8,0.7))
-    plot!(time_step, R_d__p__e, lw=2, label="Ground Truth")
-    plot!(time_step, f_θ__p__e, lw=2, label="Structured ODE NN")
-    Plots.pdf(joinpath(@__DIR__, "figures", "p.e_compositional_idho.pdf"))
-end
-
+# Plot the evolution of the flow variables
 
 begin
     using Plots
@@ -218,15 +203,6 @@ begin
     plot!(time_step, f_θ__p__f, lw=2, label="Structured ODE NN")
     Plots.pdf(joinpath(@__DIR__, "figures", "p.f_compositional_idho.pdf"))
 end
-
-
-begin
-    using Plots
-    plot(xlabel="Time Step", ylabel="sₑ.e", xlims=(0,100), ylims=(-0.035,0.035))
-    plot!(time_step, Array{Float64}(undef, length(time_step)), lw=2, label="Ground Truth")
-    Plots.pdf(joinpath(@__DIR__, "figures", "se.e_compositional_idho.pdf"))
-end
-
 
 begin
     using Plots
