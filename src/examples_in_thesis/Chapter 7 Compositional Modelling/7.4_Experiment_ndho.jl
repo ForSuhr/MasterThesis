@@ -1,191 +1,224 @@
-######################################
-# Step 1: construct a neural network #
-######################################
-
-using Lux
-Structured_O_NET = Lux.Chain(Lux.Dense(1, 20, tanh),
-                             Lux.Dense(20, 10, tanh),
-                             Lux.Dense(10, 2))
-
-using Random
-rng = Random.default_rng()
-ps, st = Lux.setup(rng, Structured_O_NET)
-
-
-############################
-# Step 2: construct an IVP #
-############################
 begin
-m = 1
-c = 1
-θ_0 = 20
-θ_d = 30
-α = 1.5
-function ODE(dz, z, θ, t)
-    q, p, sd, sₑ = z
-    v = p/m
-    dz[1] = v
-    dz[2] = -q/c + Structured_O_NET([v], θ, st)[1][1]
-    dz[3] = Structured_O_NET([v^2], θ, st)[1][2] / θ_0 - α*(θ_d-θ_0)/θ_d
-    dz[4] = α*(θ_d-θ_0)/θ_0
-end
+    include("helpers/data_helper.jl")
+    include("helpers/train_helper.jl")
 end
 
-# initial state
-initial_state = [1.0, 1.0, 5.0, 10.0]
-    
-# Starting at 0.0 and ending at 19.9, the length of each step is 0.1. Thus, we have 200 time steps in total.
-time_span = (0.0, 19.9)
-time_steps = range(0.0, 19.9, 200)
 
-# parameters of the neural network
-θ = ps
-
-# ODEProblem is an IVP constructor in the Julia package SciMLBase.jl
-using SciMLBase
-IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, time_span, θ)
-
-
-
-
-#########################
-# Step 3: solve the IVP #
-#########################
-
-# Select a numerical method to solve the IVP
-using OrdinaryDiffEq
-numerical_method = ImplicitMidpoint()
-
-# Select the adjoint method to computer the gradient of the loss with respect to the parameters. 
-# ReverseDiffVJP is a callable function in the package SciMLSensitivity.jl, it uses the automatic 
-# differentiation tool ReverseDiff.jl to compute the vector-Jacobian products (VJP) efficiently. 
-using ReverseDiff
-using SciMLSensitivity
-sensitivity_analysis = InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))
-
-# Use the ODE Solver CommonSolve.solve to yield solution. And the solution is the estimate of the coordinates trajectories.
-using CommonSolve
-solution = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
-# Convert the solution into a 2D-array
-pred_data = Array(solution)
-
-
-
-
-#####################################
-# Step 4: construct a loss function #
-#####################################
-
-function ODEfunc_ndho(du,u,params,t) ### du=[̇q,̇p,̇sd,̇sₑ], u=[q,p,sd,sₑ], p=[m,d,c,θₒ,θd,α]
-    q, p, s_d, s_e = u
-    m, c, d, θ_0, θ_d, α = params
-    v = p/m
-    ## ODEs
-    du[1] = v
-    du[2] = -q/c-d*v
-    du[3] = d*((v)^2)/θ_d-α*(θ_d-θ_0)/θ_d
-    du[4] = α*(θ_d-θ_0)/θ_0
-end
-
-# params = [m, c]
-params = [1.0, 1.0, 0.5, 20, 30, 1.5] 
-prob = ODEProblem(ODEFunction(ODEfunc_ndho), initial_state, time_span, params)
-ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = time_steps))
-using Plots
-plot(ode_data[1,:], ode_data[2,:], xlabel="q", ylabel="p")
-plot!(pred_data[1,:], pred_data[2,:], xlabel="q", ylabel="p")
-
-
-function solve_IVP(θ, batch_timesteps)
-    IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, (batch_timesteps[1], batch_timesteps[end]), θ)
-    #pred_data = Array(CommonSolve.solve(IVP, Midpoint(), p=θ, saveat = batch_timesteps, sensealg=sensitivity_analysis))
-    pred_data = Array(CommonSolve.solve(IVP, ImplicitMidpoint(), p=θ, tstops = batch_timesteps, sensealg=sensitivity_analysis))
-    return pred_data
-end
-
-function loss_function(θ, batch_data, batch_timesteps)
-    pred_data = solve_IVP(θ, batch_timesteps)
-    #loss = sum((batch_data[:,1:length(pred_data[1,:])] .- pred_data) .^ 2)
-    loss = sum((batch_data .- pred_data) .^ 2)
-    return loss, pred_data
-end
-
-callback = function(θ, loss, pred_data)
-    plt = plot(ode_data[1,:], ode_data[2,:], label="Ground truth")
-    plot!(plt, pred_data[1,:], pred_data[2,:], label = "Prediction")
-    display(plot(plt))
-    println("loss: ", loss_function(θ, ode_data, time_steps)[1])
-    return false
-end
-
-solve_IVP(θ, time_steps)
-loss_function(θ, ode_data, time_steps)[1]
-
-
-
-
-####################################
-# Step 5: train the neural network #
-####################################
-
-# The dataloader generates a batch of data according to the given batchsize from the "ode_data".
-using Flux: DataLoader
-#dataloader = DataLoader((ode_data, dz_data), batchsize = 200)
-dataloader = DataLoader((ode_data, time_steps), batchsize = 200)
-
-# Select an automatic differentiation tool
-using Optimization
-#adtype = Optimization.AutoFiniteDiff()
-adtype = Optimization.AutoZygote()
-
-# Construct an optimization problem with the given automatic differentiation and the initial parameters θ
-optf = Optimization.OptimizationFunction((θ, ps, batch_data, batch_timesteps) -> loss_function(θ, batch_data, batch_timesteps), adtype)
-optprob = Optimization.OptimizationProblem(optf, Lux.ComponentArray(θ))
-# Train the model multiple times. The "ncycle" is a function in the package IterTools.jl, it cycles through the dataloader "epochs" times.
-using OptimizationOptimisers
-using IterTools: ncycle
-epochs = 10;
-result = Optimization.solve(optprob, Optimisers.ADAM(0.01), ncycle(dataloader, epochs), callback=callback)
-# Access the trained parameters
-θ = result.u
-
-# The "loss_function" returns a tuple, where the first element of the tuple is the loss
-loss = loss_function(θ, ode_data, time_steps)[1]
-
-# Option: continue the training
-include("helpers/train_helper.jl")
-using Main.TrainInterface: LuxTrain
-# Adjust the learning rate and epochs, then repeat this code block
+# Construct a Structured ODE Neural Network
 begin
-    learning_rate = 0.001
-    epochs = 10
-    θ = LuxTrain(optf, θ, learning_rate, epochs, dataloader, callback)
+    using Lux, NNlib
+    Structured_ODE_NN = Lux.Chain(Lux.Dense(1, 20, tanh),
+                                  Lux.Dense(20, 10, tanh),
+                                  Lux.Dense(10, 4))
+
+    using Random
+    rng = Random.default_rng()
+    θ_Structured_ODE_NN, st_Structured_ODE_NN = Lux.setup(rng, Structured_ODE_NN)
 end
 
 
-
-
-##########################
-# Step 6: test the model #
-##########################
-
-Structured_O_NET([initial_state[2]/m], θ, st)[1][1]
-
-# Plot phase portrait
+# Generate ODE data of an non-isothermal damped harmonic oscillator
 begin
-IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, time_span, θ)
-trained_solution = CommonSolve.solve(IVP, ImplicitMidpoint(), p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
-plot(ode_data[1,:], ode_data[2,:], xlabel="q", ylabel="p", xlims=(-2,2), ylims=(-2,2))
-plot!(trained_solution[1,:], trained_solution[2,:])
+    using Main.DataHelper: ODEfunc_ndho, ODESolver
+    # mass m, spring compliance c, damping coefficient d, environment temperature θ_0, heat transfer coefficient α, thermal capacity parameters c₁ and c₂
+    params = [2, 1, 0.5, 300, 0.2, 1.0, 1.0]
+    # initial state q, p, s_e, s_d
+    initial_state = [1.0, 1.0, 0.2, 5.8]
+    # Generate data set
+    time_span = (0.0, 19.9)
+    time_step = range(0.0, 19.9, 200)
+    ode_data = ODESolver(ODEfunc_ndho, params, initial_state, time_span, time_step)
 end
 
 
-#################
-# miscellaneous #
-#################
+# Generate predict data
+begin
+    using Main.DataHelper: NeuralODESolver
+    function NeuralODE_Structured_ODE_NN(dz, z, θ_Structured_ODE_NN, t)
+        q, p, s_e, s_d = z
+        m, c, d, θ_0, α, c₁, c₂ = params
+        v = p/m
+        dz[1] = v
+        dz[2] = - q/c - Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
+        dz[3] = - Structured_ODE_NN([exp(s_d)/θ_0], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2]
+        dz[4] = - Structured_ODE_NN([v^2/exp(s_d)], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][3] - Structured_ODE_NN([-θ_0/exp(s_d)], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][4]
+    end
+    predict_data_Structured_ODE_NN = NeuralODESolver(NeuralODE_Structured_ODE_NN, θ_Structured_ODE_NN, initial_state, time_span, time_step)
+end
 
-# Save and load parameters
-using JLD2
-JLD2.@save joinpath(@__DIR__, "results", "params.jld") θ
-JLD2.@load joinpath(@__DIR__, "results", "params.jld") θ
-θ
+
+############
+# Training #
+############
+
+# Construct loss function, callback function, dataloader and optimization function
+begin
+    using Main.TrainInterface: SolveIVP, OptFunction
+    using Flux: DataLoader
+    using OrdinaryDiffEq: Tsit5
+
+    function loss_function_Structured_ODE_NN(θ, batch_data, batch_timesteps)
+        pred_data = SolveIVP(NeuralODE_Structured_ODE_NN, θ, initial_state, batch_timesteps, Tsit5(), false)
+        loss = sum((batch_data[1,:] .- pred_data[1,:]) .^ 2 +
+                   (batch_data[2,:] .- pred_data[2,:]) .^ 2 +
+                   (batch_data[3,:] .- pred_data[3,:]) .^ 2 +
+                 10(batch_data[4,:] .- pred_data[4,:]) .^ 2)
+        return loss, pred_data
+    end
+
+    callback_Structured_ODE_NN = function(θ, loss, pred_data)
+        println(loss_function_Structured_ODE_NN(θ, ode_data, time_step)[1])
+        return false
+    end
+
+    dataloader = DataLoader((ode_data, time_step), batchsize = 200)
+
+    optf_Structured_ODE_NN = OptFunction(loss_function_Structured_ODE_NN)
+end
+
+
+# Repeat training for the Structured ODE Neural Network
+begin
+    using Main.TrainInterface: LuxTrain
+    α_learn = 0.001
+    epochs = 1000
+    θ_Structured_ODE_NN = LuxTrain(optf_Structured_ODE_NN, θ_Structured_ODE_NN, α_learn, epochs, dataloader, callback_Structured_ODE_NN)
+end
+
+
+# Save the parameters and models of Structured ODE Neural Network
+begin
+    using JLD2, Lux
+    path = joinpath(@__DIR__, "parameters", "params_compositional_experiment_ndho.jld2")
+    JLD2.save(path, "params_compositional_experiment_ndho", θ_Structured_ODE_NN)
+    path = joinpath(@__DIR__, "models", "compositional_experiment_ndho.jld2")
+    JLD2.save(path, "compositional_experiment_ndho", Structured_ODE_NN, "st", st_Structured_ODE_NN)
+end
+
+
+
+
+##############
+# Evaluation #
+##############
+begin
+    include("helpers/data_helper.jl")
+    include("helpers/train_helper.jl")
+end
+
+# Load the parameters and models
+begin
+    using JLD2, Lux
+    path = joinpath(@__DIR__, "parameters", "params_compositional_experiment_ndho.jld2")
+    θ_Structured_ODE_NN = JLD2.load(path, "params_compositional_experiment_ndho")
+    path = joinpath(@__DIR__, "models", "compositional_experiment_ndho.jld2")
+    Structured_ODE_NN = JLD2.load(path, "compositional_experiment_ndho")
+    st_Structured_ODE_NN = JLD2.load(path, "st")
+end
+
+# Generate ODE data of an non-isothermal damped harmonic oscillator
+begin
+    using Main.DataHelper: ODEfunc_ndho, ODESolver
+    # mass m, spring compliance c, damping coefficient d, environment temperature θ_0, heat transfer coefficient α, thermal capacity parameters c₁ and c₂
+    params = [2, 1, 0.5, 300, 0.2, 1.0, 1.0]
+    # initial state q, p, s_e, s_d
+    initial_state = [1.0, 1.0, 0.2, 5.8]
+    # Generate data set
+    time_span = (0.0, 99.9)
+    time_step = range(0.0, 99.9, 1000)
+    ode_data = ODESolver(ODEfunc_ndho, params, initial_state, time_span, time_step)
+end
+
+
+# Generate predict data
+begin
+    using Main.DataHelper: NeuralODESolver
+    function NeuralODE_Structured_ODE_NN(dz, z, θ_Structured_ODE_NN, t)
+        q, p, s_e, s_d = z
+        m, c, d, θ_0, α, c₁, c₂ = params
+        v = p/m
+        dz[1] = v
+        dz[2] = - q/c - Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
+        dz[3] = - Structured_ODE_NN([exp(s_d)/θ_0], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2]
+        dz[4] = - Structured_ODE_NN([v^2/exp(s_d)], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][3] - Structured_ODE_NN([-θ_0/exp(s_d)], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][4]
+    end
+    using OrdinaryDiffEq: Tsit5
+    predict_data_Structured_ODE_NN = NeuralODESolver(NeuralODE_Structured_ODE_NN, θ_Structured_ODE_NN, initial_state, time_span, time_step, Tsit5(), false)
+end
+
+#########
+# Plots #
+#########
+
+
+# Phase portrait
+begin
+    using Plots
+    plot(xlabel="q", ylabel="p", xlims=(-2,3), ylims=(-2,3))
+    plot!(ode_data[1,:], ode_data[2,:], lw=3, label="Ground Truth", linestyle=:solid)
+    plot!(predict_data_Structured_ODE_NN[1,:], predict_data_Structured_ODE_NN[2,:], lw=3, label="Structured ODE NN", linestyle=:dash)
+    #Plots.pdf(joinpath(@__DIR__, "figures", "phase_portrait_compositional_ndho.pdf"))
+end
+
+
+# Prediction error
+begin
+    using Plots
+    l2_error_Structured_ODE_NN = vec(sum((ode_data .- predict_data_Structured_ODE_NN).^2, dims=1))
+    plot(xlabel="Time Step", ylabel="L2 Error", xlims=(0,100), ylims=(0,0.02))
+    plot!(time_step, l2_error_Structured_ODE_NN, lw=3, label="Structured ODE NN")
+    #Plots.pdf(joinpath(@__DIR__, "figures", "prediction_error_compositional_ndho.pdf"))
+end
+
+
+# Hamiltonian evolution of an isothermal damped harmonic oscillator
+begin
+    using Plots
+    Hamiltonian_Ground_Truth = ode_data[2,:].^2/(2*params[1]) + ode_data[1,:].^2/(2*params[2])
+    Hamiltonian_Structured_ODE_NN = predict_data_Structured_ODE_NN[2,:].^2/(2*params[1]) + predict_data_Structured_ODE_NN[1,:].^2/(2*params[2])
+    plot(xlabel="Time Step", ylabel="Mechanical Energy", xlims=(0,100), ylims=(0.0,0.90))
+    plot!(time_step, round.(Hamiltonian_Ground_Truth, digits=10), lw=3, label="Ground Truth", linestyle=:solid)
+    plot!(time_step, round.(Hamiltonian_Structured_ODE_NN, digits=10), lw=3, label="Structured ODE NN", linestyle=:dash)
+    #Plots.pdf(joinpath(@__DIR__, "figures", "Hamiltonian_evolution_compositional_ndho.pdf"))
+end
+
+
+# Compute effort and flow variables
+begin
+    p = ode_data[2,:]
+    s_d = ode_data[4,:]
+    m, c, d, θ_0, α, c₁, c₂ = params
+    # Target values
+    R_d__p__f = d * p ./ m
+    θ_d = c₁/c₂ * exp.(s_d ./ c₂)
+    R_d__s_e__f = α .* (θ_0 .- θ_d) ./ θ_0
+    # Estimated values
+    f_θ__p__f = Vector{Float64}(undef, length(ode_data[2,:]))
+    f_θ__s_e__f = Vector{Float64}(undef, length(ode_data[2,:]))
+    for (idx, p) in enumerate(ode_data[2,:])
+        v = p/m
+        f_θ__p__f[idx] = Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
+    end
+    for (idx, s_d) in enumerate(ode_data[4,:])
+        f_θ__s_e__f[idx] = Structured_ODE_NN([exp(s_d)/θ_0], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2]
+    end
+end
+
+
+# Plot the evolution of the flow variables
+
+begin
+    using Plots
+    plot(xlabel="Time Step", ylabel="p.f", xlims=(0,100), ylims=(-0.5,0.4))
+    plot!(time_step, R_d__p__f, lw=3, label="Ground Truth", linestyle=:solid)
+    plot!(time_step, f_θ__p__f, lw=3, label="Structured ODE NN", linestyle=:dash)
+    #Plots.pdf(joinpath(@__DIR__, "figures", "p.f_compositional_ndho.pdf"))
+end
+
+begin
+    using Plots
+    plot(xlabel="Time Step", ylabel="sₑ.f", xlims=(0,100), ylims=(-0.06,0.03))
+    plot!(time_step, R_d__s_e__f, lw=3, label="Ground Truth", linestyle=:solid)
+    plot!(time_step, f_θ__s_e__f, lw=3, label="Structured ODE NN", linestyle=:dash)
+    #Plots.pdf(joinpath(@__DIR__, "figures", "se.f_compositional_ndho.pdf"))
+end

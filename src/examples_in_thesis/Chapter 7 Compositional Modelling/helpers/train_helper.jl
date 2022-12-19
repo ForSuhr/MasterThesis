@@ -11,9 +11,13 @@ using ReverseDiff, SciMLSensitivity
 using OrdinaryDiffEq, SciMLBase, CommonSolve
 
 
-function SolveIVP(NeuralODE, θ, initial_state, batch_timesteps, numerical_method=ImplicitMidpoint(), sensitivity_analysis=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)))
+function SolveIVP(NeuralODE, θ, initial_state, batch_timesteps, numerical_method=ImplicitMidpoint(), implicit=true, sensitivity_analysis=InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true)))
     IVP = SciMLBase.ODEProblem(ODEFunction(NeuralODE), initial_state, (batch_timesteps[1], batch_timesteps[end]), θ)
-    pred_data = Array(CommonSolve.solve(IVP, numerical_method, p=θ, tstops = batch_timesteps, sensealg=sensitivity_analysis))
+    if implicit
+        pred_data = Array(CommonSolve.solve(IVP, numerical_method, p=θ, tstops = batch_timesteps, sensealg=sensitivity_analysis))
+    else
+        pred_data = Array(CommonSolve.solve(IVP, numerical_method, p=θ, saveat = batch_timesteps, sensealg=sensitivity_analysis))
+    end
     return pred_data
 end
 
