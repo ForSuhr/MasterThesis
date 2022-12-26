@@ -31,8 +31,8 @@ end
 # Generate ODE data of an isothermal damped harmonic oscillator
 begin
     using Main.DataHelper: ODEfunc_idho, ODESolver
-    # mass m and spring compliance c
-    params = [2, 1, 1, 20]
+    # mass m, spring compliance c, the damping coefficient d and the environment temperature θ_0
+    params = [2, 1, 0.5, 300]
     # initial state
     initial_state = [1.0, 1.0, 0.2]
     # Generate data set
@@ -119,7 +119,7 @@ end
 begin
     using Main.TrainInterface: LuxTrain
     α = 0.001
-    epochs = 20
+    epochs = 100
     θ_O_NET = LuxTrain(optf_O_NET, θ_O_NET, α, epochs, dataloader, callback_O_NET)
 end
 
@@ -128,7 +128,7 @@ end
 begin
     using Main.TrainInterface: LuxTrain
     α = 0.001
-    epochs = 20
+    epochs = 100
     θ_Structured_ODE_NN = LuxTrain(optf_Structured_ODE_NN, θ_Structured_ODE_NN, α, epochs, dataloader, callback_Structured_ODE_NN)
 end
 
@@ -181,17 +181,17 @@ begin
 end
 
 
-# Generate ODE data
+# Generate ODE data of an isothermal damped harmonic oscillator
 begin
     include("helpers/data_helper.jl")
     using Main.DataHelper: ODEfunc_idho, ODESolver
-    # mass m, spring compliance c, damping coefficient d, environment temperature θ_0
-    params = [2, 1, 1, 20]
-    # initial state q, p, s_e
+    # mass m, spring compliance c, the damping coefficient d and the environment temperature θ_0
+    params = [2, 1, 0.5, 300]
+    # initial state
     initial_state = [1.0, 1.0, 0.2]
     # Generate data set
-    time_span = (0.0, 9.9)
-    time_step = range(0.0, 9.9, 100)
+    time_span = (0.0, 99.9)
+    time_step = range(0.0, 99.9, 1000)
     ode_data = ODESolver(ODEfunc_idho, params, initial_state, time_span, time_step)
 end
 
@@ -235,7 +235,7 @@ begin
     plot!(ode_data[1,:], ode_data[2,:], lw=3, label="Ground Truth", linestyle=:solid)
     plot!(predict_data_O_NET[1,:], predict_data_O_NET[2,:], lw=3, label="O-NET", linestyle=:dot)
     plot!(predict_data_Structured_ODE_NN[1,:], predict_data_Structured_ODE_NN[2,:], lw=3, label="Structured ODE NN", linestyle=:dash)
-    Plots.pdf(joinpath(@__DIR__, "figures", "phase_portrait_idho_O_NET_and_structured_ODE_NN.pdf"))
+    #Plots.pdf(joinpath(@__DIR__, "figures", "phase_portrait_idho_O_NET_and_structured_ODE_NN.pdf"))
 end
 
 
@@ -244,10 +244,10 @@ begin
     using Plots
     l2_error_O_NET = vec(sum((ode_data .- predict_data_O_NET).^2, dims=1))
     l2_error_Structured_ODE_NN = vec(sum((ode_data .- predict_data_Structured_ODE_NN).^2, dims=1))
-    plot(xlabel="Time Step", ylabel="L2 Error", xlims=(0,10), ylims=(0,0.01))
+    plot(xlabel="Time Step", ylabel="L2 Error", xlims=(0,100), ylims=(0,0.05))
     plot!(time_step, l2_error_O_NET, lw=3, label="O-NET")
     plot!(time_step, l2_error_Structured_ODE_NN, lw=3, label="Structured ODE NN")
-    Plots.pdf(joinpath(@__DIR__, "figures", "prediction_error_idho_O_NET_and_structured_ODE_NN.pdf"))
+    #Plots.pdf(joinpath(@__DIR__, "figures", "prediction_error_idho_O_NET_and_structured_ODE_NN.pdf"))
 end
 
 
@@ -257,9 +257,9 @@ begin
     Hamiltonian_Ground_Truth = ode_data[2,:].^2/(2*params[1]) + ode_data[1,:].^2/(2*params[2])
     Hamiltonian_O_NET = predict_data_O_NET[2,:].^2/(2*params[1]) + predict_data_O_NET[1,:].^2/(2*params[2])
     Hamiltonian_Structured_ODE_NN = predict_data_Structured_ODE_NN[2,:].^2/(2*params[1]) + predict_data_Structured_ODE_NN[1,:].^2/(2*params[2])
-    plot(xlabel="Time Step", ylabel="Mechanical Energy", xlims=(0,10), ylims=(0.0,0.90))
-    plot!(time_step, round.(Hamiltonian_Ground_Truth, digits=10), label="Ground Truth")
-    plot!(time_step, round.(Hamiltonian_O_NET, digits=10), label="O-NET")
-    plot!(time_step, round.(Hamiltonian_Structured_ODE_NN, digits=10), label="Structured ODE NN")
-    Plots.pdf(joinpath(@__DIR__, "figures", "Hamiltonian_evolution_idho_O_NET_and_structured_ODE_NN.pdf"))
+    plot(xlabel="Time Step", ylabel="Mechanical Energy", xlims=(0,100), ylims=(0.0,0.90))
+    plot!(time_step, round.(Hamiltonian_Ground_Truth, digits=10), lw=2, label="Ground Truth", linestyle=:solid)
+    plot!(time_step, round.(Hamiltonian_O_NET, digits=10), lw=2, label="O-NET", linestyle=:dot)
+    plot!(time_step, round.(Hamiltonian_Structured_ODE_NN, digits=10), lw=2, label="Structured ODE NN", linestyle=:dash)
+    #Plots.pdf(joinpath(@__DIR__, "figures", "Hamiltonian_evolution_idho_O_NET_and_structured_ODE_NN.pdf"))
 end

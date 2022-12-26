@@ -1,9 +1,13 @@
 # Generate random parameters
 W = rand(2, 3)
 b = rand(2)
+
+
 # Perform the feedforward propagation
 using NNlib: sigmoid
 predict(x) = sigmoid((W * x) .+ b)
+
+
 # Define the loss function
 using Statistics: mean
 loss(x, y) = mean(abs2, ( predict(x) .- y))

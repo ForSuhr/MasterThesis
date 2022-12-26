@@ -22,8 +22,8 @@ end
 
 function ODEfunc_ndho(dz,z,params,t)
     q, p, s_e, s_d = z
-    m, c, d, θ_0, α, c₁, c₂ = params
-    θ_d = c₁/c₂ * exp(s_d/c₂)
+    m, c, d, θ_0, α, c_tc = params
+    θ_d = exp(s_d/c_tc) / c_tc
     Δθ = θ_d - θ_0
     v = p/m
     dz[1] = v

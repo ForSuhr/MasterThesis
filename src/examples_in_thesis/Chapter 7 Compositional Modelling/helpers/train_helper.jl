@@ -28,17 +28,17 @@ function OptFunction(loss_function, adtype=Optimization.AutoZygote())
 end
 
 
-function FluxTrain(optf, θ, α, epochs, dataloader, callback)
+function FluxTrain(optf, θ, α, epochs, dataloader, callback, optmiser=Optimisers.ADAM(α))
     optprob = Optimization.OptimizationProblem(optf, θ)
-    result = Optimization.solve(optprob, Optimisers.ADAM(α), ncycle(dataloader, epochs), callback=callback)
+    result = Optimization.solve(optprob, optmiser, ncycle(dataloader, epochs), callback=callback)
     θ = result.u
     return θ
 end
 
 
-function LuxTrain(optf, θ, α, epochs, dataloader, callback)
+function LuxTrain(optf, θ, α, epochs, dataloader, callback, optmiser=Optimisers.ADAM(α))
     optprob = Optimization.OptimizationProblem(optf, ComponentArray(θ))
-    result = Optimization.solve(optprob, Optimisers.ADAM(α), ncycle(dataloader, epochs), callback=callback)
+    result = Optimization.solve(optprob, optmiser, ncycle(dataloader, epochs), callback=callback)
     θ = result.u
     return θ
 end

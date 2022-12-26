@@ -4,24 +4,48 @@ begin
 end
 
 
-# Construct a Structured ODE Neural Network
+# Construct a Structured ODE Neural Network for damping
 begin
     using Lux, NNlib
-    Structured_ODE_NN = Lux.Chain(Lux.Dense(1, 20, tanh),
-                                  Lux.Dense(20, 10, tanh),
-                                  Lux.Dense(10, 4))
-
+    Structured_ODE_NN_d = Lux.Chain(Lux.Dense(1, 20, tanh),
+                                    Lux.Dense(20, 10),
+                                    Lux.Dense(10, 2))
     using Random
     rng = Random.default_rng()
-    θ_Structured_ODE_NN, st_Structured_ODE_NN = Lux.setup(rng, Structured_ODE_NN)
+    θ_Structured_ODE_NN_d, st_Structured_ODE_NN_d = Lux.setup(rng, Structured_ODE_NN_d)
+end
+
+
+# Construct a Structured ODE Neural Network for thermal conduction
+begin
+    using Lux, NNlib
+    Structured_ODE_NN_tc = Lux.Chain(Lux.Dense(1, 20, tanh),
+                                     Lux.Dense(20, 10),
+                                     Lux.Dense(10, 2))
+    using Random
+    rng = Random.default_rng()
+    θ_Structured_ODE_NN_tc, st_Structured_ODE_NN_tc = Lux.setup(rng, Structured_ODE_NN_tc)
+end
+
+
+# Combine the parameters of two neural networks
+begin
+    using Lux: ComponentArray
+    θ_Structured_ODE_NN_d = Lux.ComponentArray(θ_Structured_ODE_NN_d)
+    θ_Structured_ODE_NN_tc = Lux.ComponentArray(θ_Structured_ODE_NN_tc)
+    θ_Structured_ODE_NN = Lux.ComponentArray{eltype(θ_Structured_ODE_NN_d)}()
+    θ_Structured_ODE_NN = Lux.ComponentArray(θ_Structured_ODE_NN;θ_Structured_ODE_NN_d)
+    θ_Structured_ODE_NN = Lux.ComponentArray(θ_Structured_ODE_NN;θ_Structured_ODE_NN_tc)
+    # This is a combination of the parameters of two neural networks 
+    θ_Structured_ODE_NN  
 end
 
 
 # Generate ODE data of an non-isothermal damped harmonic oscillator
 begin
     using Main.DataHelper: ODEfunc_ndho, ODESolver
-    # mass m, spring compliance c, damping coefficient d, environment temperature θ_0, heat transfer coefficient α, thermal capacity parameters c₁ and c₂
-    params = [2, 1, 0.5, 300, 0.2, 1.0, 1.0]
+    # mass m, spring compliance c, damping coefficient d, environment temperature θ_0, heat transfer coefficient α, heat capacity c_tc
+    params = [2, 1, 0.5, 300, 0.2, 1.0]
     # initial state q, p, s_e, s_d
     initial_state = [1.0, 1.0, 0.2, 5.8]
     # Generate data set
@@ -34,15 +58,20 @@ end
 # Generate predict data
 begin
     using Main.DataHelper: NeuralODESolver
-    function NeuralODE_Structured_ODE_NN(dz, z, θ_Structured_ODE_NN, t)
+    function NeuralODE_Structured_ODE_NN(dz, z, θ_NN, t)
         q, p, s_e, s_d = z
-        m, c, d, θ_0, α, c₁, c₂ = params
+        m, c, d, θ_0, α, c_tc = params
         v = p/m
+        θ_d = exp(s_d/c_tc) / c_tc
+        Δθ = θ_d - θ_0
+        θ_NN_d = θ_NN.θ_Structured_ODE_NN_d
+        θ_NN_tc = θ_NN.θ_Structured_ODE_NN_tc       
         dz[1] = v
-        dz[2] = - q/c - Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
-        dz[3] = - Structured_ODE_NN([exp(s_d)/θ_0], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2]
-        dz[4] = - Structured_ODE_NN([v^2/exp(s_d)], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][3] - Structured_ODE_NN([-θ_0/exp(s_d)], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][4]
+        dz[2] = - q/c - Structured_ODE_NN_d([v], θ_NN_d, st_Structured_ODE_NN_d)[1][1]
+        dz[3] = - Structured_ODE_NN_tc([Δθ/θ_0], θ_NN_tc, st_Structured_ODE_NN_tc)[1][2]
+        dz[4] = - Structured_ODE_NN_d([-(v^2)/θ_d], θ_NN_d, st_Structured_ODE_NN_d)[1][2] - Structured_ODE_NN_tc([Δθ/θ_d], θ_NN_tc, st_Structured_ODE_NN_tc)[1][1]
     end
+    using OrdinaryDiffEq: Tsit5 
     predict_data_Structured_ODE_NN = NeuralODESolver(NeuralODE_Structured_ODE_NN, θ_Structured_ODE_NN, initial_state, time_span, time_step)
 end
 
@@ -59,10 +88,10 @@ begin
 
     function loss_function_Structured_ODE_NN(θ, batch_data, batch_timesteps)
         pred_data = SolveIVP(NeuralODE_Structured_ODE_NN, θ, initial_state, batch_timesteps, Tsit5(), false)
-        loss = sum((batch_data[1,:] .- pred_data[1,:]) .^ 2 +
-                   (batch_data[2,:] .- pred_data[2,:]) .^ 2 +
-                   (batch_data[3,:] .- pred_data[3,:]) .^ 2 +
-                 10(batch_data[4,:] .- pred_data[4,:]) .^ 2)
+        loss = sum(  (batch_data[1,:] .- pred_data[1,:]) .^ 2 +
+                     (batch_data[2,:] .- pred_data[2,:]) .^ 2 +
+                     (batch_data[3,:] .- pred_data[3,:]) .^ 2 +
+                     (batch_data[4,:] .- pred_data[4,:]) .^ 2)
         return loss, pred_data
     end
 
@@ -80,8 +109,9 @@ end
 # Repeat training for the Structured ODE Neural Network
 begin
     using Main.TrainInterface: LuxTrain
+    using OptimizationOptimisers: Descent
     α_learn = 0.001
-    epochs = 1000
+    epochs = 200
     θ_Structured_ODE_NN = LuxTrain(optf_Structured_ODE_NN, θ_Structured_ODE_NN, α_learn, epochs, dataloader, callback_Structured_ODE_NN)
 end
 
@@ -90,9 +120,12 @@ end
 begin
     using JLD2, Lux
     path = joinpath(@__DIR__, "parameters", "params_compositional_experiment_ndho.jld2")
-    JLD2.save(path, "params_compositional_experiment_ndho", θ_Structured_ODE_NN)
+    JLD2.save(path, "params", θ_Structured_ODE_NN)
     path = joinpath(@__DIR__, "models", "compositional_experiment_ndho.jld2")
-    JLD2.save(path, "compositional_experiment_ndho", Structured_ODE_NN, "st", st_Structured_ODE_NN)
+    JLD2.save(path, "model_d", Structured_ODE_NN_d,
+                    "model_tc", Structured_ODE_NN_tc, 
+                    "st_d", st_Structured_ODE_NN_d, 
+                    "st_tc", st_Structured_ODE_NN_tc)
 end
 
 
@@ -110,17 +143,19 @@ end
 begin
     using JLD2, Lux
     path = joinpath(@__DIR__, "parameters", "params_compositional_experiment_ndho.jld2")
-    θ_Structured_ODE_NN = JLD2.load(path, "params_compositional_experiment_ndho")
+    θ_Structured_ODE_NN = JLD2.load(path, "params")
     path = joinpath(@__DIR__, "models", "compositional_experiment_ndho.jld2")
-    Structured_ODE_NN = JLD2.load(path, "compositional_experiment_ndho")
-    st_Structured_ODE_NN = JLD2.load(path, "st")
+    Structured_ODE_NN_d = JLD2.load(path, "model_d")
+    Structured_ODE_NN_tc = JLD2.load(path, "model_tc")
+    st_Structured_ODE_NN_d = JLD2.load(path, "st_d")
+    st_Structured_ODE_NN_tc = JLD2.load(path, "st_tc")
 end
 
 # Generate ODE data of an non-isothermal damped harmonic oscillator
 begin
     using Main.DataHelper: ODEfunc_ndho, ODESolver
-    # mass m, spring compliance c, damping coefficient d, environment temperature θ_0, heat transfer coefficient α, thermal capacity parameters c₁ and c₂
-    params = [2, 1, 0.5, 300, 0.2, 1.0, 1.0]
+    # mass m, spring compliance c, damping coefficient d, environment temperature θ_0, heat transfer coefficient α, heat capacity c_tc
+    params = [2, 1, 0.5, 300, 0.2, 1.0]
     # initial state q, p, s_e, s_d
     initial_state = [1.0, 1.0, 0.2, 5.8]
     # Generate data set
@@ -133,17 +168,21 @@ end
 # Generate predict data
 begin
     using Main.DataHelper: NeuralODESolver
-    function NeuralODE_Structured_ODE_NN(dz, z, θ_Structured_ODE_NN, t)
+    function NeuralODE_Structured_ODE_NN(dz, z, θ_NN, t)
         q, p, s_e, s_d = z
-        m, c, d, θ_0, α, c₁, c₂ = params
+        m, c, d, θ_0, α, c_tc = params
         v = p/m
+        θ_d = exp(s_d/c_tc) / c_tc
+        Δθ = θ_d - θ_0
+        θ_NN_d = θ_NN.θ_Structured_ODE_NN_d
+        θ_NN_tc = θ_NN.θ_Structured_ODE_NN_tc       
         dz[1] = v
-        dz[2] = - q/c - Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
-        dz[3] = - Structured_ODE_NN([exp(s_d)/θ_0], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2]
-        dz[4] = - Structured_ODE_NN([v^2/exp(s_d)], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][3] - Structured_ODE_NN([-θ_0/exp(s_d)], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][4]
+        dz[2] = - q/c - Structured_ODE_NN_d([v], θ_NN_d, st_Structured_ODE_NN_d)[1][1]
+        dz[3] = - Structured_ODE_NN_tc([Δθ/θ_0], θ_NN_tc, st_Structured_ODE_NN_tc)[1][2]
+        dz[4] = - Structured_ODE_NN_d([-(v^2)/θ_d], θ_NN_d, st_Structured_ODE_NN_d)[1][2] - Structured_ODE_NN_tc([Δθ/θ_d], θ_NN_tc, st_Structured_ODE_NN_tc)[1][1]
     end
-    using OrdinaryDiffEq: Tsit5
-    predict_data_Structured_ODE_NN = NeuralODESolver(NeuralODE_Structured_ODE_NN, θ_Structured_ODE_NN, initial_state, time_span, time_step, Tsit5(), false)
+    using OrdinaryDiffEq: Tsit5 
+    predict_data_Structured_ODE_NN = NeuralODESolver(NeuralODE_Structured_ODE_NN, θ_Structured_ODE_NN, initial_state, time_span, time_step)
 end
 
 #########
@@ -165,7 +204,7 @@ end
 begin
     using Plots
     l2_error_Structured_ODE_NN = vec(sum((ode_data .- predict_data_Structured_ODE_NN).^2, dims=1))
-    plot(xlabel="Time Step", ylabel="L2 Error", xlims=(0,100), ylims=(0,0.02))
+    plot(xlabel="Time Step", ylabel="L2 Error", xlims=(0,100), ylims=(0,0.00005))
     plot!(time_step, l2_error_Structured_ODE_NN, lw=3, label="Structured ODE NN")
     #Plots.pdf(joinpath(@__DIR__, "figures", "prediction_error_compositional_ndho.pdf"))
 end
@@ -187,38 +226,89 @@ end
 begin
     p = ode_data[2,:]
     s_d = ode_data[4,:]
-    m, c, d, θ_0, α, c₁, c₂ = params
+    m, c, d, θ_0, α, c_tc = params
+    # Split the parameter combination into two components for the two neural networks
+    θ_NN_d = θ_Structured_ODE_NN.θ_Structured_ODE_NN_d
+    θ_NN_tc = θ_Structured_ODE_NN.θ_Structured_ODE_NN_tc      
     # Target values
-    R_d__p__f = d * p ./ m
-    θ_d = c₁/c₂ * exp.(s_d ./ c₂)
-    R_d__s_e__f = α .* (θ_0 .- θ_d) ./ θ_0
+    v = p ./ m
+    θ_d = exp.(s_d ./ c_tc) / c_tc
+    R_d__p__f = d * v
+    R_d__s_d__f = - d * v.^2 ./ θ_d
+    R_tc__s_d__f = α .* (θ_d .- θ_0) ./ θ_d
+    R_tc__s_e__f = α .* (θ_0 .- θ_d) ./ θ_0
+    target_dissipative_power_d = θ_0 * d * v .^2 ./ θ_d
+    target_dissipative_power_tc = θ_0 * α * ((θ_d .- θ_0) ./ θ_0 .+ (θ_0 .- θ_d) ./ θ_d)
     # Estimated values
-    f_θ__p__f = Vector{Float64}(undef, length(ode_data[2,:]))
-    f_θ__s_e__f = Vector{Float64}(undef, length(ode_data[2,:]))
-    for (idx, p) in enumerate(ode_data[2,:])
+    f_θ_d__p__f = Vector{Float64}(undef, length(ode_data[2,:]))
+    f_θ_d__s_d__f = Vector{Float64}(undef, length(ode_data[2,:]))
+    f_θ_tc__s_d__f = Vector{Float64}(undef, length(ode_data[4,:]))
+    f_θ_tc__s_e__f = Vector{Float64}(undef, length(ode_data[4,:]))
+    estimate_dissipative_power_d = Vector{Float64}(undef, length(ode_data[2,:]))
+    estimate_dissipative_power_tc = Vector{Float64}(undef, length(ode_data[4,:]))
+    for idx in range(1,length(ode_data[2,:]))
+        q = ode_data[1, idx]
+        p = ode_data[2, idx]
+        s_e = ode_data[3, idx]
+        s_d = ode_data[4, idx]
+        θ_d = exp(s_d / c_tc) / c_tc
+        Δθ = θ_d - θ_0
         v = p/m
-        f_θ__p__f[idx] = Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
-    end
-    for (idx, s_d) in enumerate(ode_data[4,:])
-        f_θ__s_e__f[idx] = Structured_ODE_NN([exp(s_d)/θ_0], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2]
+        f_θ_d__p__f[idx] = Structured_ODE_NN_d([v], θ_NN_d, st_Structured_ODE_NN_d)[1][1]
+        f_θ_d__s_d__f[idx] = Structured_ODE_NN_d([-(v^2)/θ_d], θ_NN_d, st_Structured_ODE_NN_d)[1][2]
+        f_θ_tc__s_d__f[idx] = Structured_ODE_NN_tc([Δθ/θ_d], θ_NN_tc, st_Structured_ODE_NN_tc)[1][1]
+        f_θ_tc__s_e__f[idx] = Structured_ODE_NN_tc([Δθ/θ_0], θ_NN_tc, st_Structured_ODE_NN_tc)[1][2]
+        estimate_dissipative_power_d[idx] = v * Structured_ODE_NN_d([v], θ_NN_d, st_Structured_ODE_NN_d)[1][1] + Δθ * Structured_ODE_NN_d([-(v^2)/θ_d], θ_NN_d, st_Structured_ODE_NN_d)[1][2]
+        estimate_dissipative_power_tc[idx] = Δθ * Structured_ODE_NN_tc([Δθ/θ_d], θ_NN_tc, st_Structured_ODE_NN_tc)[1][1]
     end
 end
 
 
 # Plot the evolution of the flow variables
-
 begin
     using Plots
     plot(xlabel="Time Step", ylabel="p.f", xlims=(0,100), ylims=(-0.5,0.4))
     plot!(time_step, R_d__p__f, lw=3, label="Ground Truth", linestyle=:solid)
-    plot!(time_step, f_θ__p__f, lw=3, label="Structured ODE NN", linestyle=:dash)
+    plot!(time_step, f_θ_d__p__f, lw=3, label="Structured ODE NN", linestyle=:dash)
     #Plots.pdf(joinpath(@__DIR__, "figures", "p.f_compositional_ndho.pdf"))
 end
 
 begin
     using Plots
-    plot(xlabel="Time Step", ylabel="sₑ.f", xlims=(0,100), ylims=(-0.06,0.03))
-    plot!(time_step, R_d__s_e__f, lw=3, label="Ground Truth", linestyle=:solid)
-    plot!(time_step, f_θ__s_e__f, lw=3, label="Structured ODE NN", linestyle=:dash)
+    plot(xlabel="Time Step", ylabel="s_d.f of the damping", xlims=(0,100), ylims=(-0.01,0.01))
+    plot!(time_step, R_d__s_d__f, lw=3, label="Ground Truth", linestyle=:solid)
+    plot!(time_step, f_θ_d__s_d__f, lw=3, label="Structured ODE NN", linestyle=:dash)
+    #Plots.pdf(joinpath(@__DIR__, "figures", "sd_d.f_compositional_ndho.pdf"))
+end
+
+begin
+    using Plots
+    plot(xlabel="Time Step", ylabel="s_d.f of the thermal conduction", xlims=(0,100), ylims=(-0.01,0.04))
+    plot!(time_step, R_tc__s_d__f, lw=3, label="Ground Truth", linestyle=:solid)
+    plot!(time_step, f_θ_tc__s_d__f, lw=3, label="Structured ODE NN", linestyle=:dash)
+    #Plots.pdf(joinpath(@__DIR__, "figures", "sd_tc.f_compositional_ndho.pdf"))
+end
+
+begin
+    using Plots
+    plot(xlabel="Time Step", ylabel="sₑ.f", xlims=(0,100), ylims=(-0.05,0.05))
+    plot!(time_step, R_tc__s_e__f, lw=3, label="Ground Truth", linestyle=:solid)
+    plot!(time_step, f_θ_tc__s_e__f, lw=3, label="Structured ODE NN", linestyle=:dash)
     #Plots.pdf(joinpath(@__DIR__, "figures", "se.f_compositional_ndho.pdf"))
+end
+
+begin
+    using Plots
+    plot(xlabel="Time Step", ylabel="Dissipative Power of the damping", xlims=(0,100), ylims=(-0.2,0.4))
+    plot!(time_step, target_dissipative_power_d, lw=3, label="Ground Truth", linestyle=:solid)
+    plot!(time_step, estimate_dissipative_power_d, lw=3, label="Structured ODE NN", linestyle=:dash)
+    #Plots.pdf(joinpath(@__DIR__, "figures", "dissipative_power_damping_ndho.pdf"))
+end
+
+begin
+    using Plots
+    plot(xlabel="Time Step", ylabel="Dissipative Power of the thermal conduction", xlims=(0,100), ylims=(-0.4,1.0))
+    plot!(time_step, target_dissipative_power_tc, lw=3, label="Ground Truth", linestyle=:solid)
+    plot!(time_step, estimate_dissipative_power_tc, lw=3, label="Structured ODE NN", linestyle=:dash)
+    #Plots.pdf(joinpath(@__DIR__, "figures", "dissipative_power_thermal_conduction_ndho.pdf"))
 end
