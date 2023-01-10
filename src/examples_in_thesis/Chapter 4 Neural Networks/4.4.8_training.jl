@@ -1,50 +1,35 @@
-# Generate random parameters
-W = rand(2, 3)
-b = rand(2)
-
-
-# Perform the feedforward propagation
+using Random
 using NNlib: sigmoid
-predict(x) = sigmoid((W * x) .+ b)
-
-
-# Define the loss function
 using Statistics: mean
-loss(x, y) = mean(abs2, ( predict(x) .- y))
+using Zygote: gradient
 
+rng = Random.default_rng()
+Random.seed!(rng, 0)
 
-# Compute the loss
-input = rand(3)
-estimated_value = predict(input)
-target_value = rand(2)
-loss(input, target_value)
+# hand-written single-layer NN
+predict(x, W, b) = sigmoid((W * x) .+ b)
 
+# generate random initial parameters
+W = rand(rng, 2, 3)
+b = rand(rng, 2)
 
-# "Flux" is a deep learning framework in Julia language. The function "params" creates a trainable parameters object.
-using Flux
-θ = Flux.params(W, b)
-# Compute the gradient of the loss. "Zygote" is an automatic differentiation package.
-using Zygote
-gs = Zygote.gradient(() -> loss(input, target_value), θ)
-# Compute the gradient of the loss with respect to the parameters
-gs[W]
-gs[b]
+# generate random training data
+input = rand(rng, 3)
+target = rand(rng, 2)
 
+# mean squared error
+loss(input, target, W, b) = mean(abs2, predict(input, W, b) .- target)
 
-# Single update of the parameters accroading to gradient descent 
-# The learning Rate
-α = 0.1
-# Update the parameters using gradient descent
-for θ in (W, b)
-    θ .-= α * gs[θ]
-end
-loss(input, target_value)
+# value of loss function before training
+loss₁ = loss(input, target, W, b)
 
+# parameter update via gradient descent
+α = 0.1 # learning rate
+fwd = (W, b) -> loss(input, target, W, b)
+gradW, gradb = gradient(fwd, W, b)
+W = W - α * gradW
+b = b - α * gradb
+loss₂ = loss(input, target, ps)
 
-# The optimization algorithm "Gradient Descent"
-opt = Flux.Descent(0.1)
-# Update the parameters with the given learning rate and optimization algorithm
-for θ in (W, b)
-    Flux.Optimise.update!(opt, θ, gs[θ])
-end
-loss(input, target_value)
+@assert loss₂ < loss₁
+"One update lead to a reduction of the error by $((loss₁ - loss₂) / loss₁ * 100) %"
