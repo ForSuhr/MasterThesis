@@ -69,7 +69,7 @@ using ReverseDiff
 using SciMLSensitivity
 sensitivity_analysis = InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))
 
-# Use the ODE Solver CommonSolve.solve to yield solution. And the solution is the estimate of the coordinates trajectories.
+# Use the ODE Solver CommonSolve.solve to yield solution. And the solution is the prediction of the state trajectories.
 using CommonSolve
 solution = CommonSolve.solve(IVP, numerical_method, p=θ, tstops = time_steps, sensealg=sensitivity_analysis)
 
@@ -130,7 +130,6 @@ end
 ####################################
 
 # The dataloader generates a batch of data according to the given batchsize from the "training_data".
-
 dataloader = Flux.Data.DataLoader((training_data, time_steps), batchsize = 200)
 
 # Select an automatic differentiation tool
@@ -150,14 +149,14 @@ begin
 end
 
 # The "loss_function" returns a tuple, where the first element of the tuple is the loss
-loss = loss_function(result.u, training_data, time_steps)[1]
+loss = loss_function(θ, training_data, time_steps)[1]
 
 # Option: continue the training
 include("helpers/train_helper.jl")
 using Main.TrainInterface: FluxTrain
 begin
-    α = 0.00005
-    epochs = 50
+    α = 0.001
+    epochs = 10
     θ = FluxTrain(optf, θ, α, epochs, dataloader, callback)
 end
 
@@ -197,7 +196,7 @@ begin
     re = JLD2.load(path, "re")
 end
 
-# Recall that "re" is a method to reconstruct the neural network.
+# "re" is a method to reconstruct the neural network.
 re(θ)(initial_state)
 
 # Plot phase portrait
