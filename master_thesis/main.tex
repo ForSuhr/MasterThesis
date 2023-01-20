@@ -87,7 +87,7 @@
 % CONTENTS AND LISTS %
 %%%%%%%%%%%%%%%%%%%%%%
 %% declaration
-\dothis{\languages}
+\dothis{ngerman}
 
 % abstract
 \include{prechapters/abstract}
@@ -114,14 +114,14 @@
 \chapter{Introduction}
 \label{ch:chapter1}
 \section{Motivation}
-Today, neural networks are widely used in various fields. For Hamiltonian mechanics, a paper \cite{greydanus2019hamiltonian} proposed Hamiltonian Neural Networks. They encode underlying physical laws as prior knowledge, such that a Hamiltonian Neural Network can learn a conserved quantity that is analogous to the total energy of a Hamiltonian system. A following paper \cite{zhong2020dissipative} introduced Dissipative SymODEN, which is a deep learning architecture designed to learn dynamics of port-Hamiltonian systems. Both the above models are based on a state of the art technique called Neural ODEs \cite{chen2018neural}. A Neural ODE is an ODE like $\dot{x} = f_{\theta}(x, t)$, which has a neural network on its right hand side (RHS). In an Neural ODE, its RHS is unknown and the neural network $f_{\theta}$ is treated as a black box model for the whole system. By integrating the Neural ODE with numerical methods, we can obtain the system dynamics.
+Today, neural networks are widely used in various fields. For Hamiltonian mechanics, a paper \cite{greydanus2019hamiltonian} proposed Hamiltonian Neural Networks. They encode underlying physical laws as prior knowledge, such that a Hamiltonian Neural Network can learn a conserved quantity that is analogous to the total energy of a Hamiltonian system. A following paper \cite{zhong2020dissipative} introduced Dissipative SymODEN, which is a deep learning architecture designed to learn dynamics of port-Hamiltonian systems. Both the above models are based on a state of the art technique called Neural ODEs \cite{chen2018neural}. A Neural ODE is an ODE like $\dot{x} = f_{\theta}(x, t)$, which has a neural network on its right hand side (RHS). In a Neural ODE, its RHS is unknown and the neural network $f_{\theta}$ is treated as a black box model for the whole system. By integrating the Neural ODE with numerical methods, we can obtain the system dynamics.
 
-Port-Hamiltonian systems theory provides a port-based approach to modelling, optimization and control of multiphysical systems. Exergetic Port-Hamiltonian Systems (EPHS) proposed in \cite{lohmayer2021exergetic} are port-Hamiltonian systems endowed with thermodynamic structure. In contrast to traditional port-Hamiltonian systems, EPHS further provides an explicit relation between port-Hamiltonian systems and thermodynamics. In EPHS modelling framework, an EPHS model is considered as a model composed by system components, where some components may be unknown. To build a model without knowning all components, the techniques like Neural ODE provide a new direction. However, in the case where a part of system components are known, it seems unnecessary to treat the whole system as a black box. Can we replace only the unknown components with neural network models? Can these neural network models be reused in other systems?
+Port-Hamiltonian systems theory provides a port-based approach to modelling, optimization and control of multiphysical systems. Exergetic Port-Hamiltonian Systems (EPHS) proposed in \cite{lohmayer2021exergetic} are port-Hamiltonian systems endowed with thermodynamic structure. In contrast to traditional port-Hamiltonian systems, EPHS further provides an explicit relation between port-Hamiltonian systems and thermodynamics. In the EPHS modelling framework, an EPHS model is considered as a model composed by system components, where some components may be unknown. To build a model without knowning all components, techniques like Neural ODEs provide a new direction. However, in the case where a part of system components are known, it seems unnecessary to treat the whole system as a black box. Can we replace only the unknown components with neural network models? Can these neural network models be reused in other systems?
 
 \section{Main Contributions}
 The main contributions of this thesis is two-fold. We first explain structured Neural ODEs, which are Neural ODEs endowed with structure composing the known parts and unknown parts. 
 
-Later, we propose two approaches for EPHS modelling, where structured Neural ODEs are used. To evaluate our models, we compare the prediction with the ground truth and reuse the models for other systems.
+Later, we propose two approaches for EPHS modelling, where structured Neural ODEs are used. To evaluate our models, we compare the prediction with the ground truth and reuse the neural network models for other systems.
 
 \section{Outline}
 An outline for the following chapters:
@@ -134,9 +134,9 @@ An outline for the following chapters:
 
 \textbf{Chapter} \ref{ch:chapter5} reviews the idea of Neural ODEs and the adjoint method.
 
-\textbf{Chapter} \ref{ch:chapter6} first explores the implementations of priors in the field of physics. Then, it overviews different neural network based on Neural ODEs: O-NETs, H-NETs and HNNs, where H-NETs and HNNs are endowed with physics priors to improve learning accuracy. At the end, structured ODE neural network is explained and compared with other neural network models in code and experiments.
+\textbf{Chapter} \ref{ch:chapter6} first explores physics priors. Then, it overviews different neural networks based on Neural ODEs: O-NETs, H-NETs and HNNs. Finally, structured ODE neural networks are explained and compared with the other neural network models in code and experiments.
 
-\textbf{Chapter} \ref{ch:chapter7} proposes two approaches for modelling (exergetic) port-Hamiltonian systems with structured Neural ODEs and performs three experiments.
+\textbf{Chapter} \ref{ch:chapter7} proposes two approaches for modelling (exergetic) port-Hamiltonian systems with structured Neural ODEs and performs experiments.
 
 \textbf{Chapter} \ref{ch:chapter8} draws conclusions and provides an outlook for future work.
 
@@ -144,9 +144,9 @@ An outline for the following chapters:
 \clearpage
 \chapter{Differential Equations}
 \label{ch:chapter2}
-For better understanding of Neural ODEs and structured Neural ODEs in the later chapters, we first review the definition of ordinary differential equation (ODE). In this thesis, we restrict our study to autonomous systems.
+For better understanding of Neural ODEs and structured Neural ODEs in later chapters, we first review the definition of ordinary differential equation (ODE). In this thesis, we restrict our study to autonomous systems. For more details about ODEs, we refer to \cite{teschl2012ordinary}.
 \section{Ordinary Differential Equations}
-Consider a real-valued function $x$ with $k$ continuous derivatives: $x \in C^{k}(I)$, where the time interval $ I \subseteq \mathbb{R}, \: k \in \mathbb{N}_{0}, \: x: \mathbb{R} \rightarrow \mathbb{R}$. An implicit ODE is a functional relation of the form:
+Consider a real-valued function $x$ with $k$ continuous derivatives: $x \in C^{k}(I)$, where the time interval $ I \subseteq \mathbb{R}, \: k \in \mathbb{N}, \: x: \mathbb{R} \rightarrow \mathbb{R}$. An implicit ODE is an equation of the form:
 
 \begin{equation}
     \label{eq:implicit_ODE}
@@ -196,7 +196,7 @@ which is an analytical solution.
 \section{Numerical Methods}
 In this section, we discuss some numerical methods for solving IVPs. We refer to the solutions provided by numerical methods as numerical solutions. In addition, the algorithmic descriptions regarding numerical methods are known as numerical schemes. For details about numerical methods, we refer to \cite{hairer2006geometric}.
 
-Suppose that the time evolution in \ref{eq:solution_IVP} ends with $T$, we can obtain a sequence of approximating solutions $ \{ x_{t_{i}} \}_{t_{0}}^{T}$. In dynamical systems, $ \{ x_{t_{i}} \}_{t_{0}}^{T}$ is a sequence of points in state space, which is also known as state trajectory. Although numerical methods provide approximations rather than exact solutions, they are widely implemented since they are efficient in computer programs. 
+Suppose that the time evolution in \ref{eq:solution_IVP} ends with $T$, we can obtain a sequence of approximating solutions $ \{ x_{t_{i}} \}_{t_{0}}^{T}$. In dynamical systems, $ \{ x_{t_{i}} \}_{t_{0}}^{T}$ is a sequence of points in state space, which is also known as state trajectory. Although numerical methods provide approximations rather than exact solutions, they are widely implemented since they are easier to compute and more efficient in computer programs. 
 
 \subsection{Explicit Euler Method}
 The Euler method is the simplest and probably the first numerical method formulated by Leonhard Euler. Consider an IVP $\dot{x} = f(x), \quad x(t_{0})=x_{0}$. The explicit Euler method is of the form
@@ -216,17 +216,15 @@ The implicit Euler method is of the form
     x_{n+1} = x_{n} + h \cdot f_{n+1},
 \end{equation}
 
-where $f_{n+1} = f(x_{n+1}) = \left. \frac{dx}{dt} \right|_{t=t_{n+1}}$. Comparing to the explicit form \ref{eq:Eulers_method_explicit}, the solution $x_{n+1}$ is defined implicitly. Hence, to obtain the solution of an IVP by using such an implicit method, we need to solve nonlinear equations.
+where $f_{n+1} = f(x_{n+1}) = \left. \frac{dx}{dt} \right|_{t=t_{n+1}}$. Comparing to the explicit method \ref{eq:Eulers_method_explicit}, the solution $x_{n+1}$ is defined implicitly. Hence, to obtain the solution of an IVP by using such an implicit method, we need to solve nonlinear equations, given that $f$ is nonlinear.
 
 \subsection{Implicit Midpoint Rule}
 The implicit midpoint is of the form
 
 \begin{equation}
     \label{eq:Midpoint_rule_implicit}
-    x_{n+1} = x_{n} + h \cdot f\left(\frac{x_{n} + x_{n+1}}{2}\right),
+    x_{n+1} = x_{n} + h \cdot f\left(\frac{x_{n} + x_{n+1}}{2}\right).
 \end{equation}
-
-where $f$ evaluates the slope of the solution at time $t_{n}+\frac{h}{2}$.
 
 The implicit midpoint rule is a symplectic integrator. In contrast to \ref{eq:Eulers_method_explicit} and \ref{eq:Eulers_method_implicit}, this symplectic integrator allows the solution trajectory to remain unchanged after inverting the direction. This property is known as symmetry \cite{hairer2006geometric}. In more detail, after exchanging $x_{n+1}$ and $x_{n}$, Equation \ref{eq:Midpoint_rule_implicit} can be rewritten as
 
@@ -235,7 +233,7 @@ The implicit midpoint rule is a symplectic integrator. In contrast to \ref{eq:Eu
     x_{n} = x_{n+1} + h \cdot f\left(\frac{x_{n} + x_{n+1}}{2}\right).
 \end{equation}
 
-Such an inversion only changes the direction of the solution trajectory but does not affect the solution trajectory itself. This property of the symplectic integrator makes it useful for some reversible systems, such as Hamiltonian systems.
+Such an inversion only changes the direction of the solution trajectory but does not affect the solution trajectory itself. This property of the symplectic integrator makes it useful for reversible systems, such as Hamiltonian systems.
 
 \clearpage
 \chapter{Port-Hamiltonian Systems}
@@ -277,7 +275,7 @@ Then, the dynamcis of the Hamiltonian systems is given by
 
 
 \subsection{Conservation of Energy}
-Let the state variables $\mathbf{x}=(\mathbf{q},\mathbf{p}) \in \mathcal{X}$. If a Hamiltonian is time-independent, it holds
+Let the state variables $\mathbf{x}=(\mathbf{q},\mathbf{p}) \in \mathcal{X}$. As the Hamiltonian is time-independent, it holds
 
 \begin{equation}
     \label{eq:Hamiltonian_invariant}
@@ -298,7 +296,7 @@ where the time derivatives of the state variables can be written as
     \end{aligned}
 \end{equation}
 
-A matrix $J$ that holds $-J = J^T$ is called skew-symmetric matrix.
+A matrix $J$ which satisfies $-J = J^T$ is called a skew-symmetric matrix.
 
 Plugging \ref{eq:Hamiltonian_symplectic} into \ref{eq:Hamiltonian_invariant}, we can prove that the Hamiltonian is conserved:
 
@@ -312,30 +310,24 @@ Plugging \ref{eq:Hamiltonian_symplectic} into \ref{eq:Hamiltonian_invariant}, we
 \end{equation}
 
 \subsection{Symplectic Integration of Hamiltonian Systems}
-Plugging \ref{eq:Hamiltonian_symplectic} into the symplectic integrator \ref{eq:Midpoint_rule_implicit}, we obtain:
+Applying the midpoint rule to Equation \ref{eq:Hamiltonian_symplectic}, we obtain:
 
 \begin{equation}
     \label{eq:Midpoint_rule_implicit_Hamiltonian}
     x_{n+1} = x_{n} + h \cdot J \nabla H \left(\frac{x_{n} + x_{n+1}}{2}\right).
 \end{equation}
 
-We reformulate \ref{eq:Midpoint_rule_implicit_Hamiltonian} as
-
-\begin{equation}
-    \left(I - \frac{1}{2} h \cdot J \nabla^2 H\right)x_{n+1} = \left(I + \frac{1}{2} h \cdot J \nabla^2 H \right)x_{n}.
-\end{equation}
-
 The differentiation of $x_{n+1}$ with respect to $x_{n}$ yields
 
 \begin{equation}
     \label{eq:Midpoint_rule_implicit_Hamiltonian_differentiation}
-    \left(I - \frac{1}{2} h \cdot J \nabla^2 H \right) \frac{\partial x_{n+1}}{\partial x_{n}} = \left(I + \frac{1}{2} h \cdot J \nabla^2 H \right).
+    \left(I - \frac{1}{2} h \cdot J \nabla^2 H\left(\frac{x_{n} + x_{n+1}}{2}\right) \right) \frac{\partial x_{n+1}}{\partial x_{n}} = I + \frac{1}{2} h \cdot J \nabla^2 H\left(\frac{x_{n} + x_{n+1}}{2}\right).
 \end{equation}
 
 We reformulate \ref{eq:Midpoint_rule_implicit_Hamiltonian_differentiation} as
 
 \begin{equation}
-    \frac{\partial x_{n+1}}{\partial x_{n}} = \frac{\left(I - \frac{1}{2} h \cdot J \nabla^2 H \right)}{\left(I + \frac{1}{2} h \cdot J \nabla^2 H \right)} .
+    \frac{\partial x_{n+1}}{\partial x_{n}} = \frac{I - \frac{1}{2} h \cdot J \nabla^2 H\left(\frac{x_{n} + x_{n+1}}{2}\right) }{I + \frac{1}{2} h \cdot J \nabla^2 H\left(\frac{x_{n} + x_{n+1}}{2}\right)} .
 \end{equation}
 
 Then, we can prove the relation
@@ -359,7 +351,7 @@ An undamped harmonic oscillator is a classical Hamiltonian system. A mass $m$ is
     \label{fig:physical_model_undamped_harmonic_oscillator}
 \end{figure}
 
-In Newtonian mechanics, according to Newton's second law $F=ma=m\ddot{x}$ and Hooke's law $F_s=kx$ ($F_s$ is the restoring force of a spring, which is always in the opposite direction to the displacement), it holds $m\ddot{x}+kx=0$. This implicit ODE can be used to describe the system dynamics. As the highest order in the ODE is second order, it is called second order differential equation.
+In Newtonian mechanics, according to Newton's second law $F=ma=m\ddot{x}$ and Hooke's law $F_s=kx$ ($F_s$ is the restoring force of a spring, which is always in the opposite direction to the displacement and $k$ is the spring coefficient $k=\frac{1}{c}$), it holds $m\ddot{x}+kx=0$. This implicit ODE describes the system dynamics. As the highest order in the ODE is two, it is called a second order differential equation.
 
 In Hamiltonian mechanics, referring to Equation \ref{eq:Hamiltonian}, the Hamiltonian is the sum of the kinetic energy $\frac{1}{2}\mathbf{p}^T\mathbf{M}^{-1}(\mathbf{q})\mathbf{p}$ and the potential energy $\mathbf{V}(\mathbf{q})$. In the case of undamped harmonic oscillator, the Hamiltonian function can be written as
 
@@ -368,7 +360,7 @@ In Hamiltonian mechanics, referring to Equation \ref{eq:Hamiltonian}, the Hamilt
     H(q,p)=\frac{1}{2c}q^2+\frac{1}{2m}p^2,
 \end{equation}
 
-where p is the momentum of the mass. The state of the system (in canonical coordinates) $x=(q,p)$ moves along the Hamiltonian vector field $X_{H}=\{H, \cdot\}$, where the Poission bracket is on the symplectic manifold $(\mathcal{X},\omega)$. According to \ref{eq:Hamiltonian_vector_field}, the evolutions of $q$ and $p$ are given by
+where p is the momentum of the mass. The state of the system (in canonical coordinates) $x=(q,p)$ moves along the Hamiltonian vector field $X_{H}=\{H, \cdot\}$, where the Poission bracket is on the symplectic manifold $(\mathcal{X},\omega)$. According to \ref{eq:Hamiltonian_vector_field}, the evolution of $q$ and $p$ is determined by
 
 \begin{equation}
     \label{eq:ODE_undamped_harmonic_oscillator}
@@ -378,7 +370,7 @@ where p is the momentum of the mass. The state of the system (in canonical coord
     \end{aligned}
 \end{equation}
 
-Moving along the Hamiltonian vector field keeps the total energy of the system constant. In this way, the time derivative of Hamiltonian stays at zero:
+Moving along the Hamiltonian vector field keeps the total energy of the system constant. Therefor, the time derivative of the Hamiltonian stays at zero:
 
 \begin{equation}
     \label{eq:derivative_Hamiltonian}
@@ -402,10 +394,10 @@ where a pair $(f_S, e_S) \in T_{x}\mathcal{X} \times T_{x}^{*}\mathcal{X}$ is an
 As can be seen in \ref{eq:Dirac_structure}, a Dirac structure is a subbundle $\mathcal{D} \subset \mathcal{F} \times \mathcal{E}$, where $\mathcal{F}$ and $\mathcal{E}$ are the spaces of the port variables (i.e. flows $f$ and efforts $e$). We refer to a pair $(f,e)$ of flow and effort variables as a port. In port-Hamiltonian systems, the subsystems interact with each other via ports. Normally, such interactions are assumed to be the exchanges of energy.
 
 \subsection{EPHS framework}
-The EPHS (exergetic port-Hamiltonian systems) framework combines the port-Hamilton systems theory with the GENERIC framework \cite{lohmayer2021exergetic}. In this thesis, we adopt a bond-graph expression proposed by \cite{lohmayer2022ephs} and \cite{lohmayer2022exergetic}, which is inspired by bond-graph \cite{paynter1961analysis}, to provide graphical representation for EPHS. We will follow the EPHS framework in the following example.
+The EPHS (exergetic port-Hamiltonian systems) framework combines the port-Hamilton systems theory with the GENERIC framework \cite{lohmayer2021exergetic}. In this thesis, we adopt a bond-graph expression proposed by \cite{lohmayer2022ephs}, which is inspired by bond-graph \cite{paynter1961analysis}, to provide a graphical representation of syntactic expression for EPHS. We will follow the EPHS framework in the following example.
 
 \subsection{Example: Isothermal Damped Harmonic Oscillator}
-Unlike the previous example, the mechanical energy of an isothermal damped harmonic oscillator dissipates with the vibration.
+Unlike the previous example, the mechanical energy of an isothermal damped harmonic oscillator dissipates with time.
 
 \clearpage
 \begin{figure}[h!]
@@ -417,7 +409,7 @@ Unlike the previous example, the mechanical energy of an isothermal damped harmo
 
 Figure \ref{fig:idho} illustrates an isothermal damped harmonic oscillator, where $d$ is the damping coefficient.
 
-In bond-graph expression, to distinguish different types of subsystems more visually, storage components are shown in blue, Dirac structures in green and resistive structures in red:
+In bond-graph expression, to distinguish different types of subsystems visually, storage components are shown in blue, Dirac structures in green and resistive structures in red:
 
 \begin{figure}[h!]
     \centering
@@ -426,11 +418,11 @@ In bond-graph expression, to distinguish different types of subsystems more visu
     \label{fig:bondgraph_idho}
 \end{figure}
 
-All components (or boxes) are connected to junctions (black dots). A name on a junction is not the name of the junction but the name of all ports connected to that junction.
+All components (boxes) are connected to junctions (black dots). A name on a junction is not the name of the junction but the name of all ports connected to that junction.
 
 \textbf{The storage components} spring $\mathtt{H_{s}}$ and mass $\mathtt{H_{m}}$ are connected to the Dirac structure $\mathtt{D_m}$ via ports $\mathtt{H_{s}.q}$ and $\mathtt{H_{m}.p}$, where the port variables are $(\mathtt{H_{s}.q.f}, \mathtt{H_{s}.q.e}) = (\dot{q}, \partial_q H)$ and $(\mathtt{H_{m}.p.f}, \mathtt{H_{m}.p.e}) = (\dot{p}, \partial_p H)$.
 
-\textbf{The resistive structure} damping $\mathtt{R_{d}}$ is connected to the Dirac structure $\mathtt{D_m}$ via port $\mathtt{R_{d}.p}$ with port variables $(\mathtt{R_{d}.p.f}, \mathtt{R_{d}.p.e}) = (dv, v)$ and connected to the environment $\mathtt{E}$ via port $\mathtt{R_{d}.s_{e}}$ with port variables $(\mathtt{R_{d}.s_{e}.f}, \mathtt{R_{d}.s_{e}.e}) = (-\frac{1}{\theta_{0}}dv^2, \theta_{0}-\theta_{0})$. According to the prerequisite "isothermal", the damping achieves thermodynamic equilibrium with the environment. And the net power at the damping $\mathtt{R_{d}.p.e} * \mathtt{R_{d}.p.f} + \mathtt{R_{d}.s_{e}.e} * \mathtt{R_{d}.s_{e}.f} = \mathtt{R_{d}.p.e} * \mathtt{R_{d}.p.f} = dv^2$ represents the dissipated power of the system.
+\textbf{The resistive structure} damping $\mathtt{R_{d}}$ is connected to the Dirac structure $\mathtt{D_m}$ via port $\mathtt{R_{d}.p}$ with port variables $(\mathtt{R_{d}.p.f}, \mathtt{R_{d}.p.e}) = (dv, v)$ and connected to the environment $\mathtt{E}$ via port $\mathtt{R_{d}.s_{e}}$ with port variables $(\mathtt{R_{d}.s_{e}.f}, \mathtt{R_{d}.s_{e}.e}) = (-\frac{1}{\theta_{0}}dv^2, \theta_{0}-\theta_{0})$. According to the prerequisite "isothermal", the damping process is in thermodynamic equilibrium with the environment. The net power at the damping $\mathtt{R_{d}.p.e} * \mathtt{R_{d}.p.f} + \mathtt{R_{d}.s_{e}.e} * \mathtt{R_{d}.s_{e}.f} = \mathtt{R_{d}.p.e} * \mathtt{R_{d}.p.f} = dv^2$ represents the dissipated power of the system.
 
 The following relation defines the resistive structure $\mathtt{R_d}$:
 
@@ -439,7 +431,7 @@ The following relation defines the resistive structure $\mathtt{R_d}$:
     \left[\begin{array}{l}\mathtt{R_{d}.p.f} \\ \mathtt{R_{d}.s_{e}.f}\end{array}\right]=\frac{1}{\theta_0} d\left[\begin{array}{rr}\theta_0+\mathtt{R_{d}.s_{e}.e} & -\mathtt{R_{d}.p.e} \\ -\mathtt{R_{d}.p.e} & \frac{(\mathtt{R_{d}.p.e})^2}{\theta_0+\mathtt{R_{d}.s_{e}.e}}\end{array}\right]\left[\begin{array}{l}\mathtt{R_{d}.p.e} \\ \mathtt{R_{d}.s_{e}.e}\end{array}\right].
 \end{equation}
 
-\textbf{The Dirac structure $\mathtt{D_m}$} is connected to three ports $\mathtt{H_{s}.q}$, $\mathtt{H_{m}.p}$ and $\mathtt{R_{d}.p}$ and thus can be defined by
+\textbf{The Dirac structure $\mathtt{D_m}$} is connected to the ports $\mathtt{H_{s}.q}$, $\mathtt{H_{m}.p}$ and $\mathtt{R_{d}.p}$ and thus can be defined by
 
 \begin{equation}
     \label{eq:Dirac_structure_idho}
@@ -458,7 +450,7 @@ where $J$ is a skew-symmetric matrix
     \end{array}\right].
 \end{equation}
 
-The above component-based description can be reduced to the system of ODEs:
+The above modular description can be reduced to the system of ODEs:
 
 \begin{equation}
     \label{eq:ODE_isothermal_damped_harmonic_oscillator}
@@ -486,7 +478,7 @@ The above component-based description can be reduced to the system of ODEs:
 Artificial neural networks (ANNs), also referred to simply as neural networks (NNs), are mathematical models that mimic the behavioral characteristics of animal neural networks for distributed parallel information processing, even though this mimicry is superficial \cite{russell2010artificial}.
 
 \section{Perceptron}
-Neural network technology originated in the 1960s as perceptron by Rosenblatt \cite{rosenblatt1958perceptron}. The characteristics of perceptrons are strongly contemporary: their inputs and outputs are in binary form. Each of these perceptrons is characterized as either "on" or "off", with an "on" response occurring when stimulated by a sufficient number of neighboring perceptrons.
+Neural network technology originated in the 1960s as perceptron by Rosenblatt \cite{rosenblatt1958perceptron}. The characteristics of perceptrons are strongly contemporary: their inputs and outputs are in binary form \cite{mcculloch1943logical}. Each of these perceptrons is characterized as either "on" or "off", with an "on" response occurring when stimulated by a sufficient number of neighboring perceptrons.
 
 \begin{figure}[h!]
     \centering
@@ -495,7 +487,7 @@ Neural network technology originated in the 1960s as perceptron by Rosenblatt \c
     \label{fig:perceptron}
 \end{figure}
 
-In Figure \ref{fig:perceptron}, $x$ denotes multiple inputs to the perceptron, $w$ denotes the weights corresponding to each input and the arrow to the right of the perceptron indicates that it has only one output. Each input is multiplied by the corresponding weight and then summed, and the result is compared with a threshold, with 1 being output if it is greater than the threshold and 0 being output if it is less than the threshold:
+In Figure \ref{fig:perceptron}, $x_i$ denotes multiple inputs to the perceptron, $w_i$ denotes the weights corresponding to each input and the arrow to the right indicates that the perceptron has one output. Each input is multiplied by the corresponding weight and then summed, and the result is compared with a threshold, with 1 being output if it is greater than the threshold and 0 being output if it is less than the threshold:
 
 \begin{equation}
     \label{eq:perceptron_1}
@@ -512,7 +504,7 @@ Let $b=-\text{threshold}$, the formula \ref{eq:perceptron_1} can be rewritten as
 where b is also known as bias. 
 
 \section{Activation Functions}
-Following the idea of perceptron, a neuron in a neural network computes the weighted sum of inputs and then applies an activation function $g$ to yield the output $g(z)$, where $z=\sum\nolimits_{i=1}^n w_{i} x_{i} + b$. For instance, a neuron adopts the Heaviside step function (also known as binary step function) $g$ as its activation function according to
+Following the idea of perceptron, a neuron in a neural network computes the weighted sum of inputs and then applies an activation function $g$ to yield the output $g(z)$, where $z=\sum\nolimits_{i=1}^n w_{i} x_{i} + b$. For instance, a neuron adopts the Heaviside step function (also known as binary step function) $g$ as its activation function defined by
 
 \begin{equation}
     \label{eq:activation_function}
@@ -531,14 +523,14 @@ The following figure depicts the structure of a neuron.
 
 An activation function should be differentiable, so that we can compute the gradient for training, cf. \cite{goodfellow2016deep}. In addition, the range of the activation function should be suitable, not too large or too small. Otherwise, it will affect the efficiency and stability of the training. Despite these requirements mentioned above, there are still a wide variety of activation functions available. We will introduce some of them in the following. For more details about activation functions, we refer to \cite{nwankpa2018activation}\cite{dubey2022activation}.
 
-\textbf{The sigmoid function} is defined by the relation
+\textbf{The Sigmoid function} is defined by
 
 \begin{equation}
     \label{eq:sigmoid}
     \sigma(z)=\frac{1}{1+\exp (-z)}.
 \end{equation}
 
-Sigmoid is a classical saturating function. The probability in real life is always limited to the range of 0 to 1, and this characteristic is consistent with the range of sigmoid. Hence, it is common to use sigmoid as activation function when the output is expected to be probabilistic \cite{nwankpa2018activation}. 
+The Sigmoid function is a classical saturating function. The probability in real life is always limited to the range of 0 to 1, and this characteristic is consistent with the range of Sigmoid. Hence, it is common to use Sigmoid as activation function when the output is probabilistic \cite{nwankpa2018activation}. 
 
 \begin{figure}[h!]
     \centering
@@ -547,29 +539,29 @@ Sigmoid is a classical saturating function. The probability in real life is alwa
     \label{fig:sigmoid}
 \end{figure}
 
-\textbf{The hyperbolic tangent function} is known as tanh function, which is given by
+\textbf{The hyperbolic tangent function} is known as $\mathrm{Tanh}$ function, which is given by
 
 \begin{equation}
     \label{eq:tanh}
     f(z)=\frac{\left(e^{z}-e^{-z}\right)}{\left(e^{z}+e^{-z}\right)}.
 \end{equation}
 
-Compared to sigmoid, tanh function has the range of -1 to 1:
+Compared to Sigmoid, the $\mathrm{Tanh}$ function has the range of -1 to 1:
 
 \begin{figure}[h!]
     \centering
     \includegraphics[scale=0.6]{figures/tanh.pdf}
-    \caption{Tanh.}
+    \caption{$\mathrm{Tanh}$.}
     \label{fig:tanh}
 \end{figure}
 
-Tanh function is also a a saturating function. The output of a saturating function is saturated for higher and lower inputs, which may lead to vanishing gradient problem. The gradient vanishing problem describes a situation, where the gradient of the objective function with respect to the parameters becomes very close to zero. This situation results in almost no update in the parameters \cite{dubey2022activation}. As a result, the training is almost stopped.
+The $\mathrm{Tanh}$ function is also a a saturating function. The output of a saturating function is saturated for higher and lower inputs, which may lead to vanishing gradient problem. The gradient vanishing problem describes a situation, where the gradient of the objective function with respect to the parameters becomes close to zero. This situation results in almost no update in the parameters \cite{dubey2022activation}. As a result, the training is almost stopped.
 
-\textbf{The Rectified Linear Unit (ReLU) function} is given by the relationship
+\textbf{The Rectified Linear Unit (ReLU) function} is defined by
 
 \begin{equation}
     \label{eq:ReLU}
-    ReLU(x) = max(0,x).
+    \mathrm{ReLU}(x) = max(0,x).
 \end{equation}
 
 The main advantage of using ReLU is that we only need to perform additions, multiplications and comparison operations, which are more efficient in computation than performing exponentials and divisions \cite{nwankpa2018activation}.
@@ -583,7 +575,7 @@ The main advantage of using ReLU is that we only need to perform additions, mult
 
 
 \section{Feedforward Neural Network Architecture}
-So far, there is a variety of neural network architectures designed. In this thesis, we will focus on feedforward neural network. A feedforward neural network can be seen as a directed acyclic graph (DAG) with designated input and output nodes, which are fully connected to each other, i.e., all nodes in the next layer are connected to each node in the previous layer \cite{russell2010artificial}. Each node computes its input from the previous layer with the parameters and activation function and passes the result to the nodes in the next layer as their inputs. By definition of DAG, these nodes will never form a closed loop. The following is an example of feedforward neural network architecture.
+There exists a variety of neural network architectures. In this thesis, we will focus on feedforward neural networks. A feedforward neural network can be seen as a directed acyclic graph (DAG) with designated input and output nodes, which are fully connected to each other, i.e., all nodes in the next layer are connected to each node in the previous layer \cite{russell2010artificial}. Each node computes its inputs from the previous layer with the parameters and activation function and passes the result to all nodes in the next layer as their inputs. By definition of DAG, these nodes will never form a closed loop. The following is an example of feedforward neural network architecture.
 
 \clearpage
 \begin{figure}[h!]
@@ -593,7 +585,7 @@ So far, there is a variety of neural network architectures designed. In this the
     \label{fig:feedforward}
 \end{figure}
 
-To clarify the principle of feedforward neural network, we first declare some notations. The uppercase $L$ stands for the number of layers (input layer not included) in the feedforward neural network, the lowercase $l$ stands for the $l$th layer and $M_{l}$ stands for the number of neurons in $l$th layer. $g_{l}$ denotes the activation function in the $l$th layer. The parameters are denoted by the weight matrix $\mathbf{W}^{(l)} \in \mathbb{R}^{M_{l} \times M_{l-1}}$ and the bias vector $\mathbf{b}^{(l)} \in \mathbb{R}^{M_{l}}$. Thus, the input $\mathbf{z}^{(l)} \in \mathbb{R}^{M_{l}}$ and the output $\mathbf{a}^{(l)} \in \mathbb{R}^{M_{l}}$ of $l$th layer can be written as:
+To clarify the principle of feedforward neural network, we first fix some notations. $L$ refers to the number of layers (input layer not included) in the feedforward neural network, the index $l$ refers to the $l$-th layer and $M_{l}$ stands for the number of neurons in $l$-th layer. $g_{l}$ denotes the activation function in the $l$-th layer. The parameters are denoted by the weight matrix $\mathbf{W}^{(l)} \in \mathbb{R}^{M_{l} \times M_{l-1}}$ and the bias vector $\mathbf{b}^{(l)} \in \mathbb{R}^{M_{l}}$. Thus, the input $\mathbf{z}^{(l)} \in \mathbb{R}^{M_{l}}$ and the output $\mathbf{a}^{(l)} \in \mathbb{R}^{M_{l}}$ of $l$-th layer can be written as:
 
 \begin{equation}
     \label{eq:input_output_neuron}
@@ -608,6 +600,8 @@ The feedforward neural network can be seen as a function $f$ according to the re
 The following is a code example in Julia for feedforward propagation:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
+    using NNlib:sigmoid
+
     # 3 neurons in this layer and 2 neurons in the next layer
     # generate random parameters
     W1 = rand(2, 3)
@@ -617,7 +611,7 @@ The following is a code example in Julia for feedforward propagation:
     W2 = rand(4, 2)
     b2 = rand(4)
     
-    # Input
+    # input
     a1 = rand(3)
     # The first layer
     z2 = (W1 * a1) .+ b1
@@ -630,13 +624,13 @@ The following is a code example in Julia for feedforward propagation:
 \section{Training}
 
 \subsection{Optimization}
-Optimization theory is a branch of mathematics dedicated to solving optimization problems. In machine learning, an optimization problem is defined by a continuous function called the loss function (or cost function), in which we want to minimize or maximize the objective function value. In general, finding the global optimum of a convex objective function is a relatively simple optimization problem. However, a lot of optimization problems in machine learning are formulated as non-convex optimization problems, in which the objective functions are non-convex \cite{sun2019survey}. It may be more complex to find the global optimum of a non-convex function. In this case, one may choose to settle for second best, i.e., seeking the local optimum.
+Optimization theory is a branch of mathematics dedicated to solving optimization problems. In machine learning, an optimization problem is defined by a differentiable function called the loss function (or cost function), in which we want to minimize or maximize the function value. In general, finding the global optimum of a convex objective function is a relatively simple optimization problem. However, a lot of optimization problems in machine learning are formulated as non-convex optimization problems, in which the objective functions are non-convex \cite{sun2019survey}. It may be more complex to find the global optimum of a non-convex function. In this case, one may choose to settle for second best, i.e., seeking the local optimum.
 
 \subsection{Data Set}
-A data set is a set of samples (or data). In machine learning, the data is commonly divided into two data sets: training set and test set. The training set is used to train the model, while the test set is used to evaluate the model. In supervised learning, such a data set (whether for training or for testing) can be denoted by $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{n=1}^{N} = \{ (\mathbf{x}_{1}, \mathbf{y}_{1}),  (\mathbf{x}_{2}, \mathbf{y}_{2}), ..., (\mathbf{x}_{N}, \mathbf{y}_{N}) \}$, where $\mathbf{x}_{n}$ are inputs and $\mathbf{y}_{n}$ are target values.
+A data set is a set of samples (or data). In supervised learning, the data is commonly divided into two data sets: training set and test set. The training set is used to train the model, while the test set is used to evaluate the model. Such a data set (whether for training or for testing) can be denoted by $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{n=1}^{N} = \{ (\mathbf{x}_{1}, \mathbf{y}_{1}),  (\mathbf{x}_{2}, \mathbf{y}_{2}), ..., (\mathbf{x}_{N}, \mathbf{y}_{N}) \}$, where $\mathbf{x}_{n}$ are inputs and $\mathbf{y}_{n}$ are target values.
 
 \subsection{Loss Functions}
-A loss function $L$ is a non-negative real-valued function that quantifies the error between the target value $\mathbf{y}$ and the estimated value $\hat{\mathbf{y}}$. 
+A loss function $L$ is a non-negative real-valued differentiable function that quantifies the error between the target value $\mathbf{y}$ and the estimated value $\hat{\mathbf{y}}$. 
 
 Suppose that the goal of the optimization is to find the minimum. This minimum can be formulated as MSE (mean squared error):
 
@@ -676,7 +670,7 @@ BGD computes the gradient of the loss function with respect to the parameters fo
     \theta_{t+1} = \theta_{t} - \alpha \frac{1}{N} \sum\nolimits_{i=1}^N  \frac{\partial L (y^i, \hat{y}^i)}{\partial \theta_{t}},
 \end{equation}
 
-where $\theta_{t}$ is the parameters at time $t$ and $\alpha$ is a small real number called learning rate. BGD is guaranteed to converge to the global minimum for convex functions and to the local minimum for non-convex functions \cite{ruder2016overview}.
+where $\theta_{t}$ is the parameters at $t$ and $\alpha$ is a small real number called learning rate. BGD is guaranteed to converge to the global minimum for convex functions and to the local minimum for non-convex functions \cite{ruder2016overview}.
 
 \subsection{Stochastic Gradient Descent}
 In the process of BGD above, the objective function is the MSE over the whole training set. However, for large data sets, performing BGD leads to high computational complexity in each iteration \cite{sun2019survey}.
@@ -684,10 +678,10 @@ In the process of BGD above, the objective function is the MSE over the whole tr
 In order to reduce the computational complexity, it is also possible to randomly pick one sample in each iteration and compute the gradient of the loss function with respect to the parameters for this sample and update the parameters immediately. This approach is known as Stochastic Gradient Descent (SGD). For optimization problems involving non-convex objective function, the SGD algorithm may be able to escape from local optima and saddle points easier \cite{sun2019survey}.
 
 \subsection{Automatic Differentiation}
-Automatic differentiation (AD) is a set of techniques that allow a computer program to compute the derivative of a function. Automatic differentiation uses the fact that a function can be decomposed into a finite set of elementary operations where the derivatives are known. Then we can obtain the overall composition by combining the derivatives of the elementary operations through the chain rule. For details, we refer to \cite{baydin2018automatic} and \cite{margossian2019review}.
+Automatic differentiation (AD) is a set of techniques that allow a computer program to compute the derivative of a differentiable function. Automatic differentiation uses the fact that a function can be decomposed into a finite set of elementary operations where the derivatives are known. Then we can obtain the overall derivative by combining the derivatives of the elementary operations through the chain rule. For details, we refer to \cite{baydin2018automatic} and \cite{margossian2019review}.
 
 \subsection{Backpropagation}
-Backpropagation (also known as reverse-mode automatic differentiation) is an algorithm for efficient computation of gradients. It requires the help of automatic differentiation techniques to improve computational efficiency \cite{baydin2018automatic}.
+Backpropagation (also known as reverse-mode automatic differentiation) is an algorithm for efficient computation of gradients \cite{baydin2018automatic}.
 
 Consider a neural network $f$. According to the chain rule, the gradient of the loss function with respect to the parameters $\mathbf{W}$ and $\mathbf{b}$ can be written as
 
@@ -702,7 +696,7 @@ Consider a neural network $f$. According to the chain rule, the gradient of the 
     \end{aligned}
 \end{equation}
 
-where $\mathbf{z}^{(l)}$ is the input to the $l$th layer, i.e., $\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$. 
+where $\mathbf{z}^{(l)}$ is the input to the $l$-th layer, i.e., $\mathbf{z}^{(l)} = \mathbf{W}^{(l)} \mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}$. 
 
 In the following, we compute the three terms: $\frac{\partial \mathbf{z}^{(l)}}{\partial \mathbf{W}^{(l)}}$, $\frac{\partial \mathbf{z}^{(l)}}{\partial \mathbf{b}^{(l)}}$ and $\frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l)}}$.
 
@@ -719,7 +713,7 @@ We compute the first two terms according to \ref{eq:input_output_neuron}:
 
 where $\mathbf{I} \in \mathbb{R}^{M_{l}}$ is an identity matrix. 
 
-The third term $\frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l)}}$ is called error, which reflects the sensitivity of the loss to neurons in the $l$th layer. The error is denoted by $\delta^{(l)}$. Applying the chain rule, the error from the previous layer $\delta^{(l)}$ in terms of the error in the next layer $\delta^{(l+1)}$ is given by
+The third term $\frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l)}}$ is called error, which reflects the sensitivity of the loss to neurons in the $l$-th layer. The error is denoted by $\delta^{(l)}$. Applying the chain rule, the error from the previous layer $\delta^{(l)}$ in terms of the error in the next layer $\delta^{(l+1)}$ is given by
 
 \begin{equation}
     \label{eq:error_in_one_layer}
@@ -730,7 +724,7 @@ The third term $\frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\p
     \end{aligned}
 \end{equation}
 
-where $\mathbf{z}^{(l+1)} = \mathbf{W}^{(l+1)} \mathbf{a}^{(l)} + \mathbf{b}^{(l+1)}$ and $\mathbf{a}^{(l)} = g_{l}(\mathbf{z}^{(l)})$. And we define $\delta^{(l+1)}=\frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l+1)}}$, $\frac{\partial \mathbf{z}^{(l+1)}}{\partial \mathbf{a}^{(l)}} = \mathbf{W}^{(l+1)}$ and $\frac{\partial \mathbf{a}^{(l)}}{\partial \mathbf{z}^{(l)}} = g_{l}'(\mathbf{z}^{(l)})$.
+where $\mathbf{z}^{(l+1)} = \mathbf{W}^{(l+1)} \mathbf{a}^{(l)} + \mathbf{b}^{(l+1)}$ and $\mathbf{a}^{(l)} = g_{l}(\mathbf{z}^{(l)})$. And we can also obtain $\delta^{(l+1)}=\frac{\partial L \left( \mathbf{y}, \hat{\mathbf{y}} \right)}{\partial \mathbf{z}^{(l+1)}}$, $\frac{\partial \mathbf{z}^{(l+1)}}{\partial \mathbf{a}^{(l)}} = \mathbf{W}^{(l+1)}$ and $\frac{\partial \mathbf{a}^{(l)}}{\partial \mathbf{z}^{(l)}} = g_{l}'(\mathbf{z}^{(l)})$.
 
 Hence, the error can be written as
 
@@ -739,26 +733,7 @@ Hence, the error can be written as
         \delta^{(l)} = (\mathbf{W}^{(l+1)})^T \delta^{(l+1)} \odot g_{l}'(\mathbf{z}^{(l)}),
 \end{equation}
 
-where $\odot$ stands for Hadamard product (also known as element-wise product), which is the product of two matrices with the same dimensions. The elements in each position of the output matrix are equal to the product of the elements in the same position of the two input matrices. 
-
-The following is an example of Hadamard product:
-
-\begin{equation}
-    \label{eq:Hadamard_product}
-\left[\begin{array}{ll}
-a_{11} & a_{12}  \\
-a_{21} & a_{22} \\
-a_{31} & a_{32} 
-\end{array}\right] \odot \left[\begin{array}{ll}
-b_{11} & b_{12}  \\
-b_{21} & b_{22}\\
-b_{31} & b_{32} 
-\end{array}\right]=\left[\begin{array}{ll}
-a_{11} b_{11} & a_{12} b_{12} \\
-a_{21} b_{21} & a_{22} b_{22}  \\
-a_{31} b_{31} & a_{32} b_{32} 
-\end{array}\right].
-\end{equation}
+where $\odot$ refers to Hadamard product (also known as element-wise product) of two matrices with the same dimensions.
 
 Note that $(\mathbf{W}^{(l+1)})^T$ in \ref{eq:error_in_one_line} is transposed, as the direction is backward (from $l+1$ to $l$).
 
@@ -773,14 +748,14 @@ Lastly, after we have the three terms, Equation \ref{eq:Chain_rule_partial} toge
     \end{aligned}
 \end{equation}
 
-Thereafter, the gradient of the loss function w.r.t the paramters above can be used to update the parameters through BGD or SGD. For more details about backpropragation, we refer to \cite{nielsen2015neural}.
+Thereafter, the gradient of the loss function w.r.t the paramters can be used to update the parameters through BGD or SGD. For more details about backpropragation, we refer to \cite{nielsen2015neural}.
 
 \subsection{Adam Algorithm}
-Adam algorithms (Adaptive Moment Estimation Algorithm) \cite{kingma2014adam} is an algorithms that combines the momentum method \cite{qian1999momentum} and the RMSProp algorithm (Root Mean Squared Propagation algorithm) \cite{tieleman2012divide}. In practice, the Adam algorithm is relatively stable in the process of gradient descent. Hence, it can be applied for most non-convex optimization problems with large data sets and high dimensional space \cite{sun2019survey}. For more details about the above mentioned or other optimization algorithms, we refer to \cite{ruder2016overview}.
+The Adam algorithm (Adaptive Moment Estimation Algorithm) \cite{kingma2014adam} is an algorithm that combines the momentum method \cite{qian1999momentum} and the RMSProp algorithm (Root Mean Squared Propagation algorithm) \cite{tieleman2012divide}. In practice, the Adam algorithm is relatively stable in the process of gradient descent. Hence, it can be applied for most non-convex optimization problems with large data sets and high dimensional space \cite{sun2019survey}. For more details about the above mentioned or other optimization algorithms, we refer to \cite{ruder2016overview}.
 
-The Adam algorithm uses mini-batch gradient descent (MBGD) \cite{bottou2010large}. Consider a neural network $f$ and a training set $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{n=1}^{N}$. MBGD algorithm splits the training set $\mathcal{D}$ into a sequence of subsets (or mini batches) $\mathcal{S}_i=\{(\mathbf{x}_{m}, \mathbf{y}_{m}) \}_{m=1}^{M}$, where $M$ is the batch size of the mini batch $\mathcal{S}_i$.
+The Adam algorithm uses mini-batch gradient descent (MBGD) \cite{bottou2010large}. Consider a neural network $f$ and a training set $\mathcal{D}=\{ (\mathbf{x}_{n}, \mathbf{y}_{n}) \}_{n=1}^{N}$. The MBGD algorithm splits the training set $\mathcal{D}$ into a sequence of subsets (or mini batches) $\mathcal{S}_i=\{(\mathbf{x}_{m}, \mathbf{y}_{m}) \}_{m=1}^{M}$, where $M$ is the batch size.
 
-Similar to the momentum method, Adam stores the exponentially decaying average of past gradients $m_t$. Moreover, similar to the Adadelta algorithm (please refer to \cite{zeiler2012adadelta}) and the RMSprop algorithm, Adam also stores the exponentially decaying average of past squared gradients $v_t$:
+Similar to the momentum method, Adam stores the exponentially decaying average of past gradients $m_t$. Moreover, similar to the Adadelta algorithm \cite{zeiler2012adadelta} and the RMSprop algorithm, Adam also stores the exponentially decaying average of past squared gradients $v_t$:
 
 \begin{equation}
     \label{eq:moment_estimate}
@@ -791,14 +766,14 @@ Similar to the momentum method, Adam stores the exponentially decaying average o
     \end{aligned}
 \end{equation}
 
-where $v_t$ and $m_t$ can also be referred to as estimates of the first moment and the second moment of the gradients. And $g_{t}$ stands for the gradient of the loss function with respect to the parameter at time $t$:
+where $v_t$ and $m_t$ can also be referred to as estimates of the first moment and the second moment of the gradients. And $g_{t}$ stands for the gradient of the loss function with respect to the parameters at $t$:
 
 \begin{equation}
     \label{eq:mean_gradient}
     g_{t} = \frac{1}{M} \sum\nolimits_{j=1}^M \frac{\partial L (y^j, \hat{y}^j)}{\partial \theta_{t}}.
 \end{equation}
 
-$\beta_1$ and $\beta_2$ are decay rates. The Adam's authors proposed default values of 0.9 for $\beta_1$ and 0.999 for $\beta_2$. However, as $m_t$ and $v_t$ are initially set to vector of zeros, Adam's authors observed that they are biased towards zero during the initial time steps when $\beta_1$ and $\beta_2$ are close to 1. Hence, instead of using the original $m_t$ and $v_t$, they use bias-corrected first and second moment estimates $\hat{m_t}$ and $\hat{v_t}$:
+$\beta_1$ and $\beta_2$ are decay rates. The authors of Adam proposed default values of 0.9 for $\beta_1$ and 0.999 for $\beta_2$. However, as $m_t$ and $v_t$ are initially set to vector of zeros, the authors of Adam observed that they are biased towards zero during the initial time when $\beta_1$ and $\beta_2$ are close to 1. Hence, instead of using the original $m_t$ and $v_t$, they use bias-corrected first and second moment estimates $\hat{m_t}$ and $\hat{v_t}$:
 
 \begin{equation}
     \label{eq:corrected_moment_estimate}
@@ -818,7 +793,7 @@ Following the idea of gradient descent, they perform an update of the parameters
     \end{aligned}
 \end{equation}
 
-where $\epsilon$ is a very small constant (the Adam's authors proposed default value of $10^{-8}$ for it) for stabilization (avoiding zero as the denominator). 
+where $\epsilon$ is a very small constant (the authors of Adam proposed default value of $10^{-8}$ for it) for stabilization (avoiding zero as the denominator). 
 
 The following is an example of using the Adam algorithm in Julia code:
 
@@ -831,15 +806,13 @@ using Zygote: gradient
 # Generate random parameters
 W = rand(2, 3)
 b = rand(2)
-# Perform the feedforward propagation
+# Define the NN model
 predict(x) = sigmoid((W * x) .+ b)
 # Define the loss function
 loss(x, y) = mean(abs2, ( predict(x) .- y))
 # Compute the loss
 input = rand(3, 100)
-estimated_value = predict(input)
 target_value = rand(2, 100)
-loss(input, target_value)
 
 # The ADAM algorithm with the learning rate α=0.01 and 
 # decay rates β1=0.9, β2=0.999.
@@ -873,9 +846,7 @@ Firstly, we generate random parameters and perform the feedforward propagation:
     # generate random initial parameters
     W = rand(rng, 2, 3)
     b = rand(rng, 2)
-\end{minted}
 
-\begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # Perform the feedforward propagation
     predict(x, W, b) = sigmoid((W * x) .+ b)
 \end{minted}
@@ -920,7 +891,7 @@ An alternative for optimization is to use the function "Flux.Optimise.update!" f
     loss(input, target_value)
 \end{minted}
 
-At the end, we post the complete code block:
+Finally, we post the complete code block:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     using Random
@@ -968,7 +939,7 @@ At the end, we post the complete code block:
 To obtain more accurate results from a neural network model, we may think of stacking more hidden layers. However, when a neural network model is built with hundreds of hidden layers, they found that the vanishing or exploding gradient problem often occurs during backpropagation \cite{glorot2010understanding}. Due to the vanishing or exploding gradient problem, a deeper neural network could even yield worse results than a shallower one. Residual Neural Network (ResNet) was exactly designed to tackle these problems \cite{he2016deep}. The proposers of ResNet argue that the results of deeper neural networks should be better or at least equal to the results of shallower neural networks, but should not be worse.
 
 \section{Residual Neural Networks}
-Usually, the output of a layer of a neural network only directly affects the next layer. However, ResNet breaks this convention and allows the output of a layer $\mathbf{x}$ to skip several weight layers $F(\mathbf{x};\theta)$. $H$ is a target function given by
+Usually, the output of a layer of a neural network only directly affects the next layer. However, ResNet breaks this convention and allows the input $\mathbf{x}$ to skip several weight layers $F(\mathbf{x};\theta)$. $H$ is a target function given by
 
 \begin{equation}
     \label{eq:ResNet}
@@ -985,12 +956,12 @@ The following residual building block illustrates the idea of ResNet:
     \label{fig:ResNet}
 \end{figure}
 
-The weight layers can be thought of as serveral hidden layers that are skipped over by a shortcut connection. This shortcut connection changes the learning target from learning the complete target $H(\mathbf{x})$ to the residual $H(\mathbf{x})-\mathbf{x}$. And the goal of the optimization is to minimize the residual $H(\mathbf{x})-\mathbf{x}$, such that $F(\mathbf{x};\theta)=H(\mathbf{x})-\mathbf{x}=0$. Then we obtain $H(\mathbf{x})=\mathbf{x}$. Since $H(\mathbf{x})$ and $\mathbf{x}$ are identical, $\mathbf{x}$ is also referred to as identity. The proposers of ResNet hypothesized that the residual is easier to optimize than the complete output and then verified this hypothesis in their experiments. 
+The weight layers can be thought of as serveral hidden layers that are skipped over by a shortcut connection. This shortcut connection changes the learning target from learning the original target $H(\mathbf{x})$ to the residual $H(\mathbf{x})-\mathbf{x}$. The proposers of ResNet hypothesized that the residual is easier to optimize than learning the original output and then verified this hypothesis in their experiments. 
 
  The significance of ResNet is that it provides a new direction to address the challenges of stacking more and more hidden layers to the neural networks. Benefiting from the ResNet, the vanishing or exploding gradient problem can be solved to some extent.
 
 \section{Neural ODEs}
-The hidden layers in a ResNet are built by a sequence of transformations like $H(\mathbf{x})=\mathbf{x}+F(\mathbf{x};\theta)$. This sequence of transformations was found to be remarkably similar to the Euler method formula $y_{n+1} = y_{n} + h \cdot f_{n}$ \cite{ruthotto2020deep}. In view of this, the transformation \ref{eq:ResNet} can also be formulated as
+The hidden layers in a ResNet are built by a sequence of transformations like $H(\mathbf{x})=\mathbf{x}+F(\mathbf{x};\theta)$. This sequence of transformations was found to be remarkably similar to the Euler method formula $x_{n+1} = x_{n} + h \cdot f_{n}$ \cite{ruthotto2020deep}. In view of this, the transformation \ref{eq:ResNet} can also be formulated as
 
 \begin{equation}
     \label{eq:Euler_discretization}
@@ -1029,7 +1000,7 @@ Plugging \ref{eq:Neural_ODE} into \ref{eq:Euler_discretization}, we obtain the t
     \mathbf{z}(t+\varepsilon ) = \mathbf{z}(t) + \int_{t}^{t+\varepsilon } f(\mathbf{z}(t), t, \theta)dt,
 \end{equation}
 
-where $\varepsilon $ is a small time step size and $f$ is a neural network. An ODE solver is treated as a black box that provides a solution to an IVP, which consists of a Neural ODE and its initial state. Thus, the loss function can be defined by
+where $\varepsilon $ is a small time step size and $f$ is a neural network. An ODE solver is treated as a black box that provides a solution to an IVP, which consists of a Neural ODE and its initial state. Thus, the loss function is
 
 \begin{equation}
     \label{eq:Neural_ODE_Gradient_loss}
@@ -1046,11 +1017,11 @@ As stated before, to optimize a loss function through backpropagation, we comput
     \frac{d L}{d\mathbf{z}(t)} = \frac{d L}{d\mathbf{z}(t+\varepsilon )} \cdot \frac{d\mathbf{z}(t+\varepsilon )}{d\mathbf{z}(t)}.
 \end{equation}
 
-However, the main difficulty is to perform backpropagation through the ODE solver. To tackle this problem, the authors of Neural ODEs propose to use the adjoint method.
+However, the main difficulty is to perform backpropagation through the ODE solver. To address this issue, the authors of Neural ODEs propose to use the adjoint method.
 
 
 \section{Adjoint Method}
-The adjoint method (or adjoint sensitivity method) is a method designed to compute the gradients of functions by solving ODEs, which can be dated back to the 1960s \cite{boltyanskiy1962mathematical}. Due to the continuity of Neural ODE, computing the gradient of the loss function through backpropagation leads to a huge memory cost. The significance of using the adjoint method is that the gradient of the loss function can still be computed efficiently without storing the intermediate activations and thus the memory cost can be reduced.
+The adjoint method (or adjoint sensitivity method) is a method designed to compute the gradients of functions by solving ODEs, which can be dated back to the 1960s \cite{boltyanskiy1962mathematical}. During the training of a neural network with many layers, computing the gradient of the loss function through backpropagation leads to a huge memory cost. The significance of using the adjoint method is that the gradient of the loss function can still be computed efficiently without storing the intermediate activations and thus the memory cost can be reduced.
 
 For Neural ODEs, the goal of using the adjoint method is to compute the gradient of the loss function with respect to the state $\frac{d L}{d\mathbf{z}(t)}$ and the gradient of the loss function with respect to the parameters $\frac{d L}{d\theta}$.
 
@@ -1061,7 +1032,7 @@ To use the adjoint method, the first step is to define an adjoint state that is 
     \mathbf{a}(t) = \frac{d L}{d\mathbf{z}(t)}.
 \end{equation}
 
-And then, we expand the Taylor series for the hidden state $\mathbf{z}(t+\varepsilon )$ at the point $\mathbf{z}(t)$:
+And then, we expand the Taylor series for the state $\mathbf{z}(t+\varepsilon )$ at point $t$:
 
 \begin{equation}
     \label{eq:taylor_series_expansion}
@@ -1078,7 +1049,7 @@ Then plug Equation \ref{eq:adjoint_state} and \ref{eq:taylor_series_expansion} i
     \mathbf{a}(t) = \mathbf{a}(t+\varepsilon ) \cdot \frac{\partial}{\partial \mathbf{z}(t)} (\mathbf{z}(t) + \varepsilon f(\mathbf{z}(t), t; \theta) + O (\varepsilon ^2)) .
 \end{equation}
 
-By definition of differentiation, the gradient of the adjoint state follows:
+By definition of differentiation, the time derivative of the adjoint state follows:
 
 \begin{equation}
     \label{eq:adjoint_state_gradient_hidden_state}
@@ -1129,7 +1100,7 @@ A short summary: from the above procedures, it can be concluded that the idea of
 \chapter{Structured Neural ODEs}
 \label{ch:chapter6}
 \section{Physics Priors}
-In machine learning, some optimization algorithms tend to make some assumptions to improve the learning efficiency, and these assumptions are referred to as inductive biases (also known as priors) \cite{mitchell1997machine}. Inductive biases or priors may have different names in specific fields. For example, in the field of physics, they are most frequently referred to as physics priors or physically informed inductive biases.
+In machine learning, some optimization algorithms tend to make some assumptions to improve the learning efficiency, and these assumptions are referred to as inductive biases (also known as priors) \cite{mitchell1997machine}. Inductive biases or priors may have different names in specific fields. In the field of physics, they are referred to as physics priors or physically informed inductive biases.
 
 The experiments in \cite{gupta2019general} introduced a framework to model the Lagrangian and the generalized forces of mechanical systems by using neural networks. Their experiments show the advantage of a grey-box model endowed with physics priors in terms of data efficiency compared to a black-box model without prior knowledge. Another similar work related to Lagrangian is \cite{lutter2019deep}.
 
@@ -1147,7 +1118,7 @@ An O-NET is a neural network $f_{\theta}$ on the RHS of a Neural ODE. The traini
 
 \textbf{Step 1}: construct a neural network
 
-We construct a 2-inputs and 2-outputs O-NET via the deep learning framework "Flux.jl" or "Lux.jl" \cite{pal2022lux}.
+We construct a 2-inputs and 2-outputs O-NET using the deep learning framework "Flux.jl" or "Lux.jl" \cite{pal2022lux}.
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # Dense: construct a layer. For instance, Dense(2, 40, tanh) constructs 
     # a 2-input and 40-output layer with the activation function tanh.
@@ -1161,9 +1132,9 @@ We construct a 2-inputs and 2-outputs O-NET via the deep learning framework "Flu
                   Dense(40, 2))
 \end{minted}
 
-If we use both Flux.jl and Lux.jl simultaneously (sometimes a mix of both may be needed), then it is advisable to specify them explicitly, as they both contain chain and dense functions under same names. However, the ways of generating initial parameters and obtaining output are different in both.
+If we use both "Flux.jl" and "Lux.jl" simultaneously, then it is advisable to specify them explicitly, as they both contain chain and dense functions under same names. However, the ways of generating initial parameters and obtaining output are different in both.
 
-We construct a neural network in Flux like
+We construct a neural network using "Flux.jl" like
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     O_NET = Flux.Chain(Flux.Dense(2, 40, tanh),
                        Flux.Dense(40, 40, tanh),
@@ -1175,7 +1146,7 @@ We construct a neural network in Flux like
     ps, re = Flux.destructure(O_NET)
 \end{minted}
 
-or in Lux like
+or in "Lux.jl" like
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     O_NET = Lux.Chain(Lux.Dense(2, 40, tanh),
                       Lux.Dense(40, 40, tanh),
@@ -1201,9 +1172,9 @@ Suppose that $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ is a training set, where $\mathbf{
 
 where $f_{\theta}$ is an O-NET.
 
-$f_{\theta}(\mathbf{z_t})$ at time $t$ estimates the time derivative of coordinates $\dot{\mathbf{z}}_{t}$ such that $\dot{ \mathbf{z}}_{t} = f_{\theta}(\mathbf{z}_t)$. In the case of Hamiltonian systems, let $\mathbf{z}_{t} = [q_{t}, p_{t}]$, we can rewrite the IVP \ref{eq:O-NET_IVP} as $[\dot q_{t}, \dot p_{t}] = f_{\theta}(q_t, p_t)$, $\mathbf{z}_{0}= [q_{0}, p_{0}]$.
+$f_{\theta}(\mathbf{z_t})$ at time $t$ estimates the time derivative of coordinates $\dot{\mathbf{z}}_{t}$ such that $\dot{ \mathbf{z}}_{t} = f_{\theta}(\mathbf{z}_t)$. In the case of canonical Hamiltonian systems, let $\mathbf{z}_{t} = [q_{t}, p_{t}]$, we can rewrite the IVP \ref{eq:O-NET_IVP} as $[\dot q_{t}, \dot p_{t}] = f_{\theta}(q_t, p_t)$, $\mathbf{z}_{0}= [q_{0}, p_{0}]$.
 
-Let $\mathbf{z}_{0}=[1.0, 1.0]$ and $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, we construct this IVP in code:
+Let $\mathbf{z}_{0}=[1.0, 1.0]$ and $\{ t \}_{t=0}^{19.9} = (0.0, 0.1, 19.9)$, we construct this IVP with the following code snippet:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # dz is the time derivative of z at a fixed time.
@@ -1272,9 +1243,9 @@ To train the neural network model, we define a $L_{2}$ loss function like \ref{e
      L(\{ \mathbf{z}_{t} \}_{t=1}^{T}, \{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}) = \lVert \{ \mathbf{z}_{t} \}_{t=1}^{T} - \{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T} \rVert_{2}^{2},
 \end{equation}
 
-where $\hat{\mathbf{z}_{t}}$ is the estimate value at time $t$ ($\hat{\mathbf{z}_{t}}$ is a point in the estimate of the coordinates trajectories $\{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}$) and $\mathbf{z}_{t}$ is assumed to be a point from observation at time $t$ (${\mathbf{z}_{t}}$ is a point in the training set $\{ \mathbf{z}_{t} \}_{t=1}^{T}$). The goal of the optimization is to minimize the error between the points from the estimates and the points from the training set.
+where $\hat{\mathbf{z}_{t}}$ is the estimated state at time $t$ ($\hat{\mathbf{z}_{t}}$ is a point in the estimate of the coordinates trajectories $\{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}$) and $\mathbf{z}_{t}$ is assumed to be a point from observation at time $t$ (${\mathbf{z}_{t}}$ is a point in the training set $\{ \mathbf{z}_{t} \}_{t=1}^{T}$). The goal of the optimization is to minimize the error between the points from the estimates and the points from the training set.
 
-In code, we adopt the training set $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ generated by a system of ODEs instead of real observations. For instance, the training set for an undamped harmonic oscillator can be generated by the evolution of $q$ and $p$ according to \ref{eq:ODE_undamped_harmonic_oscillator}:
+In code, we adopt the set $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ generated by a system of ODEs instead of real observations. For instance, the training set for an undamped harmonic oscillator can be generated by the evolution of $q$ and $p$ according to \ref{eq:ODE_undamped_harmonic_oscillator}:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     # The system of ODEs of an undamped harmonic oscillator
@@ -1290,7 +1261,7 @@ In code, we adopt the training set $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ generated by
     ode_data = Array(CommonSolve.solve(prob, ImplicitMidpoint(), tstops = time_steps))
 \end{minted}
 
-The "ode\_data" is the training set $\{ \mathbf{z}_{t} \}_{t=1}^{T}$. The loss computed by \ref{eq:loss_O-NET} is the sum of the square of the differences between the target values "ode\_data" $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ and the estimated values "pred\_data" $\{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}$.
+The "ode\_data" is the set $\{ \mathbf{z}_{t} \}_{t=1}^{T}$. The loss computed by \ref{eq:loss_O-NET} is the sum of the square of the differences between the target values "ode\_data" $\{ \mathbf{z}_{t} \}_{t=1}^{T}$ and the estimated values "pred\_data" $\{ \mathbf{\hat{z}}_{t} \}_{t=1}^{T}$.
 
 Now we construct the loss function in code:
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
@@ -1310,7 +1281,7 @@ end
 
 \textbf{Step 5}: train the neural network
 
-There are different optimization algorithm can be implemented to train the model. We will use one of the most popular algorithms, the Adam Algorithm, in the following. As stated before, the Adam algorithm uses mini-batch gradient descent. Hence, first create an iterable object "dataloader" to load mini-batches.
+There are different optimization algorithm can be used to train the model. We will use one of the most popular algorithms, the Adam Algorithm, in the following. As stated before, the Adam algorithm uses mini-batch gradient descent. Hence, first create an iterable object "dataloader" to load mini-batches.
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 # The dataloader generates a batch of data according to 
@@ -1340,30 +1311,30 @@ result = Optimization.solve(optprob, Optimisers.ADAM(0.01), ncycle(dataloader, e
 result.u
 \end{minted}
 
-The training is stopped when the given number of consecutive epochs run out. And the "Optimization.jl" package provides a checkpoint strategy that the parameters of the optimally tuned model are restored and saved. For instance, if the epochs is 100, then only the parameters corresponding to the minimal loss within 100 consecutive epochs will be saved eventually.  The saved parameters can be used for further training and for evaluating the model by the loss over the whole training set "ode\_data" or a test set:
+The training is stopped when the given number of consecutive epochs run out. And the "Optimization.jl" package provides a checkpoint strategy that the parameters of the optimally tuned model are restored and saved. For instance, if the epochs is 100, then only the parameters corresponding to the minimal loss within 100 consecutive epochs will be saved eventually.  The saved parameters can be used for further training and for evaluating the model by the loss over the whole training set or a test set:
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
 # The "loss_function" returns a tuple, where the first element of the tuple 
 # is the loss
 loss = loss_function(result.u, ode_data, time_steps)[1]
 \end{minted}
 
-If the loss is already small, we can choose to stop training early. Naturally, we can also continue the training, but if the loss has tended to converge with training, then it does not make much sense to continue.
+If the loss is already small, we can choose to stop training early. Naturally, we can also continue the training, but since the loss function has converged, it does not make much sense to continue.
 
-At the end, use the neural network model with the optimized parameters to predict.
+Finally, we use the neural network model with the optimized parameters to predict.
 
-We use the neural network model in Flux like
+We use the neural network model in "Flux.jl" like
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     re()(initial_state)
 \end{minted}
 
-or in Lux like
+or in "Lux.jl" like
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     O_NET(initial_state, result.u, st)
 \end{minted}
 
 
 \subsection{H-NETs}
-A H-NET is a neural network $\mathcal{H}_{\theta}$ that learns the Hamiltonian. The idea of H-NET is to replace the O-NET $f_{\theta}$ in \ref{eq:O-NET_IVP} with the estimate of the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$. Then, the IVP \ref{eq:O-NET_IVP} can be rewritten as
+A H-NET is a neural network $\mathcal{H}_{\theta}$ that learns the Hamiltonian. The idea of H-NET is to replace the O-NET $f_{\theta}$ in \ref{eq:O-NET_IVP} with the estimate of the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, - \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$. Then, the IVP \ref{eq:O-NET_IVP} can be rewritten as
 
 \begin{equation}
     \label{eq:H-NET_IVP}
@@ -1379,7 +1350,7 @@ The corresponding solution can be computed by
 
 where $\mathcal{H}_{\theta}$ is a H-NET.
 
-In code, the major difference between H-NET and O-NET appears in step 2. The Neural ODE of H-NET contains the estimate of the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$ of a neural network on its RHS rather than the neural network itself:
+In code, the major difference between H-NET and O-NET appears in step 2. The Neural ODE of H-NET contains the estimate of the symplectic gradient $X_{\mathcal{H}_{\theta}}=(\frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{p}}, - \frac{\partial \mathcal{H}_{\theta}}{\partial \mathbf{q}})$ of a neural network on its RHS rather than the neural network itself:
 
 \begin{minted}[breaklines,escapeinside=||,mathescape=true, numbersep=3pt, gobble=2, frame=lines, fontsize=\small, framesep=2mm]{julia}
     using FiniteDiff
@@ -1535,7 +1506,7 @@ end
 \section{Experiment: Undamped Harmonic Oscillator}
 In this experiment, we continue using an undamped harmonic oscillator as example and compare the models trained with Neural ODEs and with structured Neural ODEs.
 
-We use Adam algorithm to train the model with the learning rate $0.001$. First we construct an neural IVP like \ref{eq:structured_neura_IVP} with the initial state $\mathbf{z}_0 = [1.0, 1.0]$. The training set is generated by solving the system of ODEs with implicit midpoint method. The evolution of the dynamics begins from $0.0$ to $19.9$ with the time step size of $0.1$. Hence, we have 200 points in the training set. Following the above example, we suppose that the mass $m=2$ is known, while the spring compliance $c$ is unknown. Thus, the dynamics can be given by
+We use the Adam algorithm to train the model with the learning rate $0.001$. First we construct an neural IVP like \ref{eq:structured_neura_IVP} with the initial state $\mathbf{z}_0 = [1.0, 1.0]$. The training set is generated by solving the system of ODEs with implicit midpoint method. The evolution of the dynamics begins from $0.0$ to $19.9$ with the time step size of $0.1$. This is a discrete trajectory with 200 time steps in the training set. Following the above example, we suppose that the mass $m=2$ is known, while the spring compliance $c$ is unknown. Thus, the dynamics can be given by
 
 \begin{equation}
     \label{eq:NeuralODE_udho}
@@ -1568,7 +1539,7 @@ Similarly, we also plot the phase portrait of the dynamcis predicted by O-NET an
 
 As we can see, both H-NET and HNN learned better dynamcis of the undamped hamonic oscillator in the experiment.
 
-We can also evaluate the models from other perpectives. The prediction error is the $L_{2}$ prediction error over time.
+We can also evaluate the models from other perpectives. The prediction error is the $L_{2}$ error over time.
 
 \begin{figure}[h!]
     \centering
@@ -1624,7 +1595,7 @@ Both H-NET and HNN still preserve the total energy pretty good, while the predic
 
 \clearpage
 \section{Experiment: Isothermal Damped Harmonic Oscillator}
-An isothermal damped harmonic oscillator is a port-Hamiltonian system and the mechanical energy of the system dissipates with the vibration of the damping. Hence, it may not make sense to continue using H-NET or HNN in this experiment. In fact, the authors of HNN proposed D-HNNs (Dissipative Hamiltonian Neural Networks) to handle this situation in 2022 \cite{greydanus2022dissipative}. However, in this experiment, we will only focus on O-NET and structured ODE neural network.
+An isothermal damped harmonic oscillator is a port-Hamiltonian system, in which the mechanical energy of the system dissipates with the vibration of the damping. H-NET and HNN are designed to learn a quantity that obeys the conservation law. As the mechanical energy of a port-Hamiltonian system may not be conserved. Hence, it may not make sense to continue using H-NET or HNN in this experiment. In fact, the authors of HNNs proposed D-HNNs (Dissipative Hamiltonian Neural Networks) to handle this situation in 2022 \cite{greydanus2022dissipative}. However, in this experiment, we will only focus on O-NET and structured ODE neural network.
 
 For an isothermal damped harmonic oscillator, the dynamics is given by
 
@@ -1708,7 +1679,7 @@ The mechanical energy in this experiment is not conserved, as we can see in the 
 
 As stated in the Port-Hamiltonian Systems chapter, a classical port-Hamiltonian system, e.g. an isothermal damped harmonic oscillator, can be depicted by a bond-graph expression \ref{fig:bondgraph_idho}. In \cite{lohmayer2022exergetic} and \cite{lohmayer2022ephs}, a thermodynamic modelling framework is proposed to extend a classical port-Hamiltonian system to an exergetic port-Hamiltonian system (EPHS). This modelling framework combines the classical port-Hamiltonian structure and the GENERIC framework, such that the EPHS is coherent with both the first and the second law of thermodynamics.
 
-For an isothermal damped harmonic oscillator, its EPHS model can by expressed by the following bond-graph:
+For an isothermal damped harmonic oscillator, its EPHS model can by expressed by the following bond-graph expression:
 
 \begin{figure}[h!]
     \centering
@@ -1717,7 +1688,7 @@ For an isothermal damped harmonic oscillator, its EPHS model can by expressed by
     \label{fig:bondgraph_idho_exergetic}
 \end{figure}
 
-However, following the assumption in the preceding chapter, there may be an unknown part in the system, which could be an obstacle to modeling. In this chapter, we propose a component-based modelling approach based on EPHS framework that use neural networks to learn the subsystems (or system components). This approach combines with machine learning techniques and provides a direction for compositional grey-box modelling.
+However, following the assumption in the preceding chapter, there may be an unknown part in the system, which could be an obstacle to modeling. In this chapter, we propose a component-based modelling approach based on the EPHS framework that uses neural networks to learn the subsystems (or system components). This approach combines with machine learning techniques and provides a direction for compositional grey-box modelling.
 
 For example, a realistic damping model could be difficult to obtain. Hence, we suppose that the resistive structure in red is the unknow part, a structured ODE neural network $\mathtt{f_{\theta}}$ can be substituted for it:
 
@@ -1729,7 +1700,7 @@ For example, a realistic damping model could be difficult to obtain. Hence, we s
     \label{fig:bondgraph_idho_exergetic_NN}
 \end{figure}
 
-The entire model is a grey-box model, which is composed by the known components (storage components, Dirac structure and isothermal environment) and the unknown component (resistive structure). However, the unknown component replaced with a neural network is a pure black box model. Such a black box model without EPHS structure are not guaranteed to satisfy the first and the second law of thermodynamics.
+The entire model is a grey-box model, which is composed by the known components (storage components, Dirac structure and isothermal environment) and the unknown component (resistive structure). However, the unknown component replaced with a neural network is a pure black box model. Such a black box model without EPHS structure is not guaranteed to satisfy the first and the second law of thermodynamics.
 
 
 \section{Substitution}
@@ -1741,7 +1712,7 @@ Recall that the resistive structure in \ref{eq:resistive_structure_idho} is give
     \left[\begin{array}{l}\mathtt{R_{d}.p.f} \\ \mathtt{R_{d}.s_{e}.f}\end{array}\right]=\frac{1}{\theta_0} d\left[\begin{array}{rr}\theta_0+\mathtt{R_{d}.s_{e}.e} & -\mathtt{R_{d}.p.e} \\ -\mathtt{R_{d}.p.e} & \frac{(\mathtt{R_{d}.p.e})^2}{\theta_0+\mathtt{R_{d}.s_{e}.e}}\end{array}\right]\left[\begin{array}{l}\mathtt{R_{d}.p.e} \\ \mathtt{R_{d}.s_{e}.e}\end{array}\right].
 \end{equation}
 
-As in Figure \ref{fig:bondgraph_idho_exergetic_NN}, we treat the damping as a black box. Then, the environment temperature $\theta_0$ and the effort variables $\left[\begin{array}{l}\mathtt{R_{d}.p.e} \\ \mathtt{R_{d}.s_{e}.e}\end{array}\right]$ can be considered as inputs to the black box. We replace the RHS with a neural network $\mathtt{f_{\theta}}$ and rewrite \ref{eq:resistive_structure_interconnection_idho} as
+As in Figure \ref{fig:bondgraph_idho_exergetic_NN}, we treat the damping as a black box. Then, the environment temperature $\theta_0$ and the effort variables $\left[\begin{array}{l}\mathtt{R_{d}.p.e} \\ \mathtt{R_{d}.s_{e}.e}\end{array}\right]$ can be considered as inputs to the black box. We replace the RHS with a neural network $\mathtt{f_{\theta}}$ and rewrite Equation \ref{eq:resistive_structure_interconnection_idho} as
 
 \begin{equation}
     \label{eq:resistive_structure_interconnection_NN_idho}
@@ -1773,7 +1744,7 @@ where $s_e$ is the environment entropy.
 
 \section{Modelling with structured Neural ODEs}
 
-Similar to \ref{eq:structured_neura_IVP}, we also construct an IVP for the above structured Neural ODEs
+Similar to \ref{eq:structured_neura_IVP}, we also construct an IVP for the above structured Neural ODEs \ref{eq:NeuralODE_idho_EPHS}
 
 \begin{equation}
     \label{eq:structured_neural_EPHS_IVP}
@@ -1812,7 +1783,7 @@ NN([-v^2/θ_0], θ, st)[1][2]
 
 \clearpage
 \section{Experiment: Isothermal Damped Harmonic Oscillator}
-In this experiment, we set the mass $m=2$, the spring compliance $c=1$ and the environment temperature $\theta_{0}=300$ for prediction. For generating training set, we set the mass $m=2$, the spring compliance $c=1$, the damping coefficient $d=0.5$ and the environment temperature $\theta_{0}=300$. We construct an IVP the same as \ref{eq:structured_neural_EPHS_IVP} with the initial state $\mathbf{z}_{0} = [1.0, 1.0, 0.2]$. The training set begins from $0.0$ to $19.9$ with the time step size of $0.1$. We train the model using Adam algorithm with the learning rate 0.0001.
+In this experiment, we set the mass $m=2$, the spring compliance $c=1$ and the environment temperature $\theta_{0}=300$ for the structured Neural ODEs. For generating a training set, we set the mass $m=2$, the spring compliance $c=1$, the damping coefficient $d=0.5$ and the environment temperature $\theta_{0}=300$. We construct an IVP the same as \ref{eq:structured_neural_EPHS_IVP} with the initial state $\mathbf{z}_{0} = [1.0, 1.0, 0.2]$. The training set begins from $0.0$ to $19.9$ with the time step size of $0.1$. We train the model using Adam algorithm with the learning rate 0.0001.
 
 \begin{figure}[h!]
     \centering
@@ -1901,7 +1872,7 @@ As stated before, we expect that the trained neural network models can be reused
 
 \clearpage
 \section{Experiment: Non-isothermal Damped Harmonic Oscillator}
-In this experiment, we model a non-isothermal damped harmonic oscillator with a thermal capacity at the damping. In contrast to the isothermal model, the temperature difference between the damping and the environment $\Delta\theta = \theta_d - \theta_0$ affects the heat transfer in the non-isothermal model. The heat transfer is also affected by a coefficient $\alpha$. For details about this EPHS model, we refer to \cite{lohmayer2021exergetic}.
+In this experiment, we model a non-isothermal damped harmonic oscillator with a thermal capacity at the damping. In contrast to the isothermal model, the temperature difference between the damping and the environment $\Delta\theta = \theta_d - \theta_0$ affects the thermal conduction in the non-isothermal model. The thermal conduction is also affected by a coefficient $\alpha$. For details about this EPHS model, we refer to \cite{lohmayer2021exergetic}.
 
 The EPHS model of a non-isothermal damped harmonic oscillator can be expressed by  the following bond-graph expression: 
 
@@ -1932,7 +1903,7 @@ The box $\mathtt{R_d}$ has two ports $\mathtt{R_{d}.p}$ and $\mathtt{R_{d}.s_{d}
 
 The box $\mathtt{R_{tc}}$ has two ports $\mathtt{R_{tc}.s_{d}}$ and $\mathtt{R_{tc}.s_{e}}$, where the port variables are $(\mathtt{R_{tc}.s_{d}.f}, \mathtt{R_{tc}.s_{d}.e}) = (\frac{1}{\theta_d}\alpha(\theta_d-\theta_0), \theta_d-\theta_0)$ and $(\mathtt{R_{tc}.s_{e}.f}, \mathtt{R_{tc}.s_{e}.e}) = (\frac{1}{\theta_0}\alpha(\theta_0-\theta_d), \theta_0-\theta_0)$.
 
-Similarly, we assume that the system component damping and thermal conduction are unknown (or partially unknown) and replace them with two neural networks $\mathtt{f_{\theta, d}}$ and $\mathtt{g_{\theta, tc}}$:
+Similarly, we assume that the system components damping and thermal conduction are unknown (or partially unknown) and replace them with two neural networks $\mathtt{f_{\theta, d}}$ and $\mathtt{g_{\theta, tc}}$:
 
 \begin{figure}[h!]
     \centering
@@ -1997,7 +1968,7 @@ function StructuredNeuralODE(dz, z, θ, t)
 end
 \end{minted}
 
-In the experiment, we set the mass $m=2$, the spring compliance $c=1$, the environment temperature $\theta_{0}=300$ and the heat capacity $c_{tc}=1$ for prediction. For generating training set, we set the mass $m=2$, the spring compliance $c=1$, the damping coefficient $d=0.5$, the environment temperature $\theta_{0}=300$, the heat transfer coefficient $\alpha=0.2$ and the heat capacity $c_{tc}=1$. We construct an IVP with the ODEs \ref{eq:NeuralODE_ndho_EPHS} and the initial state $\mathbf{z}_{0} = [1.0, 1.0, 0.2, 5.8]$. The training set begins from $0.0$ to $19.9$ with the time step size of $0.1$. We train the model using Adam algorithm with the learning rate 0.0001.
+In the experiment, we set the mass $m=2$, the spring compliance $c=1$, the environment temperature $\theta_{0}=300$ and the heat capacity $c_{tc}=1$ for the structured Neural ODEs. For generating a training set, we set the mass $m=2$, the spring compliance $c=1$, the damping coefficient $d=0.5$, the environment temperature $\theta_{0}=300$, the heat transfer coefficient $\alpha=0.2$ and the heat capacity $c_{tc}=1$. We construct an IVP with the ODEs \ref{eq:NeuralODE_ndho_EPHS} and the initial state $\mathbf{z}_{0} = [1.0, 1.0, 0.2, 5.8]$. The training set begins from $0.0$ to $19.9$ with the time step size of $0.1$. We train the model using the Adam algorithm with the learning rate 0.0001.
 
 \clearpage
 \begin{figure}[h!]
@@ -2064,7 +2035,7 @@ We can observe that the RHS of this Structured Neural ODE is the negative sum of
 
 \clearpage
 \section{Experiment: Non-isothermal Damped Harmonic Oscillator with EPHS Structure}
-In this experiment, the neural network models are used to replace the damping coefficient and the heat transfer coefficient. Normally, the realistic models are nonlinear. In this case, we hypothesize that the damping coefficient is the value of a nonlinear function $d \left( \theta_0, \left[\begin{array}{l}\mathtt{R_{d}.p.e} \\ \mathtt{R_{d}.s_{d}.e}\end{array}\right] \right)$ depending on the environment temperature and the effort variables. Similarly, the heat transfer coefficient is the value of a nonlinear function $\alpha \left( \theta_0, \left[\begin{array}{l} \mathtt{R_{tc}.s_{d}.e} \\ \mathtt{R_{tc}.s_{e}.e}\end{array}\right] \right)$. This approach endows the structured Neural ODEs with the EPHS structure of the irreversible components. We hypothesize that this approach allows the neural networks to converge easier and learn better.
+In this experiment, the neural network models are used to replace the damping coefficient and the heat transfer coefficient. Normally, the realistic models are nonlinear. In this case, we hypothesize that the damping coefficient is the value of a nonlinear function $d \left( \theta_0, \left[\begin{array}{l}\mathtt{R_{d}.p.e} \\ \mathtt{R_{d}.s_{d}.e}\end{array}\right] \right)$ depending on the environment temperature and the effort variables. Similarly, the heat transfer coefficient is the value of a nonlinear function $\alpha \left( \theta_0, \left[\begin{array}{l} \mathtt{R_{tc}.s_{d}.e} \\ \mathtt{R_{tc}.s_{e}.e}\end{array}\right] \right)$. This approach endows the structured Neural ODEs with EPHS structure of the irreversible components. We hypothesize that this approach allows the neural networks to converge easier and learn better.
 
 In Julia code, we construct the system of structured Neural ODEs like:
 
@@ -2078,12 +2049,12 @@ function StructuredNeuralODE(dz, z, θ, t)
     v = p/m
     θ_d = exp(s_d/c_tc) / c_tc
     Δθ = θ_d - θ_0
-    θ_d = θ.θ_d
-    θ_tc = θ.θ_tc   
+    θ_NN_d = θ.θ_NN_d
+    θ_NN_tc = θ.θ_NN_tc   
     dz[1] = v
-    dz[2] = - q/c - NN_d([v, θ_d], θ_d, st_d)[1][1]*v
-    dz[3] = NN_tc([θ_d, θ_0], θ_tc, st_tc)[1][1]*(Δθ)/θ_0
-    dz[4] = NN_d([v, θ_d], θ_d, st_d)[1][1]*((v)^2)/θ_d - NN_tc([θ_d, θ_0], θ_tc, st_tc)[1][1]*(Δθ)/θ_d
+    dz[2] = - q/c - NN_d([v, θ_d], θ_NN_d, st_d)[1][1]*v
+    dz[3] = NN_tc([θ_d, θ_0], θ_NN_tc, st_tc)[1][1]*(Δθ)/θ_0
+    dz[4] = NN_d([v, θ_d], θ_NN_d, st_d)[1][1]*((v)^2)/θ_d - NN_tc([θ_d, θ_0], θ_NN_tc, st_tc)[1][1]*(Δθ)/θ_d
 end
 \end{minted}
 
@@ -2198,16 +2169,16 @@ To evaluate the model more comprehensively, we change the mass to be $m=4$ ($m=2
 \chapter{Conclusion}
 \label{ch:chapter8}
 \section{Summary}
-This thesis aims to combine machine learning techniques with EPHS modelling framework and provide a direction to compositional grey-box modelling. We hypothesized that a system can be considered as a composition of subsystem components. In the case where some components are known and some components are unknown, we replaced the unknown components with neural network models, such that the whole model becomes a grey-box model. In addition, these trained neural network models as subsystem components can be reused in other systems.
+This thesis aims to combine machine learning techniques with the EPHS modelling framework and provide a direction to compositional grey-box modelling. Normally, a system can be considered as a composition of subsystem components. In the case where some components are known and some components are unknown, we replaced the unknown components with neural network models, making the whole model a grey-box model. In addition, these trained neural network models as can be reused as subsystems of other systems.
 
 From Chapter 2 to 5, we reviewed fundamental background knowledge for port-Hamiltonian systems modelling and machine learning. 
 
 In Chapter 6, we first compared various neural networks based on Neural ODEs. Then we explained structured Neural ODEs, which are Neural ODEs endowed with structure. This structure composes the known parts and unknown parts. In the field of physics, the known parts can be some known physics laws, while the unknown parts can be replaced by the outputs of neural networks.
 
-In Chapter 7, we took isothermal damped harmonic oscillator and non-isothermal damped harmonic oscillator as examples and use structured Neural ODEs to model these two systems. In the experiment of section 7.3, we assumed that the damping is an unknown component and replaced it with a neural network. The neural network took the environment temperature and the effort variables (velocity, temperature difference) as inputs, while the outputs of the neural network are the flow variables (damping force, entropy rate). From the results, we found that the trained neural network can provide good predictions. Thereafter, we changed the parameter and the initial state to build a new system and reused the neural network model for the new system. In the new system, the predictions were still good. In the experiment of section 7.4, we assumed that both the damping and the thermal conduction are unknown components and replaced each of them with a neural network. The inputs to the neural networks are the environment temperature and the effort variables, while the output are the flow variables. However, the results of this experiment did not turn out well. As we treated these two unknown components as black boxes, the predictions are not guaranteed to obey the first and second laws of thermodynamics. Moreover, in the case where there are more than one neural network model in the system, we did not provide enough constraints. To address this issue, in the experiment of section 7.5, we endowed the structured Neural ODEs with the complete EPHS structure implying the structural properties inherent to the thermodynamic models, such that the models are guaranteed to be coherent with the first and second laws of thermodynamics. We assumed that the damping and the thermal conduction models are nonlinear and used neural networks to learn the damping coefficient and the heat transfer coefficient. We also adopted the environment temperature and the effort variables as inputs to the neural networks. This time, the experimental results look quite good and can also be reused for a new system.
+In Chapter 7, we took an isothermal damped harmonic oscillator and a non-isothermal damped harmonic oscillator as examples and use structured Neural ODEs to model these two systems. In the experiment of section 7.3, we assumed that the damping is an unknown component and replaced it with a neural network. The neural network took the environment temperature and the effort variables (velocity, temperature difference) as inputs, while the outputs of the neural network are the flow variables (damping force, entropy rate). From the results, we found that the trained neural network can provide good predictions. Thereafter, we changed the parameter (mass) and the initial state (momentum) to build a new system and reused the neural network model for the new system. In the new system, the predictions were still good. In the experiment of section 7.4, we assumed that both the damping and the thermal conduction are unknown components and replaced each of them with a neural network. The inputs to the neural networks are the environment temperature and the effort variables, while the output are the flow variables. However, the results of this experiment did not turn out well. As we treated these two unknown components as black boxes, the predictions are not guaranteed to obey the first and second laws of thermodynamics. Moreover, in the case where there are more than one neural network model in the system, we did not provide enough constraints. To address this issue, in the experiment of section 7.5, we endowed the structured Neural ODEs with the complete EPHS structure implying the first and second laws of thermodynamics. We assumed that the damping and the thermal conduction coefficients are nonlinear and can be learned by neural networks. We also adopted the environment temperature and the effort variables as inputs to the neural networks. This time, the experimental results look quite good and can also be reused for a new system.
 
 \section{Outlook}
-Future work will focus on providing a more general approach and endowing the neural networks with more structural properties (in case the complete EPHS structure are not entirely known), such that the predictions are coherent with the first and second laws of thermodynamics. 
+Future work may focus on providing a more general approach and endowing the neural networks with more structural properties (in case the complete EPHS structure are not entirely known), such that the predictions are coherent with the first and second laws of thermodynamics. 
 
 So far, the studied systems in this thesis were restricted to harmonic oscillators. To verify the generality of the approaches proposed in this thesis, these approaches should be tested on other systems. 
 
