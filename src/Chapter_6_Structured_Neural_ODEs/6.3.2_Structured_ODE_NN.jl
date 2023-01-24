@@ -9,6 +9,7 @@ Structured_ODE_NN = Lux.Chain(Lux.Dense(1, 20, tanh),
 
 using Random
 rng = Random.default_rng()
+Random.seed!(rng, 0)
 ps, st = Lux.setup(rng, Structured_ODE_NN)
 
 
@@ -103,7 +104,7 @@ function loss_function(θ, batch_data, batch_timesteps)
 end
 
 callback = function(θ, loss, pred_data)
-    println(loss_function(θ, training_data, time_steps)[1])
+    println("loss: ", loss)
     return false
 end
 
@@ -116,35 +117,42 @@ end
 
 # The dataloader generates a batch of data according to the given batchsize from the "training_data".
 using Flux: DataLoader
-dataloader = DataLoader((training_data, time_steps), batchsize = 200)
-
-# Select an automatic differentiation tool
-using Optimization
-adtype = Optimization.AutoZygote()
-# Construct an optimization problem with the given automatic differentiation and the initial parameters θ
-optf = Optimization.OptimizationFunction((θ, ps, batch_data, batch_timesteps) -> loss_function(θ, batch_data, batch_timesteps), adtype)
-optprob = Optimization.OptimizationProblem(optf, Lux.ComponentArray(θ))
-# Train the model multiple times. The "ncycle" is a function in the package IterTools.jl, it cycles through the dataloader "epochs" times.
 begin
-    using OptimizationOptimisers
-    using IterTools: ncycle
-    epochs = 10;
-    result = Optimization.solve(optprob, Optimisers.ADAM(0.001), ncycle(dataloader, epochs), callback=callback)
-    # Access the trained parameters
-    θ = result.u
+    using Flux: DataLoader
+    time_steps_1 = range(0.0, 4.9, 50)
+    time_steps_2 = range(0.0, 9.9, 100)
+    time_steps_3 = range(0.0, 19.9, 200)
+    dataloader1 = DataLoader((training_data[:,1:50], time_steps_1), batchsize = 50)
+    dataloader2 = DataLoader((training_data[:,1:100], time_steps_2), batchsize = 100)
+    dataloader3 = DataLoader((training_data[:,1:200], time_steps_3), batchsize = 200)
+  end
+
+begin
+    include("helpers/train_helper.jl")
+    using Main.TrainInterface: LuxTrain, OptFunction
+    using Optimization
+    optf = OptFunction(loss_function, Optimization.AutoZygote())
 end
-
-# The "loss_function" returns a tuple, where the first element of the tuple is the loss
-loss = loss_function(result.u, training_data, time_steps)[1]
-
-# Option: repeat the training
-include("helpers/train_helper.jl")
-using Main.TrainInterface: LuxTrain
-# Adjust the learning rate and epochs, then repeat this code block
+  
 begin
-    α = 0.0001
-    epochs = 10
-    θ = LuxTrain(optf, θ, α, epochs, dataloader, callback)
+    α = 0.002
+    epochs = 100
+    println("Training 1")
+    θ = LuxTrain(optf, θ, α, epochs, dataloader1, callback)
+end
+  
+begin
+    α = 0.002
+    epochs = 100
+    println("Training 2")
+    θ = LuxTrain(optf, θ, α, epochs, dataloader2, callback)
+end
+  
+begin
+    α = 0.001
+    epochs = 100
+    println("Training 3")
+    θ = LuxTrain(optf, θ, α, epochs, dataloader3, callback)
 end
 
 # Save the parameters
@@ -193,9 +201,3 @@ begin
     plot(ode_data[1,:], ode_data[2,:], lw=3, xlabel="q", ylabel="p")
     plot!(predict_data[1,:], predict_data[2,:], lw=3)
 end
-
-
-
-#################
-# miscellaneous #
-#################

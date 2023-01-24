@@ -128,7 +128,7 @@ begin
     plot!(ode_data[1,:], ode_data[2,:], lw=3, label="Ground Truth", linestyle=:solid)
     plot!(predict_data_H_NET[1,:], predict_data_H_NET[2,:], lw=3, label="H-NET", linestyle=:dot)
     plot!(predict_data_HNN[1,:], predict_data_HNN[2,:], lw=3, label="HNN", linestyle=:dash)
-    Plots.pdf(joinpath(@__DIR__, "figures", "phase_portrait_H_NET_and_HNN.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "phase_portrait_H_NET_and_HNN.pdf"))
 end
 
 
@@ -139,7 +139,7 @@ begin
     plot!(ode_data[1,:], ode_data[2,:], lw=3, label="Ground Truth", linestyle=:solid)
     plot!(predict_data_O_NET[1,:], predict_data_O_NET[2,:], lw=3, label="O-NET", linestyle=:dot)
     plot!(predict_data_Structured_ODE_NN[1,:], predict_data_Structured_ODE_NN[2,:], lw=3, label="Structured ODE NN", linestyle=:dash)
-    Plots.pdf(joinpath(@__DIR__, "figures", "phase_portrait_O_NET_and_structured_ODE_NN.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "phase_portrait_O_NET_and_structured_ODE_NN.pdf"))
 end
 
 
@@ -151,7 +151,7 @@ begin
     plot(xlabel="Time Step", ylabel="L2 Error", xlims=(0,10), ylims=(0,0.005))
     plot!(time_step, l2_error_H_NET, lw=3, label="H-NET")
     plot!(time_step, l2_error_HNN, lw=3, label="HNN")
-    Plots.pdf(joinpath(@__DIR__, "figures", "prediction_error_H_NET_and_HNN.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "prediction_error_H_NET_and_HNN.pdf"))
 end
 
 
@@ -163,7 +163,7 @@ begin
     plot(xlabel="Time Step", ylabel="L2 Error", xlims=(0,10), ylims=(0,0.01))
     plot!(time_step, l2_error_O_NET, lw=3, label="O-NET")
     plot!(time_step, l2_error_Structured_ODE_NN, lw=3, label="Structured ODE NN")
-    Plots.pdf(joinpath(@__DIR__, "figures", "prediction_error_O_NET_and_structured_ODE_NN.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "prediction_error_O_NET_and_structured_ODE_NN.pdf"))
 end
 
 
@@ -177,7 +177,7 @@ begin
     plot!(time_step, round.(Hamiltonian_Ground_Truth, digits=10), label="Ground Truth")
     plot!(time_step, round.(Hamiltonian_H_NET, digits=10), label="H-NET")
     plot!(time_step, round.(Hamiltonian_HNN, digits=10), label="HNN")
-    Plots.pdf(joinpath(@__DIR__, "figures", "Hamiltonian_evolution_H_NET_and_HNN.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "Hamiltonian_evolution_H_NET_and_HNN.pdf"))
 end
 
 
@@ -191,5 +191,5 @@ begin
     plot!(time_step, round.(Hamiltonian_Ground_Truth, digits=10), label="Ground Truth")
     plot!(time_step, round.(Hamiltonian_O_NET, digits=10), label="O-NET")
     plot!(time_step, round.(Hamiltonian_Structured_ODE_NN, digits=10), label="Structured ODE NN")
-    Plots.pdf(joinpath(@__DIR__, "figures", "Hamiltonian_evolution_O_NET_and_structured_ODE_NN.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "Hamiltonian_evolution_O_NET_and_structured_ODE_NN.pdf"))
 end

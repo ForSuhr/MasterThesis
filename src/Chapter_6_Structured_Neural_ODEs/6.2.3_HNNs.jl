@@ -10,6 +10,7 @@ HNN = Lux.Chain(Lux.Dense(2, 20, tanh),
 # "Random.default_rng" is a random number generator. It generates a random number in preparation for generating random parameters in the next code line.
 using Random
 rng = Random.default_rng()
+Random.seed!(rng, 0)
 # ps: the initial parameters of the neural network.
 # st: the state of the neural network. It stores information (layers number, neurons number, activation function etc.) for reconstructing the neural network. For example, the output of the neural network with the given parameters is O_NET(x, ps, st)
 ps, st = Lux.setup(rng, HNN)
@@ -129,33 +130,20 @@ using Flux: DataLoader
 # (training_data, dz_data) is the whole training set.
 dataloader = DataLoader((training_data, dz_data), batchsize = 50)
 
-# Select an automatic differentiation tool
-using Optimization
-adtype = Optimization.AutoFiniteDiff()
-# Construct an optimization problem with the given automatic differentiation and the initial parameters θ
-optf = Optimization.OptimizationFunction((θ, ps, batch_data, batch_dz_data) -> loss_function(θ, batch_data, batch_dz_data), adtype)
-optprob = Optimization.OptimizationProblem(optf, Lux.ComponentArray(θ))
-# Train the model multiple times. The "ncycle" is a function in the package IterTools.jl, it cycles through the dataloader "epochs" times.
 begin
-  using OptimizationOptimisers
-  using IterTools
-  epochs = 10;
-  result = Optimization.solve(optprob, Optimisers.ADAM(0.01), ncycle(dataloader, epochs), callback=callback)
-  # Access the trained parameters
-  θ = result.u
+  include("helpers/train_helper.jl")
+  using Main.TrainInterface: LuxTrain, OptFunction
+  using Optimization
+  optf = OptFunction(loss_function, Optimization.AutoFiniteDiff())
+  # optf = OptFunction(loss_function, Optimization.AutoReverseDiff())
 end
 
-# The "loss_function" returns a tuple, where the first element of the tuple is the loss
-loss = loss_function(θ, training_data, dz_data)[1]
-
-# Option: continue the training
-include("helpers/train_helper.jl")
-using Main.TrainInterface: LuxTrain
 begin
-  α = 0.001
-  epochs = 10
+  α = 0.002
+  epochs = 200
   θ = LuxTrain(optf, θ, α, epochs, dataloader, callback)
 end
+
 
 # Save the parameters
 begin
@@ -199,5 +187,5 @@ HNN(initial_state, θ, st)
 IVP_test = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, time_span_total, θ)
 predict_data = CommonSolve.solve(IVP_test, numerical_method, p=θ, tstops = time_steps_total, sensealg=sensitivity_analysis)
 using Plots
-plot(ode_data[1,:], ode_data[2,:], lw=3, xlabel="q", ylabel="p")
-plot!(predict_data[1,:], predict_data[2,:], lw=3)
+plot(ode_data[1,:], ode_data[2,:], lw=3, xlabel="q", ylabel="p", label="Ground truth")
+plot!(predict_data[1,:], predict_data[2,:], lw=3, label="HNNs")

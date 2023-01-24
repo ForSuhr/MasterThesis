@@ -12,6 +12,7 @@ begin
                                     Lux.Dense(10, 1))
     using Random
     rng = Random.default_rng()
+    Random.seed!(rng, 0)
     θ_Structured_ODE_NN_d, st_Structured_ODE_NN_d = Lux.setup(rng, Structured_ODE_NN_d)
 end
 
@@ -24,6 +25,7 @@ begin
                                      Lux.Dense(10, 1))
     using Random
     rng = Random.default_rng()
+    Random.seed!(rng, 0)
     θ_Structured_ODE_NN_tc, st_Structured_ODE_NN_tc = Lux.setup(rng, Structured_ODE_NN_tc)
 end
 
@@ -71,7 +73,6 @@ begin
         dz[3] = Structured_ODE_NN_tc([θ_d, θ_0], θ_NN_tc, st_Structured_ODE_NN_tc)[1][1]*(Δθ)/θ_0
         dz[4] = Structured_ODE_NN_d([v, θ_d], θ_NN_d, st_Structured_ODE_NN_d)[1][1]*((v)^2)/θ_d - Structured_ODE_NN_tc([θ_d, θ_0], θ_NN_tc, st_Structured_ODE_NN_tc)[1][1]*(Δθ)/θ_d
     end
-    using OrdinaryDiffEq: Tsit5 
     predict_data_Structured_ODE_NN = NeuralODESolver(NeuralODE_Structured_ODE_NN, θ_Structured_ODE_NN, initial_state, time_span, time_step)
 end
 
@@ -96,11 +97,18 @@ begin
     end
 
     callback_Structured_ODE_NN = function(θ, loss, pred_data)
-        println(loss_function_Structured_ODE_NN(θ, ode_data, time_step)[1])
+        # println(loss_function_Structured_ODE_NN(θ, ode_data, time_step)[1])
+        println("loss: ", loss)
         return false
     end
 
-    dataloader = DataLoader((ode_data, time_step), batchsize = 200)
+    # dataloader = DataLoader((ode_data, time_step), batchsize = 200)
+    time_steps_1 = range(0.0, 4.9, 50)
+    time_steps_2 = range(0.0, 9.9, 100)
+    time_steps_3 = range(0.0, 19.9, 200)
+    dataloader1 = DataLoader((ode_data[:,1:50], time_steps_1), batchsize = 50)
+    dataloader2 = DataLoader((ode_data[:,1:100], time_steps_2), batchsize = 100)
+    dataloader3 = DataLoader((ode_data[:,1:200], time_steps_3), batchsize = 200)
 
     optf_Structured_ODE_NN = OptFunction(loss_function_Structured_ODE_NN)
 end
@@ -109,10 +117,23 @@ end
 # Repeat training for the Structured ODE Neural Network
 begin
     using Main.TrainInterface: LuxTrain
-    using OptimizationOptimisers: Descent
+    α_learn = 0.005
+    epochs = 500
+    θ_Structured_ODE_NN = LuxTrain(optf_Structured_ODE_NN, θ_Structured_ODE_NN, α_learn, epochs, dataloader1, callback_Structured_ODE_NN)
+end
+
+begin
+    using Main.TrainInterface: LuxTrain
+    α_learn = 0.005
+    epochs = 500
+    θ_Structured_ODE_NN = LuxTrain(optf_Structured_ODE_NN, θ_Structured_ODE_NN, α_learn, epochs, dataloader2, callback_Structured_ODE_NN)
+end
+
+begin
+    using Main.TrainInterface: LuxTrain
     α_learn = 0.001
-    epochs = 100
-    θ_Structured_ODE_NN = LuxTrain(optf_Structured_ODE_NN, θ_Structured_ODE_NN, α_learn, epochs, dataloader, callback_Structured_ODE_NN)
+    epochs = 200
+    θ_Structured_ODE_NN = LuxTrain(optf_Structured_ODE_NN, θ_Structured_ODE_NN, α_learn, epochs, dataloader3, callback_Structured_ODE_NN)
 end
 
 
@@ -181,7 +202,6 @@ begin
         dz[3] = Structured_ODE_NN_tc([θ_d, θ_0], θ_NN_tc, st_Structured_ODE_NN_tc)[1][1]*(Δθ)/θ_0
         dz[4] = Structured_ODE_NN_d([v, θ_d], θ_NN_d, st_Structured_ODE_NN_d)[1][1]*((v)^2)/θ_d - Structured_ODE_NN_tc([θ_d, θ_0], θ_NN_tc, st_Structured_ODE_NN_tc)[1][1]*(Δθ)/θ_d
     end
-    using OrdinaryDiffEq: Tsit5 
     predict_data_Structured_ODE_NN = NeuralODESolver(NeuralODE_Structured_ODE_NN, θ_Structured_ODE_NN, initial_state, time_span, time_step)
 end
 

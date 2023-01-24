@@ -13,6 +13,7 @@ begin
 
     using Random
     rng = Random.default_rng()
+    Random.seed!(rng, 0)
     θ_Structured_ODE_NN, st_Structured_ODE_NN = Lux.setup(rng, Structured_ODE_NN)
 end
 
@@ -82,7 +83,7 @@ end
 begin
     using Main.TrainInterface: LuxTrain
     α = 0.0001
-    epochs = 100
+    epochs = 200
     θ_Structured_ODE_NN = LuxTrain(optf_Structured_ODE_NN, θ_Structured_ODE_NN, α, epochs, dataloader, callback_Structured_ODE_NN)
 end
 
@@ -200,7 +201,7 @@ begin
         v = p/m
         f_θ__p__f[idx] = Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
         f_θ__s_e__f[idx] = Structured_ODE_NN([-v^2/θ_0], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2]
-        estimate_dissipated_power_d[idx] = v * Structured_ODE_NN_d([v], θ_NN_d, st_Structured_ODE_NN_d)[1][1]
+        estimate_dissipated_power_d[idx] = v * Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
     end
 end
 
@@ -337,7 +338,7 @@ begin
         v = p/m
         f_θ__p__f[idx] = Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
         f_θ__s_e__f[idx] = Structured_ODE_NN([-v^2/θ_0], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][2]
-        estimate_dissipated_power_d[idx] = v * Structured_ODE_NN_d([v], θ_NN_d, st_Structured_ODE_NN_d)[1][1]
+        estimate_dissipated_power_d[idx] = v * Structured_ODE_NN([v], θ_Structured_ODE_NN, st_Structured_ODE_NN)[1][1]
     end
 end
 

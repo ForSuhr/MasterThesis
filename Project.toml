@@ -1,6 +1,7 @@
 [deps]
 CommonSolve = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
+FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"

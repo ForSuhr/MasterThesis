@@ -1,4 +1,7 @@
 module DataHelper
+using OrdinaryDiffEq, SciMLBase, CommonSolve
+using ReverseDiff, SciMLSensitivity
+using FiniteDiff
 
 
 function ODEfunc_udho(dz, z, params, t)
@@ -33,7 +36,6 @@ function ODEfunc_ndho(dz,z,params,t)
 end
 
 
-using OrdinaryDiffEq, SciMLBase, CommonSolve
 function ODESolver(ODE_function, params, initial_state, time_span, time_step, numerical_method=ImplicitMidpoint(), implicit=true)
     prob = ODEProblem(ODEFunction(ODE_function), initial_state, time_span, params)
     if implicit
@@ -45,7 +47,6 @@ function ODESolver(ODE_function, params, initial_state, time_span, time_step, nu
 end
 
 
-using ReverseDiff, SciMLSensitivity
 function NeuralODESolver(NeuralODE, θ, initial_state, time_span, time_step, numerical_method=ImplicitMidpoint(), implicit=true)
     IVP = SciMLBase.ODEProblem(ODEFunction(NeuralODE), initial_state, time_span, θ)
     sensitivity_analysis = InterpolatingAdjoint(autojacvec=ReverseDiffVJP(true))
@@ -58,10 +59,9 @@ function NeuralODESolver(NeuralODE, θ, initial_state, time_span, time_step, num
 end
 
 
-using FiniteDiff
 function SymplecticGradient(NN, ps, st, z)
-  H = FiniteDiff.finite_difference_gradient(x -> sum(NN(x, ps, st)[1]), z)
-  return vec(cat(H[2:2, :], -H[1:1, :], dims=1))
+  ∂H = FiniteDiff.finite_difference_gradient(x -> sum(NN(x, ps, st)[1]), z)
+  return vec(cat(∂H[2:2, :], -∂H[1:1, :], dims=1))
 end
 
 
