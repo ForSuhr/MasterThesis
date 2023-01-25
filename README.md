@@ -42,4 +42,4 @@ Under the folder [Chapter_7_Compositional_Modelling](https://git.ltd.uni-erlange
 # Links
 
 - [Compiled pdf file of the thesis](https://git.ltd.uni-erlangen.de/JiandongZhao/master-thesis/-/blob/main/master_thesis/compiled_files)
-- [Code in the thesis](https://git.ltd.uni-erlangen.de/JiandongZhao/master-thesis/-/tree/main/src/examples_in_thesis)
+- [Code in the thesis](https://git.ltd.uni-erlangen.de/JiandongZhao/master-thesis/-/tree/main/src)
