@@ -147,28 +147,37 @@ begin
   # optf = OptFunction(loss_function, Optimization.AutoReverseDiff())
 end
 
-# Adjust the learning rate and repeat training by using a increasing time span strategy to escape from local minima
-# Please refer to https://docs.juliahub.com/DiffEqSensitivity/02xYn/6.78.2/training_tips/local_minima/
+# Adjust the learning rate and repeat training
 begin
   α = 0.002
-  epochs = 300
+  epochs = 400
   println("Training 1")
   θ = LuxTrain(optf, θ, α, epochs, dataloader1, callback)
 end
 
 begin
   α = 0.002
-  epochs = 300
+  epochs = 400
   println("Training 2")
   θ = LuxTrain(optf, θ, α, epochs, dataloader2, callback)
 end
 
 begin
-  α = 0.002
-  epochs = 100
+  α = 0.001
+  epochs = 500
   println("Training 3")
   θ = LuxTrain(optf, θ, α, epochs, dataloader3, callback)
 end
+
+begin
+  α = 0.001
+  epochs = 100
+  println("Training 4")
+  θ = LuxTrain(optf, θ, α, epochs, dataloader1, callback)
+  θ = LuxTrain(optf, θ, α, epochs, dataloader2, callback)
+  θ = LuxTrain(optf, θ, α, epochs, dataloader3, callback)
+end
+
 
 # Save the parameters
 begin
@@ -212,5 +221,5 @@ H_NET(initial_state, θ, st)
 IVP_test = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, time_span_total, θ)
 predict_data = CommonSolve.solve(IVP_test, numerical_method, p=θ, tstops = time_steps_total, sensealg=sensitivity_analysis)
 using Plots
-plot(ode_data[1,:], ode_data[2,:], lw=3, xlabel="q", ylabel="p", label="Ground truth")
-plot!(predict_data[1,:], predict_data[2,:], lw=3, label="H-NET")
+plot(ode_data[1,:], ode_data[2,:], lw=3, xlabel="q", ylabel="p", label="Ground truth", linestyle=:solid)
+plot!(predict_data[1,:], predict_data[2,:], lw=3, label="H-NET", linestyle=:dash)

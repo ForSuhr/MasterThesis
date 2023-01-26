@@ -106,7 +106,7 @@ test_data = ode_data[:, 1:Int(time_step_number_total*0.2)]
 
 function solve_IVP(θ, batch_timesteps)
     IVP = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, (batch_timesteps[1], batch_timesteps[end]), θ)
-    pred_data = Array(CommonSolve.solve(IVP, Tsit5(), p=θ, tstops = batch_timesteps, sensealg=sensitivity_analysis))
+    pred_data = Array(CommonSolve.solve(IVP, Tsit5(), p=θ, saveat = batch_timesteps, sensealg=sensitivity_analysis))
     return pred_data
 end
 
@@ -118,7 +118,7 @@ function loss_function(θ, batch_data, batch_timesteps)
 end
 
 callback = function(θ, loss, pred_data)
-    println(loss_function(θ, training_data, time_steps)[1])
+    println("loss: ", loss)
     return false
 end
 
@@ -129,35 +129,49 @@ end
 # Step 5: train the neural network #
 ####################################
 
-# The dataloader generates a batch of data according to the given batchsize from the "training_data".
-dataloader = Flux.Data.DataLoader((training_data, time_steps), batchsize = 200)
-
-# Select an automatic differentiation tool
-using Optimization
-adtype = Optimization.AutoZygote()
-# Construct an optimization problem with the given automatic differentiation and the initial parameters θ
-optf = Optimization.OptimizationFunction((θ, ps, batch_data, batch_timesteps) -> loss_function(θ, batch_data, batch_timesteps), adtype)
-optprob = Optimization.OptimizationProblem(optf, θ)
-# Train the model multiple times. The "ncycle" is a function in the package IterTools.jl, it cycles through the dataloader "epochs" times.
-begin
-    using OptimizationOptimisers
-    using IterTools
-    epochs = 10;
-    result = Optimization.solve(optprob, Optimisers.ADAM(0.001), ncycle(dataloader, epochs), callback=callback)
-    # Access the trained parameters
-    θ = result.u
-end
-
 # The "loss_function" returns a tuple, where the first element of the tuple is the loss
 loss = loss_function(θ, training_data, time_steps)[1]
 
-# Option: continue the training
-include("helpers/train_helper.jl")
-using Main.TrainInterface: FluxTrain
+# The dataloader generates a batch of data according to the given batchsize from the "training_data".
+begin
+    using Flux: DataLoader
+    time_steps_1 = range(0.0, 4.9, 50)
+    time_steps_2 = range(0.0, 9.9, 100)
+    time_steps_3 = range(0.0, 19.9, 200)
+    dataloader1 = DataLoader((training_data[:,1:50], time_steps_1), batchsize = 50)
+    dataloader2 = DataLoader((training_data[:,1:100], time_steps_2), batchsize = 100)
+    dataloader3 = DataLoader((training_data[:,1:200], time_steps_3), batchsize = 200)
+end
+
+begin
+    include("helpers/train_helper.jl")
+    using Main.TrainInterface: FluxTrain, OptFunction
+    using Optimization
+    optf = OptFunction(loss_function)
+end
+
+# Adjust the learning rate and repeat training by using a increasing time span strategy to escape from local minima
+# Please refer to https://docs.juliahub.com/DiffEqSensitivity/02xYn/6.78.2/training_tips/local_minima/
+# Adjust the learning rate and repeat training
+begin
+    α = 0.002
+    epochs = 100
+    println("Training 1")
+    θ = FluxTrain(optf, θ, α, epochs, dataloader1, callback)
+end
+  
+begin
+    α = 0.002
+    epochs = 200
+    println("Training 2")
+    θ = FluxTrain(optf, θ, α, epochs, dataloader2, callback)
+end
+
 begin
     α = 0.001
-    epochs = 10
-    θ = FluxTrain(optf, θ, α, epochs, dataloader, callback)
+    epochs = 200
+    println("Training 3")
+    θ = FluxTrain(optf, θ, α, epochs, dataloader3, callback)
 end
 
 # Save the parameters
@@ -203,6 +217,6 @@ re(θ)(initial_state)
 IVP_test = SciMLBase.ODEProblem(ODEFunction(ODE), initial_state, time_span_total, θ)
 predict_data = CommonSolve.solve(IVP_test, numerical_method, p=θ, tstops = time_steps_total, sensealg=sensitivity_analysis)
 using Plots
-plot(ode_data[1,:], ode_data[2,:], lw=3, xlabel="q", ylabel="p")
-plot!(predict_data[1,:], predict_data[2,:], lw=3)
+plot(ode_data[1,:], ode_data[2,:], lw=3, xlabel="q", ylabel="p", label="Ground truth", linestyle=:solid)
+plot!(predict_data[1,:], predict_data[2,:], lw=3, label="O-NET", linestyle=:dash)
 
