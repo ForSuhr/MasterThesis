@@ -328,7 +328,7 @@ begin
     plot(xlabel="q", ylabel="p", xlims=(-2,3), ylims=(-2,3))
     plot!(ode_data[1,:], ode_data[2,:], lw=3, label="Ground Truth", linestyle=:solid)
     plot!(predict_data[1,:], predict_data[2,:], lw=3, label="Structured ODE NN", linestyle=:dash)
-    #Plots.pdf(joinpath(@__DIR__, "figures", "phase_portrait_compositional_ndho.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "phase_portrait_compositional_ndho.pdf"))
 end
 
 
@@ -338,7 +338,7 @@ begin
     l2_error_Structured_ODE_NN = vec(sum((ode_data .- predict_data).^2, dims=1))
     plot(xlabel="Time Step", ylabel="L2 Error")
     plot!(time_step, l2_error_Structured_ODE_NN, lw=3, label="Structured ODE NN")
-    #Plots.pdf(joinpath(@__DIR__, "figures", "prediction_error_compositional_ndho.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "prediction_error_compositional_ndho.pdf"))
 end
 
 
@@ -350,7 +350,7 @@ begin
     plot(xlabel="Time Step", ylabel="Mechanical Energy", xlims=(0,100), ylims=(0.0,0.90))
     plot!(time_step, round.(Hamiltonian_Ground_Truth, digits=10), lw=3, label="Ground Truth", linestyle=:solid)
     plot!(time_step, round.(Hamiltonian_Structured_ODE_NN, digits=10), lw=3, label="Structured ODE NN", linestyle=:dash)
-    #Plots.pdf(joinpath(@__DIR__, "figures", "Hamiltonian_evolution_compositional_ndho.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "Hamiltonian_evolution_compositional_ndho.pdf"))
 end
 
 
@@ -411,7 +411,7 @@ begin
     plot(xlabel="Time Step", ylabel="p.f")
     plot!(time_step, R_d__p__f, lw=3, label="Ground Truth", linestyle=:solid)
     plot!(time_step, f_θ_d__p__f, lw=3, label="Structured ODE NN", linestyle=:dash)
-    #Plots.pdf(joinpath(@__DIR__, "figures", "p.f_compositional_ndho.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "p.f_compositional_ndho.pdf"))
 end
 
 begin
@@ -419,7 +419,7 @@ begin
     plot(xlabel="Time Step", ylabel="s_d.f of the damping")
     plot!(time_step, R_d__s_d__f, lw=3, label="Ground Truth", linestyle=:solid)
     plot!(time_step, f_θ_d__s_d__f, lw=3, label="Structured ODE NN", linestyle=:dash)
-    #Plots.pdf(joinpath(@__DIR__, "figures", "sd_d.f_compositional_ndho.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "sd_d.f_compositional_ndho.pdf"))
 end
 
 begin
@@ -427,7 +427,7 @@ begin
     plot(xlabel="Time Step", ylabel="s_d.f of the thermal conduction")
     plot!(time_step, R_tc__s_d__f, lw=3, label="Ground Truth", linestyle=:solid)
     plot!(time_step, f_θ_tc__s_d__f, lw=3, label="Structured ODE NN", linestyle=:dash)
-    #Plots.pdf(joinpath(@__DIR__, "figures", "sd_tc.f_compositional_ndho.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "sd_tc.f_compositional_ndho.pdf"))
 end
 
 begin
@@ -435,7 +435,7 @@ begin
     plot(xlabel="Time Step", ylabel="sₑ.f")
     plot!(time_step, R_tc__s_e__f, lw=3, label="Ground Truth", linestyle=:solid)
     plot!(time_step, f_θ_tc__s_e__f, lw=3, label="Structured ODE NN", linestyle=:dash)
-    #Plots.pdf(joinpath(@__DIR__, "figures", "se.f_compositional_ndho.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "se.f_compositional_ndho.pdf"))
 end
 
 begin
@@ -443,7 +443,7 @@ begin
     plot(xlabel="Time Step", ylabel="Dissipative Power of the damping")
     plot!(time_step, target_dissipative_power_d, lw=3, label="Ground Truth", linestyle=:solid)
     plot!(time_step, estimate_dissipative_power_d, lw=3, label="Structured ODE NN", linestyle=:dash)
-    #Plots.pdf(joinpath(@__DIR__, "figures", "dissipative_power_damping_ndho.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "dissipative_power_damping_ndho.pdf"))
 end
 
 begin
@@ -451,5 +451,5 @@ begin
     plot(xlabel="Time Step", ylabel="Dissipative Power of the thermal conduction")
     plot!(time_step, target_dissipative_power_tc, lw=3, label="Ground Truth", linestyle=:solid)
     plot!(time_step, estimate_dissipative_power_tc, lw=3, label="Structured ODE NN", linestyle=:dash)
-    #Plots.pdf(joinpath(@__DIR__, "figures", "dissipative_power_thermal_conduction_ndho.pdf"))
+    # Plots.pdf(joinpath(@__DIR__, "figures", "dissipative_power_thermal_conduction_ndho.pdf"))
 end
