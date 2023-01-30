@@ -8,8 +8,8 @@ end
 begin
     using Lux, NNlib
     NN_d = Lux.Chain(Lux.Dense(3, 20, tanh),
-                                    Lux.Dense(20, 10),
-                                    Lux.Dense(10, 2))
+                     Lux.Dense(20, 10),
+                     Lux.Dense(10, 2))
     using Random
     rng = Random.default_rng()
     Random.seed!(rng, 0)
@@ -19,8 +19,8 @@ end
 begin
     using Lux, NNlib
     NN_tc = Lux.Chain(Lux.Dense(3, 20, tanh),
-                                    Lux.Dense(20, 10),
-                                    Lux.Dense(10, 2))
+                      Lux.Dense(20, 10),
+                      Lux.Dense(10, 2))
     using Random
     rng = Random.default_rng()
     Random.seed!(rng, 0)
@@ -48,8 +48,8 @@ begin
     # initial state q, p, s_e, s_d
     initial_state = [1.0, 1.0, 0.2, 5.8]
     # Generate data set
-    time_span = (0.0, 19.9)
-    time_step = range(0.0, 19.9, 200)
+    time_span = (0.0, 9.9)
+    time_step = range(0.0, 9.9, 100)
     ode_data = ODESolver(ODEfunc_ndho, params, initial_state, time_span, time_step)
 end
 
@@ -140,7 +140,11 @@ begin
         M = DissipationMatrix(θ_NN, data, params)
         second_law_prior = Array{Float64}(undef, length(data[1,:]))
         for idx in range(1, length(data[1,:]))
-            second_law_prior[idx] = isposdef(M[:,:,idx]) * constant
+            if isposdef(M[:,:,idx])
+                second_law_prior[idx] = 0
+            else
+                second_law_prior[idx] = constant
+            end
         end
         return second_law_prior
     end
@@ -178,20 +182,10 @@ begin
 
     function loss_function(θ_NN, batch_data, batch_timesteps)
         pred_data = SolveIVP(NeuralODE, θ_NN, initial_state, batch_timesteps, Tsit5(), false)
-        # First law prior
-        first_law_prior = FirstLawPrior(θ_NN, batch_data, params)
-        # Second law prior
-        constant = 10
-        second_law_prior = SecondLawPrior(θ_NN, batch_data, params, constant)
-        # RdSdF should be negative
-        negative_prior = ReverseStepFunction(RdSdF(θ_NN, batch_data, params), constant)
         loss = sum( (batch_data[1,:] .- pred_data[1,:]) .^ 2 +
                     (batch_data[2,:] .- pred_data[2,:]) .^ 2 +
                     (batch_data[3,:] .- pred_data[3,:]) .^ 2 +
-                    (batch_data[4,:] .- pred_data[4,:]) .^ 2 +
-                    0.0001 * first_law_prior +
-                    second_law_prior +
-                    negative_prior)
+                    (batch_data[4,:] .- pred_data[4,:]) .^ 2)
         return loss, pred_data
     end
 
@@ -200,12 +194,64 @@ begin
         return false
     end
 
-    time_steps_1 = range(0.0, 4.9, 50)
-    time_steps_2 = range(0.0, 9.9, 100)
-    time_steps_3 = range(0.0, 19.9, 200)
-    dataloader1 = DataLoader((ode_data[:,1:50], time_steps_1), batchsize = 50)
-    dataloader2 = DataLoader((ode_data[:,1:100], time_steps_2), batchsize = 100)
-    dataloader3 = DataLoader((ode_data[:,1:200], time_steps_3), batchsize = 200)
+    time_steps_1 = range(0.0, 0.9, 10)
+    time_steps_2 = range(0.0, 2.9, 30)
+    time_steps_3 = range(0.0, 4.9, 50)
+    dataloader1 = DataLoader((ode_data[:,1:10], time_steps_1), batchsize = 10)
+    dataloader2 = DataLoader((ode_data[:,1:30], time_steps_2), batchsize = 30)
+    dataloader3 = DataLoader((ode_data[:,1:50], time_steps_3), batchsize = 50)
+
+    using Optimization
+    optf = OptFunction(loss_function, Optimization.AutoZygote())
+    # optf = OptFunction(loss_function, Optimization.AutoReverseDiff())
+    # optf = OptFunction(loss_function, Optimization.AutoFiniteDiff())
+    # optf = OptFunction(loss_function, Optimization.AutoTracker())
+    # optf = OptFunction(loss_function, Optimization.AutoForwardDiff())
+end
+
+# Training without physics priors
+begin
+    using Main.TrainInterface: LuxTrain
+    α_learn = 0.001
+    epochs = 200
+    θ_NN = LuxTrain(optf, θ_NN, α_learn, epochs, dataloader3, callback)
+end
+
+
+begin
+    using Main.TrainInterface: SolveIVP, OptFunction
+    using Flux: DataLoader
+    using OrdinaryDiffEq: Tsit5
+
+    function loss_function(θ_NN, batch_data, batch_timesteps)
+        pred_data = SolveIVP(NeuralODE, θ_NN, initial_state, batch_timesteps, Tsit5(), false)
+        # First law prior
+        first_law_prior = FirstLawPrior(θ_NN, batch_data, params)
+        # Second law prior
+        constant = 1
+        second_law_prior = SecondLawPrior(θ_NN, batch_data, params, constant)
+        # RdSdF should be negative
+        # negative_prior = ReverseStepFunction(RdSdF(θ_NN, batch_data, params), constant)
+        loss = sum( (batch_data[1,:] .- pred_data[1,:]) .^ 2 +
+                    (batch_data[2,:] .- pred_data[2,:]) .^ 2 +
+                    (batch_data[3,:] .- pred_data[3,:]) .^ 2 +
+                    (batch_data[4,:] .- pred_data[4,:]) .^ 2 +
+                    0.0001 * first_law_prior +
+                    second_law_prior)
+        return loss, pred_data
+    end
+
+    callback = function(θ, loss, pred_data)
+        println("loss: ", loss)
+        return false
+    end
+
+    time_steps_1 = range(0.0, 0.9, 10)
+    time_steps_2 = range(0.0, 2.9, 30)
+    time_steps_3 = range(0.0, 4.9, 50)
+    dataloader1 = DataLoader((ode_data[:,1:10], time_steps_1), batchsize = 10)
+    dataloader2 = DataLoader((ode_data[:,1:30], time_steps_2), batchsize = 30)
+    dataloader3 = DataLoader((ode_data[:,1:50], time_steps_3), batchsize = 50)
 
     using Optimization
     # optf = OptFunction(loss_function, Optimization.AutoZygote())
@@ -216,25 +262,25 @@ begin
 end
 
 
-# Repeat training for the Structured ODE Neural Network
+# Retrain with physics priors
 begin
     using Main.TrainInterface: LuxTrain
-    α_learn = 0.01
-    epochs = 10
-    θ_NN = LuxTrain(optf, θ_NN, α_learn, epochs, dataloader3, callback)
+    α_learn = 0.001
+    epochs = 100
+    θ_NN = LuxTrain(optf, θ_NN, α_learn, epochs, dataloader1, callback)
 end
 
 begin
     using Main.TrainInterface: LuxTrain
     α_learn = 0.001
-    epochs = 10
-    θ_NN = LuxTrain(optf, θ_NN, α_learn, epochs, dataloader3, callback)
+    epochs = 100
+    θ_NN = LuxTrain(optf, θ_NN, α_learn, epochs, dataloader2, callback)
 end
 
 begin
     using Main.TrainInterface: LuxTrain
-    α_learn = 0.0001
-    epochs = 500
+    α_learn = 0.001
+    epochs = 100
     θ_NN = LuxTrain(optf, θ_NN, α_learn, epochs, dataloader3, callback)
 end
 
@@ -282,8 +328,8 @@ begin
     # initial state q, p, s_e, s_d
     initial_state = [1.0, 1.0, 0.2, 5.8]
     # Generate data set
-    time_span = (0.0, 99.9)
-    time_step = range(0.0, 99.9, 1000)
+    time_span = (0.0, 19.9)
+    time_step = range(0.0, 19.9, 200)
     ode_data = ODESolver(ODEfunc_ndho, params, initial_state, time_span, time_step)
 end
 
