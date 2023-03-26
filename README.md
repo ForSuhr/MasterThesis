@@ -38,8 +38,3 @@ Under the folder [Chapter_7_Compositional_Modelling](https://git.ltd.uni-erlange
 - helpers: provides some useful helper functions for reuse.
 - models: stores the trained neural network models.
 - parameters: stores the parameters of the neural networks.
-
-# Links
-
-- [Compiled pdf file of the thesis](https://git.ltd.uni-erlangen.de/JiandongZhao/master-thesis/-/blob/main/master_thesis/compiled_files)
-- [Code in the thesis](https://git.ltd.uni-erlangen.de/JiandongZhao/master-thesis/-/tree/main/src)
